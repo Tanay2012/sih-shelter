@@ -1,0 +1,13 @@
+# Node modules
+server/node_modules/
+
+# Environment variables (NEVER PUSH THIS)
+server/.env
+
+# Python virtual environment and cache
+engine/venv/
+engine/__pycache__/
+*.pyc
+
+# Mac system files (just in case)
+.DS_Store
