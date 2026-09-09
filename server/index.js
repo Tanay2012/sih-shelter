@@ -4,12 +4,15 @@ const cors = require('cors');
 const { spawn } = require('child_process');
 const path = require('path');
 const mongoose = require('mongoose');
-const Simulation = require('./models/Simulation'); // Import the schema
+const Simulation = require('./models/Simulation');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+    res.send('SIH Shelter Simulation API is successfully running! 🚀');
+});
 // ==========================================
 // 1. DATABASE CONNECTION
 // ==========================================
