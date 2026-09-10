@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | ThermoSim</title>
-  <meta name="description" content="Sign in to access the ThermoSim engineering platform.">
+  <title>Authentication | ThermoSim</title>
+  <meta name="description" content="Sign in or register to access the ThermoSim engineering platform.">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -40,7 +40,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    body { font-family: 'Inter', sans-serif; }
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: rgba(30, 41, 59, 0.85);
+      --border-color: rgba(75, 85, 99, 0.4);
+      --brand-orange: #f97316;
+      --brand-orange-hover: #ea580c;
+      --brand-orange-glow: rgba(249, 115, 22, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+    }
 
     /* Animated grid background */
     .grid-bg {
@@ -52,15 +67,15 @@
 
     /* Glowing orb effect */
     .glow-orb {
-      background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 70%);
+      background: radial-gradient(circle, var(--brand-orange-glow) 0%, transparent 70%);
     }
 
     /* Card glassmorphism */
     .glass-card {
-      background: rgba(17, 24, 39, 0.85);
+      background: var(--bg-card);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(75, 85, 99, 0.4);
+      border: 1px solid var(--border-color);
     }
 
     /* Input focus glow */
@@ -90,7 +105,7 @@
     }
     .btn-primary:hover::before { left: 100%; }
     .btn-primary:hover {
-      box-shadow: 0 0 24px rgba(249, 115, 22, 0.5);
+      box-shadow: 0 0 24px var(--brand-orange-glow);
       transform: translateY(-1px);
     }
     .btn-primary:active { transform: translateY(0px); }
@@ -112,19 +127,30 @@
   </style>
 </head>
 
-<body class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center antialiased relative overflow-hidden">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center antialiased relative overflow-hidden py-10">
 
   <!-- Animated background orbs -->
   <div class="absolute inset-0 grid-bg pointer-events-none"></div>
   <div class="glow-orb absolute -top-32 -left-32 w-96 h-96 rounded-full pointer-events-none animate-pulse-slow"></div>
   <div class="glow-orb absolute -bottom-32 -right-32 w-96 h-96 rounded-full pointer-events-none animate-pulse-slow" style="background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);"></div>
 
-  <!-- Login Card -->
+  <!-- Main Card Container -->
   <div class="relative z-10 w-full max-w-md mx-auto px-4">
 
+    <!-- Back to Overview Button -->
+    <div class="mb-4">
+      <a
+        href="/"
+        class="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-orange-400 transition-colors bg-slate-800/60 border border-slate-700/60 rounded-lg px-3 py-1.5 backdrop-blur-md"
+      >
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back to Overview</span>
+      </a>
+    </div>
+
     <!-- Logo / Brand Header -->
-    <div class="text-center mb-8 animate-float">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 shadow-2xl shadow-orange-500/30 mb-4">
+    <div class="text-center mb-6 animate-float">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 shadow-2xl shadow-orange-500/30 mb-3">
         <i class="fa-solid fa-fire-flame-curved text-2xl text-white"></i>
       </div>
       <h1 class="text-2xl font-extrabold tracking-tight text-white">ThermoSim</h1>
@@ -134,21 +160,41 @@
     <!-- Card -->
     <div class="glass-card rounded-2xl p-8 shadow-2xl">
 
-      <!-- Card Header -->
-      <div class="mb-6">
-        <h2 class="text-xl font-bold text-white">Sign in to your account</h2>
-        <p class="text-sm text-gray-400 mt-1">Enter your credentials to access the simulator</p>
+      <!-- UI Tab Switcher -->
+      <div class="flex border-b border-gray-700/60 mb-6">
+        <button
+          id="tabLogin"
+          type="button"
+          class="flex-1 py-3 text-sm font-semibold text-orange-400 border-b-2 border-orange-500 flex items-center justify-center gap-2 transition-all"
+        >
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>Sign In</span>
+        </button>
+        <button
+          id="tabSignup"
+          type="button"
+          class="flex-1 py-3 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200 flex items-center justify-center gap-2 transition-all"
+        >
+          <i class="fa-solid fa-user-plus"></i>
+          <span>Create Account</span>
+        </button>
+      </div>
+
+      <!-- Card Header Context -->
+      <div class="mb-5">
+        <h2 id="cardTitle" class="text-xl font-bold text-white">Sign in to your account</h2>
+        <p id="cardSubtitle" class="text-sm text-gray-400 mt-1">Enter your credentials to access the simulator</p>
       </div>
 
       <!-- Alert Box (hidden by default) -->
       <div id="alertBox" class="hidden mb-5 px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2"></div>
 
-      <!-- Login Form -->
-      <form id="loginForm" novalidate>
+      <!-- LOGIN FORM -->
+      <form id="loginForm" novalidate class="fade-in-up">
 
         <!-- Email Field -->
         <div class="mb-4">
-          <label for="email" class="block text-sm font-medium text-gray-300 mb-1.5">
+          <label for="loginEmail" class="block text-sm font-medium text-gray-300 mb-1.5">
             Email address
           </label>
           <div class="relative">
@@ -156,7 +202,7 @@
               <i class="fa-solid fa-envelope text-sm"></i>
             </span>
             <input
-              id="email"
+              id="loginEmail"
               name="email"
               type="email"
               autocomplete="email"
@@ -169,7 +215,7 @@
 
         <!-- Password Field -->
         <div class="mb-6">
-          <label for="password" class="block text-sm font-medium text-gray-300 mb-1.5">
+          <label for="loginPassword" class="block text-sm font-medium text-gray-300 mb-1.5">
             Password
           </label>
           <div class="relative">
@@ -177,7 +223,7 @@
               <i class="fa-solid fa-lock text-sm"></i>
             </span>
             <input
-              id="password"
+              id="loginPassword"
               name="password"
               type="password"
               autocomplete="current-password"
@@ -185,32 +231,125 @@
               placeholder="••••••••••••"
               class="input-field w-full bg-gray-800/70 border border-gray-600/50 text-white placeholder-gray-500 rounded-lg pl-10 pr-12 py-2.5 text-sm"
             >
-            <!-- Toggle visibility -->
             <button
               type="button"
-              id="togglePassword"
+              id="toggleLoginPassword"
               class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-500 hover:text-gray-300 transition-colors"
               aria-label="Toggle password visibility"
             >
-              <i id="eyeIcon" class="fa-solid fa-eye text-sm"></i>
+              <i id="loginEyeIcon" class="fa-solid fa-eye text-sm"></i>
             </button>
           </div>
         </div>
 
         <!-- Submit Button -->
         <button
-          id="submitBtn"
+          id="loginSubmitBtn"
           type="submit"
           class="btn-primary w-full text-white font-semibold py-2.5 px-4 rounded-lg text-sm flex items-center justify-center gap-2"
         >
-          <i id="submitIcon" class="fa-solid fa-arrow-right-to-bracket"></i>
-          <span id="submitText">Sign In</span>
+          <i id="loginSubmitIcon" class="fa-solid fa-arrow-right-to-bracket"></i>
+          <span id="loginSubmitText">Sign In</span>
+        </button>
+
+      </form>
+
+      <!-- SIGNUP FORM (Hidden initially) -->
+      <form id="signupForm" novalidate class="hidden fade-in-up">
+
+        <!-- Email Field -->
+        <div class="mb-4">
+          <label for="signupEmail" class="block text-sm font-medium text-gray-300 mb-1.5">
+            Email address
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-500 pointer-events-none">
+              <i class="fa-solid fa-envelope text-sm"></i>
+            </span>
+            <input
+              id="signupEmail"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+              placeholder="new.engineer@ladakh.org"
+              class="input-field w-full bg-gray-800/70 border border-gray-600/50 text-white placeholder-gray-500 rounded-lg pl-10 pr-4 py-2.5 text-sm"
+            >
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="mb-4">
+          <label for="signupPassword" class="block text-sm font-medium text-gray-300 mb-1.5">
+            Create Password
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-500 pointer-events-none">
+              <i class="fa-solid fa-lock text-sm"></i>
+            </span>
+            <input
+              id="signupPassword"
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              required
+              placeholder="At least 6 characters"
+              class="input-field w-full bg-gray-800/70 border border-gray-600/50 text-white placeholder-gray-500 rounded-lg pl-10 pr-12 py-2.5 text-sm"
+            >
+            <button
+              type="button"
+              id="toggleSignupPassword"
+              class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-500 hover:text-gray-300 transition-colors"
+              aria-label="Toggle password visibility"
+            >
+              <i id="signupEyeIcon" class="fa-solid fa-eye text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Confirm Password Field -->
+        <div class="mb-6">
+          <label for="signupConfirmPassword" class="block text-sm font-medium text-gray-300 mb-1.5">
+            Confirm Password
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-500 pointer-events-none">
+              <i class="fa-solid fa-shield-halved text-sm"></i>
+            </span>
+            <input
+              id="signupConfirmPassword"
+              name="confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              required
+              placeholder="Re-enter your password"
+              class="input-field w-full bg-gray-800/70 border border-gray-600/50 text-white placeholder-gray-500 rounded-lg pl-10 pr-12 py-2.5 text-sm"
+            >
+            <button
+              type="button"
+              id="toggleSignupConfirmPassword"
+              class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-500 hover:text-gray-300 transition-colors"
+              aria-label="Toggle password visibility"
+            >
+              <i id="signupConfirmEyeIcon" class="fa-solid fa-eye text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          id="signupSubmitBtn"
+          type="submit"
+          class="btn-primary w-full text-white font-semibold py-2.5 px-4 rounded-lg text-sm flex items-center justify-center gap-2"
+        >
+          <i id="signupSubmitIcon" class="fa-solid fa-user-plus"></i>
+          <span id="signupSubmitText">Create Account</span>
         </button>
 
       </form>
 
       <!-- Demo credentials hint -->
-      <div class="mt-6 pt-5 border-t border-gray-700/50">
+      <div id="demoHintBox" class="mt-6 pt-5 border-t border-gray-700/50">
         <div class="flex items-start gap-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-3 py-2.5">
           <i class="fa-solid fa-circle-info text-indigo-400 text-sm mt-0.5 shrink-0"></i>
           <div class="text-xs text-gray-400 leading-relaxed">
@@ -231,39 +370,79 @@
   </div>
 
   <script>
-    // --- Password visibility toggle ---
-    const toggleBtn = document.getElementById('togglePassword');
-    const passwordInput = document.getElementById('password');
-    const eyeIcon = document.getElementById('eyeIcon');
+    // --- UI Tab Toggle State ---
+    const tabLogin = document.getElementById('tabLogin');
+    const tabSignup = document.getElementById('tabSignup');
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const cardTitle = document.getElementById('cardTitle');
+    const cardSubtitle = document.getElementById('cardSubtitle');
+    const demoHintBox = document.getElementById('demoHintBox');
+    const alertBox = document.getElementById('alertBox');
 
-    toggleBtn.addEventListener('click', () => {
-      const isHidden = passwordInput.type === 'password';
-      passwordInput.type = isHidden ? 'text' : 'password';
-      eyeIcon.className = isHidden ? 'fa-solid fa-eye-slash text-sm' : 'fa-solid fa-eye text-sm';
-    });
+    function switchTab(mode) {
+      hideAlert();
+      if (mode === 'login') {
+        tabLogin.className = 'flex-1 py-3 text-sm font-semibold text-orange-400 border-b-2 border-orange-500 flex items-center justify-center gap-2 transition-all';
+        tabSignup.className = 'flex-1 py-3 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200 flex items-center justify-center gap-2 transition-all';
+        loginForm.classList.remove('hidden');
+        signupForm.classList.add('hidden');
+        cardTitle.textContent = 'Sign in to your account';
+        cardSubtitle.textContent = 'Enter your credentials to access the simulator';
+        demoHintBox.classList.remove('hidden');
+      } else {
+        tabSignup.className = 'flex-1 py-3 text-sm font-semibold text-orange-400 border-b-2 border-orange-500 flex items-center justify-center gap-2 transition-all';
+        tabLogin.className = 'flex-1 py-3 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200 flex items-center justify-center gap-2 transition-all';
+        signupForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+        cardTitle.textContent = 'Create your account';
+        cardSubtitle.textContent = 'Register to access ThermoSim engineering platform';
+        demoHintBox.classList.add('hidden');
+      }
+    }
+
+    tabLogin.addEventListener('click', () => switchTab('login'));
+    tabSignup.addEventListener('click', () => switchTab('signup'));
+
+    // --- Password visibility toggles ---
+    function setupPasswordToggle(btnId, inputId, iconId) {
+      const btn = document.getElementById(btnId);
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (!btn || !input || !icon) return;
+
+      btn.addEventListener('click', () => {
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        icon.className = isHidden ? 'fa-solid fa-eye-slash text-sm' : 'fa-solid fa-eye text-sm';
+      });
+    }
+
+    setupPasswordToggle('toggleLoginPassword', 'loginPassword', 'loginEyeIcon');
+    setupPasswordToggle('toggleSignupPassword', 'signupPassword', 'signupEyeIcon');
+    setupPasswordToggle('toggleSignupConfirmPassword', 'signupConfirmPassword', 'signupConfirmEyeIcon');
 
     // --- Alert helper ---
     function showAlert(message, type) {
-      const box = document.getElementById('alertBox');
-      box.className = 'mb-5 px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2 fade-in-up';
+      alertBox.className = 'mb-5 px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2 fade-in-up';
       if (type === 'error') {
-        box.classList.add('bg-red-500/10', 'border', 'border-red-500/30', 'text-red-300');
-        box.innerHTML = `<i class="fa-solid fa-triangle-exclamation shrink-0"></i><span>${message}</span>`;
+        alertBox.classList.add('bg-red-500/10', 'border', 'border-red-500/30', 'text-red-300');
+        alertBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation shrink-0"></i><span>${message}</span>`;
       } else if (type === 'success') {
-        box.classList.add('bg-emerald-500/10', 'border', 'border-emerald-500/30', 'text-emerald-300');
-        box.innerHTML = `<i class="fa-solid fa-circle-check shrink-0"></i><span>${message}</span>`;
+        alertBox.classList.add('bg-emerald-500/10', 'border', 'border-emerald-500/30', 'text-emerald-300');
+        alertBox.innerHTML = `<i class="fa-solid fa-circle-check shrink-0"></i><span>${message}</span>`;
       }
     }
 
     function hideAlert() {
-      document.getElementById('alertBox').className = 'hidden';
+      alertBox.className = 'hidden';
     }
 
-    // --- Set loading state ---
-    function setLoading(loading) {
-      const btn = document.getElementById('submitBtn');
-      const icon = document.getElementById('submitIcon');
-      const text = document.getElementById('submitText');
+    // --- Loading states ---
+    function setLoginLoading(loading) {
+      const btn = document.getElementById('loginSubmitBtn');
+      const icon = document.getElementById('loginSubmitIcon');
+      const text = document.getElementById('loginSubmitText');
       if (loading) {
         btn.disabled = true;
         btn.classList.add('opacity-80', 'cursor-not-allowed');
@@ -277,22 +456,39 @@
       }
     }
 
-    // --- Form submission ---
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    function setSignupLoading(loading) {
+      const btn = document.getElementById('signupSubmitBtn');
+      const icon = document.getElementById('signupSubmitIcon');
+      const text = document.getElementById('signupSubmitText');
+      if (loading) {
+        btn.disabled = true;
+        btn.classList.add('opacity-80', 'cursor-not-allowed');
+        icon.className = 'fa-solid fa-spinner fa-spin';
+        text.textContent = 'Registering…';
+      } else {
+        btn.disabled = false;
+        btn.classList.remove('opacity-80', 'cursor-not-allowed');
+        icon.className = 'fa-solid fa-user-plus';
+        text.textContent = 'Create Account';
+      }
+    }
+
+    // --- Login Form submission ---
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       hideAlert();
 
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
 
       if (!email || !password) {
         showAlert('Please fill in both fields.', 'error');
-        document.getElementById('loginForm').classList.add('shake');
-        setTimeout(() => document.getElementById('loginForm').classList.remove('shake'), 400);
+        loginForm.classList.add('shake');
+        setTimeout(() => loginForm.classList.remove('shake'), 400);
         return;
       }
 
-      setLoading(true);
+      setLoginLoading(true);
 
       try {
         const response = await fetch('/api/login', {
@@ -305,15 +501,71 @@
 
         if (response.ok && data.success) {
           showAlert('Login successful! Redirecting…', 'success');
-          setTimeout(() => { window.location.href = '/'; }, 800);
+          setTimeout(() => { window.location.href = '/dashboard'; }, 800);
         } else {
-          setLoading(false);
+          setLoginLoading(false);
           showAlert(data.message || 'Invalid email or password.', 'error');
-          document.getElementById('loginForm').classList.add('shake');
-          setTimeout(() => document.getElementById('loginForm').classList.remove('shake'), 400);
+          loginForm.classList.add('shake');
+          setTimeout(() => loginForm.classList.remove('shake'), 400);
         }
       } catch (err) {
-        setLoading(false);
+        setLoginLoading(false);
+        showAlert('Network error. Please check your connection.', 'error');
+      }
+    });
+
+    // --- Signup Form submission ---
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAlert();
+
+      const email = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      const confirmPassword = document.getElementById('signupConfirmPassword').value;
+
+      if (!email || !password || !confirmPassword) {
+        showAlert('Please fill in all fields.', 'error');
+        signupForm.classList.add('shake');
+        setTimeout(() => signupForm.classList.remove('shake'), 400);
+        return;
+      }
+
+      if (password.length < 6) {
+        showAlert('Password must be at least 6 characters long.', 'error');
+        signupForm.classList.add('shake');
+        setTimeout(() => signupForm.classList.remove('shake'), 400);
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showAlert('Passwords do not match.', 'error');
+        signupForm.classList.add('shake');
+        setTimeout(() => signupForm.classList.remove('shake'), 400);
+        return;
+      }
+
+      setSignupLoading(true);
+
+      try {
+        const response = await fetch('/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showAlert('Account created successfully! Redirecting…', 'success');
+          setTimeout(() => { window.location.href = '/dashboard'; }, 800);
+        } else {
+          setSignupLoading(false);
+          showAlert(data.message || 'Signup failed. Please try again.', 'error');
+          signupForm.classList.add('shake');
+          setTimeout(() => signupForm.classList.remove('shake'), 400);
+        }
+      } catch (err) {
+        setSignupLoading(false);
         showAlert('Network error. Please check your connection.', 'error');
       }
     });

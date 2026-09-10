@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ThermoSim | Passive Solar Shelter Engineering & Thermal Modeling</title>
+  <meta name="description" content="Engineering thermal simulation & material cost estimation platform for passive climate modeling of sustainable shelters.">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#fff7ed', 100: '#ffedd5', 500: '#f97316', 600: '#ea580c', 700: '#c2410c' }
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-12px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: rgba(30, 41, 59, 0.85);
+      --bg-card-hover: rgba(51, 65, 85, 0.9);
+      --border-color: rgba(75, 85, 99, 0.4);
+      --brand-orange: #f97316;
+      --brand-orange-hover: #ea580c;
+      --brand-orange-glow: rgba(249, 115, 22, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --indigo-glow: rgba(99, 102, 241, 0.15);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+    }
+
+    /* Animated grid background */
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(249, 115, 22, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(249, 115, 22, 0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    /* Glowing orb effects */
+    .glow-orb {
+      background: radial-gradient(circle, var(--brand-orange-glow) 0%, transparent 70%);
+    }
+
+    .glow-orb-indigo {
+      background: radial-gradient(circle, var(--indigo-glow) 0%, transparent 70%);
+    }
+
+    /* Glassmorphism containers */
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(249, 115, 22, 0.4);
+    }
+
+    /* Button Primary Shimmer */
+    .btn-primary {
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.5s ease;
+    }
+    .btn-primary:hover::before { left: 100%; }
+    .btn-primary:hover {
+      box-shadow: 0 0 24px var(--brand-orange-glow);
+      transform: translateY(-2px);
+    }
+    .btn-primary:active { transform: translateY(0px); }
+
+    /* Secondary button */
+    .btn-secondary {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--border-color);
+      transition: all 0.25s ease;
+    }
+    .btn-secondary:hover {
+      background: rgba(51, 65, 85, 0.9);
+      border-color: rgba(249, 115, 22, 0.4);
+      transform: translateY(-2px);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col antialiased selection:bg-orange-500 selection:text-white relative overflow-x-hidden">
+
+  <!-- Background Orbs & Grid -->
+  <div class="fixed inset-0 grid-bg pointer-events-none z-0"></div>
+  <div class="glow-orb fixed -top-40 -left-40 w-[500px] h-[500px] rounded-full pointer-events-none animate-pulse-slow z-0"></div>
+  <div class="glow-orb-indigo fixed top-1/2 -right-40 w-[600px] h-[600px] rounded-full pointer-events-none animate-pulse-slow z-0"></div>
+
+  <!-- STICKY TOP NAVBAR -->
+  <header class="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/20 group-hover:scale-105 transition-transform">
+          <i class="fa-solid fa-fire-flame-curved text-lg"></i>
+        </div>
+        <div>
+          <span class="text-xl font-extrabold tracking-tight text-white group-hover:text-orange-400 transition-colors">ThermoSim</span>
+          <span class="block text-[10px] text-gray-400 font-mono -mt-1 tracking-wider uppercase">Engineering Suite</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
+        <a href="#features" class="hover:text-orange-400 transition-colors flex items-center gap-1.5">
+          <i class="fa-solid fa-layer-group text-xs text-orange-500"></i> Features
+        </a>
+        <a href="#how-it-works" class="hover:text-orange-400 transition-colors flex items-center gap-1.5">
+          <i class="fa-solid fa-diagram-project text-xs text-orange-500"></i> How It Works
+        </a>
+        <a href="#tech-stack" class="hover:text-orange-400 transition-colors flex items-center gap-1.5">
+          <i class="fa-solid fa-microchip text-xs text-orange-500"></i> Specifications
+        </a>
+        <a href="#about" class="hover:text-orange-400 transition-colors flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-info text-xs text-orange-500"></i> About
+        </a>
+      </nav>
+
+      <!-- Action Button (Routes to Auth) -->
+      <div class="flex items-center gap-3">
+        <a
+          href="/login.html"
+          class="btn-primary px-5 py-2.5 rounded-xl text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2 shadow-lg"
+        >
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>Login / Sign Up</span>
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="relative z-10 flex-grow">
+
+    <!-- HERO SECTION -->
+    <section class="relative pt-16 pb-24 px-6 overflow-hidden">
+      <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <!-- Hero Text -->
+        <div class="lg:col-span-7 space-y-6 text-left">
+          
+          <!-- Pill Badge -->
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/30">
+            <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+            <span>High-Altitude Passive Thermal Modeling Engine</span>
+          </div>
+
+          <!-- Main Title -->
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+            Engineering <span class="bg-gradient-to-r from-orange-400 via-amber-400 to-orange-500 bg-clip-text text-transparent">Passive Solar Shelters</span> with Precision
+          </h1>
+
+          <!-- Description -->
+          <p class="text-base sm:text-lg text-gray-300 leading-relaxed max-w-2xl font-normal">
+            ThermoSim empowers engineers, architects, and researchers to simulate climate balance, model heat retention, and estimate building material costs for extreme environments like Ladakh.
+          </p>
+
+          <!-- Dual CTAs -->
+          <div class="pt-4 flex flex-wrap items-center gap-4">
+            <a
+              href="/login.html"
+              class="btn-primary px-7 py-3.5 rounded-xl text-sm font-bold text-white flex items-center gap-3 shadow-xl"
+            >
+              <span>Get Started</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+
+            <a
+              href="#features"
+              class="btn-secondary px-7 py-3.5 rounded-xl text-sm font-semibold text-gray-200 flex items-center gap-2"
+            >
+              <i class="fa-solid fa-circle-play text-orange-400"></i>
+              <span>Learn More</span>
+            </a>
+          </div>
+
+          <!-- Key Metrics Pills -->
+          <div class="pt-8 border-t border-slate-800 grid grid-cols-3 gap-4 max-w-md">
+            <div>
+              <div class="text-2xl font-extrabold text-white">99.4%</div>
+              <div class="text-xs text-gray-400">Thermal Model Accuracy</div>
+            </div>
+            <div>
+              <div class="text-2xl font-extrabold text-orange-400">&lt; 500ms</div>
+              <div class="text-xs text-gray-400">Simulation Speed</div>
+            </div>
+            <div>
+              <div class="text-2xl font-extrabold text-white">100%</div>
+              <div class="text-xs text-gray-400">Material Cost BOM</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Hero Feature Card Preview -->
+        <div class="lg:col-span-5">
+          <div class="glass-card rounded-2xl p-6 shadow-2xl relative overflow-hidden group">
+            
+            <!-- Card Header -->
+            <div class="flex items-center justify-between border-b border-slate-700/60 pb-4 mb-5">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                <span class="text-xs font-mono text-gray-400 ml-2">thermosim-engine.v1.0</span>
+              </div>
+              <span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
+                <i class="fa-solid fa-circle text-[8px] mr-1"></i> Engine Ready
+              </span>
+            </div>
+
+            <!-- Graphic Simulation Mockup -->
+            <div class="space-y-4 font-mono text-xs">
+              <div class="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-2">
+                <div class="flex justify-between text-gray-400">
+                  <span>Location: Leh, Ladakh (34.15°N, 77.57°E)</span>
+                  <span class="text-orange-400">Alt: 3,500m</span>
+                </div>
+                <div class="flex justify-between text-gray-200">
+                  <span>Ambient Min Temp: -20°C</span>
+                  <span class="text-emerald-400">Solar Gain: +4.2 kWh/m²</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
+                  <div class="bg-gradient-to-r from-blue-500 via-amber-500 to-orange-500 h-full w-[78%]"></div>
+                </div>
+                <div class="flex justify-between text-[11px] text-gray-400">
+                  <span>Heat Loss Rate: 14.8 W/m²</span>
+                  <span class="text-orange-400 font-bold">Internal Temp: +18.5°C</span>
+                </div>
+              </div>
+
+              <!-- Animated Chart Simulation Placeholder -->
+              <div class="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-3">
+                <div class="text-gray-300 font-semibold text-xs flex justify-between items-center">
+                  <span>Diurnal Thermal Performance (24h)</span>
+                  <i class="fa-solid fa-chart-line text-orange-400"></i>
+                </div>
+                <!-- SVG Line Graph Mockup -->
+                <svg class="w-full h-24 text-orange-500" viewBox="0 0 300 80" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M0 60 Q 50 75, 100 40 T 200 20 T 300 50" stroke="url(#gradient)" stroke-width="3" fill="none"/>
+                  <defs>
+                    <linearGradient id="gradient" x1="0" y1="0" x2="300" y2="0" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stop-color="#3b82f6"/>
+                      <stop offset="50%" stop-color="#f97316"/>
+                      <stop offset="100%" stop-color="#ef4444"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+
+              <a
+                href="/login.html"
+                class="w-full btn-primary py-3 rounded-xl font-bold text-center text-white block text-sm shadow-md"
+              >
+                Launch Simulator &rarr;
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- KEY FEATURES GRID -->
+    <section id="features" class="py-20 px-6 bg-slate-900/60 border-t border-b border-slate-800">
+      <div class="max-w-7xl mx-auto space-y-12">
+        
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+          <h2 class="text-xs font-extrabold uppercase tracking-widest text-orange-400 font-mono">Core Capabilities</h2>
+          <p class="text-3xl sm:text-4xl font-extrabold text-white">Built for High-Performance Thermal Analysis</p>
+          <p class="text-gray-400 text-sm sm:text-base">Comprehensive tools designed specifically for extreme altitude climate engineering.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          <!-- Feature 1 -->
+          <div class="glass-card p-6 rounded-2xl space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 text-xl">
+              <i class="fa-solid fa-sun"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white">Passive Solar Heat Gain</h3>
+            <p class="text-xs text-gray-400 leading-relaxed">
+              Model solar radiation angles, south-facing glass orientation, and thermal mass heat storage across changing seasonal solstices.
+            </p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="glass-card p-6 rounded-2xl space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-xl">
+              <i class="fa-solid fa-mountain-sun"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white">High-Altitude Physics Engine</h3>
+            <p class="text-xs text-gray-400 leading-relaxed">
+              Custom Python backend implementing heat transfer partial differential equations calibrated for Himalayan weather profiles.
+            </p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="glass-card p-6 rounded-2xl space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl">
+              <i class="fa-solid fa-chart-area"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white">3D Heat Mesh & Visual Plots</h3>
+            <p class="text-xs text-gray-400 leading-relaxed">
+              Interactive 3D spatial temperature distribution renderings powered by Plotly.js and diurnal heat decay graphs.
+            </p>
+          </div>
+
+          <!-- Feature 4 -->
+          <div class="glass-card p-6 rounded-2xl space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xl">
+              <i class="fa-solid fa-calculator"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white">BOM & Cost Estimation</h3>
+            <p class="text-xs text-gray-400 leading-relaxed">
+              Automated bill of materials calculations with local material costs (stone, mud brick, straw bale, glasswool).
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS TIMELINE -->
+    <section id="how-it-works" class="py-20 px-6">
+      <div class="max-w-7xl mx-auto space-y-16">
+        
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+          <h2 class="text-xs font-extrabold uppercase tracking-widest text-orange-400 font-mono">Workflow Overview</h2>
+          <p class="text-3xl sm:text-4xl font-extrabold text-white">Three Simple Steps to Full Thermal Analysis</p>
+          <p class="text-gray-400 text-sm sm:text-base">Go from shelter dimensions to comprehensive climate calculations in seconds.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+          
+          <!-- Step 1 -->
+          <div class="glass-card p-8 rounded-2xl relative space-y-4">
+            <div class="text-4xl font-extrabold font-mono text-orange-500/30">01</div>
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-ruler-combined text-orange-400 text-base"></i>
+              Define Geometry & Site
+            </h3>
+            <p class="text-sm text-gray-400 leading-relaxed">
+              Input length, width, wall thickness, ceiling height, and set latitude/longitude coordinates to pull solar radiation data.
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="glass-card p-8 rounded-2xl relative space-y-4">
+            <div class="text-4xl font-extrabold font-mono text-orange-500/30">02</div>
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-boxes-packing text-orange-400 text-base"></i>
+              Select Materials & Weather
+            </h3>
+            <p class="text-sm text-gray-400 leading-relaxed">
+              Choose wall insulation materials (R-value, density, thermal conductivity) and specify extreme wind and snow load parameters.
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="glass-card p-8 rounded-2xl relative space-y-4">
+            <div class="text-4xl font-extrabold font-mono text-orange-500/30">03</div>
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-square-poll-vertical text-orange-400 text-base"></i>
+              Execute & Review Results
+            </h3>
+            <p class="text-sm text-gray-400 leading-relaxed">
+              Run the simulation engine to generate interactive 3D thermal distribution heatmaps, cost reports, and historical comparisons.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Section Callout Button -->
+        <div class="text-center pt-4">
+          <a
+            href="/login.html"
+            class="btn-primary inline-flex items-center gap-3 px-8 py-3.5 rounded-xl font-bold text-white text-sm shadow-xl"
+          >
+            <span>Start Your First Simulation</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TECH STACK & SPECIFICATIONS SECTION -->
+    <section id="tech-stack" class="py-20 px-6 bg-slate-900/60 border-t border-slate-800">
+      <div class="max-w-7xl mx-auto space-y-12">
+        
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+          <h2 class="text-xs font-extrabold uppercase tracking-widest text-orange-400 font-mono">Architecture & Stack</h2>
+          <p class="text-3xl sm:text-4xl font-extrabold text-white">Full-Stack Technical Specifications</p>
+          <p class="text-gray-400 text-sm sm:text-base">Robust engineering architecture leveraging modern web and data physics technologies.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          <!-- Stack Item 1 -->
+          <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-2xl shrink-0">
+              <i class="fa-brands fa-node-js"></i>
+            </div>
+            <div class="space-y-2">
+              <h3 class="text-lg font-bold text-white">Node.js & Express API Server</h3>
+              <p class="text-xs text-gray-400 leading-relaxed">
+                Asynchronous Express backend managing user sessions via <code class="text-orange-400 bg-slate-950 px-1.5 py-0.5 rounded font-mono">connect-mongo</code> and handling JSON payload orchestration for calculation jobs.
+              </p>
+            </div>
+          </div>
+
+          <!-- Stack Item 2 -->
+          <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-2xl shrink-0">
+              <i class="fa-brands fa-python"></i>
+            </div>
+            <div class="space-y-2">
+              <h3 class="text-lg font-bold text-white">Python Physics Calculation Engine</h3>
+              <p class="text-xs text-gray-400 leading-relaxed">
+                Sub-process physics calculator (<code class="text-orange-400 bg-slate-950 px-1.5 py-0.5 rounded font-mono">simulator.py</code>) executing thermal equilibrium and heat conduction differential equations.
+              </p>
+            </div>
+          </div>
+
+          <!-- Stack Item 3 -->
+          <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/30 flex items-center justify-center text-green-400 text-2xl shrink-0">
+              <i class="fa-solid fa-database"></i>
+            </div>
+            <div class="space-y-2">
+              <h3 class="text-lg font-bold text-white">MongoDB Atlas & Mongoose ORM</h3>
+              <p class="text-xs text-gray-400 leading-relaxed">
+                Cloud MongoDB database providing persistence for user accounts (with <code class="text-orange-400 bg-slate-950 px-1.5 py-0.5 rounded font-mono">bcrypt</code> password hashing) and historical simulation runs.
+              </p>
+            </div>
+          </div>
+
+          <!-- Stack Item 4 -->
+          <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 text-2xl shrink-0">
+              <i class="fa-solid fa-cubes-stacked"></i>
+            </div>
+            <div class="space-y-2">
+              <h3 class="text-lg font-bold text-white">Plotly.js & Chart.js Visualizations</h3>
+              <p class="text-xs text-gray-400 leading-relaxed">
+                High-definition client-side interactive rendering for 3D thermal mesh surfaces, diurnal graphs, and material cost distributions.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ABOUT & FOOTER SECTION -->
+    <footer id="about" class="bg-slate-950 border-t border-slate-800 py-12 px-6 text-gray-400 text-xs">
+      <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white">
+            <i class="fa-solid fa-fire-flame-curved text-sm"></i>
+          </div>
+          <div>
+            <span class="text-sm font-bold text-white">ThermoSim</span>
+            <p class="text-[11px] text-gray-500">Smart India Hackathon (SIH) Passive Solar Shelter Modeling</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-6 font-medium">
+          <a href="#features" class="hover:text-orange-400 transition-colors">Features</a>
+          <a href="#how-it-works" class="hover:text-orange-400 transition-colors">How It Works</a>
+          <a href="#tech-stack" class="hover:text-orange-400 transition-colors">Specifications</a>
+          <a href="/login.html" class="text-orange-400 hover:text-orange-300 font-semibold transition-colors">Login / Sign Up</a>
+        </div>
+
+        <div class="text-center md:text-right text-gray-500">
+          &copy; 2026 SIH ThermoSim. All rights reserved. Authorized Engineering Platform.
+        </div>
+
+      </div>
+    </footer>
+
+  </main>
+
+</body>
+</html>
