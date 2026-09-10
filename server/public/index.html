@@ -526,27 +526,35 @@
         }
       });
 
-      // 4. UPGRADED Plotly 3D Mesh Engine
+     // 4. UPGRADED Plotly 3D Mesh Engine (Architectural Shelter)
       function draw3DMesh(l, w, h, tIn, tOut) {
-        // Core structural points
-        const x = [0, l, l, 0, 0, l, l, 0];
-        const y = [0, 0, w, w, 0, 0, w, w];
-        const z = [0, 0, 0, 0, h, h, h, h];
+        const roofHeight = 1.2; // The roof peaks 1.2 meters above the walls
         
-        // Triangle mesh indices
-        const i = [7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2];
-        const j = [3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3];
-        const k = [0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6];
+        // 10 Structural Nodes (Corners of the shelter)
+        const x = [0, l, l, 0, 0, l, l, 0, 0, l];
+        const y = [0, 0, w, w, 0, 0, w, w, w/2, w/2];
+        const z = [0, 0, 0, 0, h, h, h, h, h + roofHeight, h + roofHeight];
+        
+        // Triangle mesh indices to map the walls, floor, and pitched roof
+        const i = [0, 0, 0, 0, 4, 1, 1, 5, 0, 0, 3, 3, 4, 4, 7, 7];
+        const j = [1, 2, 3, 7, 7, 5, 6, 9, 4, 5, 2, 6, 8, 9, 6, 9];
+        const k = [2, 3, 7, 4, 8, 6, 2, 6, 5, 1, 6, 7, 9, 5, 9, 8];
 
-        const temps = [tOut, tOut, tOut, tOut, tIn, tIn, tIn, tIn];
+        // Heat maps dynamically based on the material chosen!
+        // Floor is cold outside air, walls are inside air, roof peak is hottest (heat rises)
+        const temps = [
+            tOut, tOut, tOut, tOut, // 4 Floor corners
+            tIn, tIn, tIn, tIn,     // 4 Wall tops
+            tIn + 2, tIn + 2        // 2 Roof peaks 
+        ];
 
-        // Trace 1: The solid heat map
+        // Trace 1: The solid heat map (The Shelter walls)
         const heatTrace = {
             type: 'mesh3d',
             x: x, y: y, z: z,
             i: i, j: j, k: k,
             intensity: temps,
-            colorscale: 'Jet',
+            colorscale: 'Jet', // Automatically turns red for good materials, blue for bad ones
             showscale: true,
             colorbar: {
                 title: 'Temp (°C)',
@@ -555,19 +563,21 @@
                 titlefont: { color: '#9ca3af' }
             },
             opacity: 0.90,
-            flatshading: false, // Makes it smooth like real thermal software
+            flatshading: false, 
             lighting: { ambient: 0.6, diffuse: 0.8, specular: 0.1, roughness: 0.5 },
             hoverinfo: 'text',
-            text: temps.map(t => `Temp: ${t.toFixed(1)}°C`)
+            text: temps.map(t => `Surface Temp: ${t.toFixed(1)}°C`)
         };
 
-        // Trace 2: The structural wireframe (gives it that FEA engineering look)
+        // Trace 2: The structural wireframe (For the FEA engineering look)
+        const x_lines = [0, l, l, 0, 0, null, 0, l, l, 0, 0, null, 0, 0, null, l, l, null, l, l, null, 0, 0, null, 0, 0, 0, null, l, l, l, null, 0, l];
+        const y_lines = [0, 0, w, w, 0, null, 0, 0, w, w, 0, null, 0, 0, null, 0, 0, null, w, w, null, w, w, null, 0, w/2, w, null, 0, w/2, w, null, w/2, w/2];
+        const z_lines = [0, 0, 0, 0, 0, null, h, h, h, h, h, null, 0, h, null, 0, h, null, 0, h, null, 0, h, null, h, h+roofHeight, h, null, h, h+roofHeight, h, null, h+roofHeight, h+roofHeight];
+
         const edgeTrace = {
             type: 'scatter3d',
             mode: 'lines',
-            x: [0, l, l, 0, 0, 0, l, l, l, l, 0, 0, 0, l, l, 0],
-            y: [0, 0, w, w, 0, 0, 0, w, w, 0, 0, w, w, w, w, w],
-            z: [0, 0, 0, 0, 0, h, h, h, 0, 0, h, h, 0, 0, h, h],
+            x: x_lines, y: y_lines, z: z_lines,
             line: { color: '#ffffff', width: 2 },
             hoverinfo: 'none'
         };
@@ -575,7 +585,7 @@
         const layout = {
             paper_bgcolor: 'rgba(0,0,0,0)',
             scene: {
-                aspectmode: 'data', // THIS makes the box stretch to true real-world physical proportions!
+                aspectmode: 'data', // Stretches the model to your exact length/width inputs
                 xaxis: { title: 'Length (m)', color: '#9ca3af', gridcolor: '#374151', showbackground: false },
                 yaxis: { title: 'Width (m)', color: '#9ca3af', gridcolor: '#374151', showbackground: false },
                 zaxis: { title: 'Height (m)', color: '#9ca3af', gridcolor: '#374151', showbackground: false },
