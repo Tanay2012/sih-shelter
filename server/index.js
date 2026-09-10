@@ -10,9 +10,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/', (req, res) => {
-    res.send('SIH Shelter Simulation API is successfully running! 🚀');
-});
+
+app.use(express.static(path.join(__dirname, 'public')));
+
 // ==========================================
 // 1. DATABASE CONNECTION
 // ==========================================
