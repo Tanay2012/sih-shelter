@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const connectMongo = require('connect-mongo');
 const bcrypt = require('bcryptjs');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -17,15 +17,32 @@ app.use(express.json());
 // Determine Mongo URI from environment variables with fallback
 const mongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/sih-shelter';
 
+// ── THE INDESTRUCTIBLE SESSION STORE ────────────────────────────────────────
+// This checks every possible version of connect-mongo. If it still fails, 
+// it forces the server to use MemoryStore so you do not crash during your demo.
+let sessionStore;
+try {
+    if (connectMongo && typeof connectMongo.create === 'function') {
+        sessionStore = connectMongo.create({ mongoUrl: mongoUrl, ttl: 8 * 60 * 60 });
+    } else if (connectMongo && connectMongo.default && typeof connectMongo.default.create === 'function') {
+        sessionStore = connectMongo.default.create({ mongoUrl: mongoUrl, ttl: 8 * 60 * 60 });
+    } else if (typeof connectMongo === 'function') {
+        const MongoStoreOld = connectMongo(session);
+        sessionStore = new MongoStoreOld({ url: mongoUrl, ttl: 8 * 60 * 60 });
+    } else {
+        throw new Error("Package format unrecognized.");
+    }
+} catch (err) {
+    console.warn("⚠️ connect-mongo failed. Using safe MemoryStore fallback so the server stays online!");
+    sessionStore = new session.MemoryStore();
+}
+
 // ── SESSION MIDDLEWARE ──────────────────────────────────────────────────────
 app.use(session({
     secret: process.env.SESSION_SECRET || 'sih-shelter-secret-key-2024',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
-        mongoUrl: mongoUrl,
-        ttl: 8 * 60 * 60 // 8 hours
-    }),
+    store: sessionStore,
     cookie: { secure: false, httpOnly: true, maxAge: 8 * 60 * 60 * 1000 } // 8 hours
 }));
 
