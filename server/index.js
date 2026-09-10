@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const session = require('express-session');
 const { spawn } = require('child_process');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -10,7 +11,59 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, 'public')));
+// ── SESSION MIDDLEWARE ──────────────────────────────────────────────────────
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'sih-shelter-secret-key-2024',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false, httpOnly: true, maxAge: 8 * 60 * 60 * 1000 } // 8 hours
+}));
+
+// ── AUTH MIDDLEWARE (only guards the root / route) ──────────────────────────
+function requireAuth(req, res, next) {
+    if (req.session && req.session.user) {
+        return next();
+    }
+    res.redirect('/login.html');
+}
+
+// ── AUTH ROUTES ─────────────────────────────────────────────────────────────
+// Demo credentials (hardcoded – no database needed)
+const DEMO_CREDENTIALS = [
+    { email: 'engineer@ladakh.org', password: 'password123' }
+];
+
+app.post('/api/login', (req, res) => {
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'Email and password are required.' });
+    }
+    const match = DEMO_CREDENTIALS.find(
+        (c) => c.email === email.trim().toLowerCase() && c.password === password
+    );
+    if (!match) {
+        return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    }
+    req.session.user = { email: match.email };
+    return res.json({ success: true, message: 'Login successful.' });
+});
+
+app.get('/api/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/login.html');
+    });
+});
+
+// ── PROTECTED ROOT ROUTE ────────────────────────────────────────────────────
+// This MUST be registered before express.static so that GET / hits
+// requireAuth before the static middleware can serve index.html directly.
+app.get('/', requireAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ── STATIC FILES (served after the / guard; index:false prevents auto-serving
+//    of index.html for GET / which would bypass auth)
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // 1. DATABASE CONNECTION
 mongoose.connect(process.env.MONGO_URI)

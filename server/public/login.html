@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Shelter Thermal Simulator</title>
+  <meta name="description" content="Sign in to access the Shelter Thermal Simulator engineering platform.">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#fff7ed', 100: '#ffedd5', 500: '#f97316', 600: '#ea580c', 700: '#c2410c' }
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-12px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Animated grid background */
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(249, 115, 22, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(249, 115, 22, 0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    /* Glowing orb effect */
+    .glow-orb {
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 70%);
+    }
+
+    /* Card glassmorphism */
+    .glass-card {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(75, 85, 99, 0.4);
+    }
+
+    /* Input focus glow */
+    .input-field {
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .input-field:focus {
+      border-color: #f97316;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+      outline: none;
+    }
+
+    /* Submit button shimmer */
+    .btn-primary {
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.4s ease;
+    }
+    .btn-primary:hover::before { left: 100%; }
+    .btn-primary:hover {
+      box-shadow: 0 0 24px rgba(249, 115, 22, 0.5);
+      transform: translateY(-1px);
+    }
+    .btn-primary:active { transform: translateY(0px); }
+
+    /* Error shake animation */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .shake { animation: shake 0.4s ease; }
+
+    /* Success fade */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in-up { animation: fadeInUp 0.35s ease forwards; }
+  </style>
+</head>
+
+<body class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center antialiased relative overflow-hidden">
+
+  <!-- Animated background orbs -->
+  <div class="absolute inset-0 grid-bg pointer-events-none"></div>
+  <div class="glow-orb absolute -top-32 -left-32 w-96 h-96 rounded-full pointer-events-none animate-pulse-slow"></div>
+  <div class="glow-orb absolute -bottom-32 -right-32 w-96 h-96 rounded-full pointer-events-none animate-pulse-slow" style="background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);"></div>
+
+  <!-- Login Card -->
+  <div class="relative z-10 w-full max-w-md mx-auto px-4">
+
+    <!-- Logo / Brand Header -->
+    <div class="text-center mb-8 animate-float">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 shadow-2xl shadow-orange-500/30 mb-4">
+        <i class="fa-solid fa-fire-flame-curved text-2xl text-white"></i>
+      </div>
+      <h1 class="text-2xl font-extrabold tracking-tight text-white">Shelter Thermal Simulator</h1>
+      <p class="text-sm text-gray-400 mt-1">Passive solar shelter engineering & thermal analysis</p>
+    </div>
+
+    <!-- Card -->
+    <div class="glass-card rounded-2xl p-8 shadow-2xl">
+
+      <!-- Card Header -->
+      <div class="mb-6">
+        <h2 class="text-xl font-bold text-white">Sign in to your account</h2>
+        <p class="text-sm text-gray-400 mt-1">Enter your credentials to access the simulator</p>
+      </div>
+
+      <!-- Alert Box (hidden by default) -->
+      <div id="alertBox" class="hidden mb-5 px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2"></div>
+
+      <!-- Login Form -->
+      <form id="loginForm" novalidate>
+
+        <!-- Email Field -->
+        <div class="mb-4">
+          <label for="email" class="block text-sm font-medium text-gray-300 mb-1.5">
+            Email address
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-500 pointer-events-none">
+              <i class="fa-solid fa-envelope text-sm"></i>
+            </span>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+              placeholder="engineer@ladakh.org"
+              class="input-field w-full bg-gray-800/70 border border-gray-600/50 text-white placeholder-gray-500 rounded-lg pl-10 pr-4 py-2.5 text-sm"
+            >
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="mb-6">
+          <label for="password" class="block text-sm font-medium text-gray-300 mb-1.5">
+            Password
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-500 pointer-events-none">
+              <i class="fa-solid fa-lock text-sm"></i>
+            </span>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+              placeholder="••••••••••••"
+              class="input-field w-full bg-gray-800/70 border border-gray-600/50 text-white placeholder-gray-500 rounded-lg pl-10 pr-12 py-2.5 text-sm"
+            >
+            <!-- Toggle visibility -->
+            <button
+              type="button"
+              id="togglePassword"
+              class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-500 hover:text-gray-300 transition-colors"
+              aria-label="Toggle password visibility"
+            >
+              <i id="eyeIcon" class="fa-solid fa-eye text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          id="submitBtn"
+          type="submit"
+          class="btn-primary w-full text-white font-semibold py-2.5 px-4 rounded-lg text-sm flex items-center justify-center gap-2"
+        >
+          <i id="submitIcon" class="fa-solid fa-arrow-right-to-bracket"></i>
+          <span id="submitText">Sign In</span>
+        </button>
+
+      </form>
+
+      <!-- Demo credentials hint -->
+      <div class="mt-6 pt-5 border-t border-gray-700/50">
+        <div class="flex items-start gap-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-3 py-2.5">
+          <i class="fa-solid fa-circle-info text-indigo-400 text-sm mt-0.5 shrink-0"></i>
+          <div class="text-xs text-gray-400 leading-relaxed">
+            <p class="font-semibold text-indigo-300 mb-0.5">Demo credentials</p>
+            <p>Email: <span class="text-gray-200 font-mono">engineer@ladakh.org</span></p>
+            <p>Password: <span class="text-gray-200 font-mono">password123</span></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <p class="text-center text-xs text-gray-600 mt-6">
+      SIH Shelter Thermal Simulator &mdash; Authorized Personnel Only
+    </p>
+
+  </div>
+
+  <script>
+    // --- Password visibility toggle ---
+    const toggleBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+
+    toggleBtn.addEventListener('click', () => {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      eyeIcon.className = isHidden ? 'fa-solid fa-eye-slash text-sm' : 'fa-solid fa-eye text-sm';
+    });
+
+    // --- Alert helper ---
+    function showAlert(message, type) {
+      const box = document.getElementById('alertBox');
+      box.className = 'mb-5 px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2 fade-in-up';
+      if (type === 'error') {
+        box.classList.add('bg-red-500/10', 'border', 'border-red-500/30', 'text-red-300');
+        box.innerHTML = `<i class="fa-solid fa-triangle-exclamation shrink-0"></i><span>${message}</span>`;
+      } else if (type === 'success') {
+        box.classList.add('bg-emerald-500/10', 'border', 'border-emerald-500/30', 'text-emerald-300');
+        box.innerHTML = `<i class="fa-solid fa-circle-check shrink-0"></i><span>${message}</span>`;
+      }
+    }
+
+    function hideAlert() {
+      document.getElementById('alertBox').className = 'hidden';
+    }
+
+    // --- Set loading state ---
+    function setLoading(loading) {
+      const btn = document.getElementById('submitBtn');
+      const icon = document.getElementById('submitIcon');
+      const text = document.getElementById('submitText');
+      if (loading) {
+        btn.disabled = true;
+        btn.classList.add('opacity-80', 'cursor-not-allowed');
+        icon.className = 'fa-solid fa-spinner fa-spin';
+        text.textContent = 'Signing in…';
+      } else {
+        btn.disabled = false;
+        btn.classList.remove('opacity-80', 'cursor-not-allowed');
+        icon.className = 'fa-solid fa-arrow-right-to-bracket';
+        text.textContent = 'Sign In';
+      }
+    }
+
+    // --- Form submission ---
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAlert();
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        showAlert('Please fill in both fields.', 'error');
+        document.getElementById('loginForm').classList.add('shake');
+        setTimeout(() => document.getElementById('loginForm').classList.remove('shake'), 400);
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showAlert('Login successful! Redirecting…', 'success');
+          setTimeout(() => { window.location.href = '/'; }, 800);
+        } else {
+          setLoading(false);
+          showAlert(data.message || 'Invalid email or password.', 'error');
+          document.getElementById('loginForm').classList.add('shake');
+          setTimeout(() => document.getElementById('loginForm').classList.remove('shake'), 400);
+        }
+      } catch (err) {
+        setLoading(false);
+        showAlert('Network error. Please check your connection.', 'error');
+      }
+    });
+  </script>
+
+</body>
+</html>

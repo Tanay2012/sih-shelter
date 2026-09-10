@@ -2,11 +2,11 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
- "scripts": {
-  "start": "node index.js",
-  "build": "npm install && pip install requests",
-  "dev": "nodemon index.js"
-},
+  "scripts": {
+    "start": "node index.js",
+    "build": "npm install && pip install requests",
+    "dev": "nodemon index.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -15,6 +15,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-session": "^1.19.0",
     "mongoose": "^9.9.5"
   }
 }
