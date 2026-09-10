@@ -31,7 +31,11 @@ app.post('/api/simulate', (req, res) => {
         .catch(err => console.error("Database Save Error:", err));
 
     // Spawn Python script for calculations
-    const pyProcess = spawn('python', [
+    // Smart OS detection: Uses 'python' on Windows, 'python3' on Render/Linux
+    const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
+    
+    // Spawn Python script for calculations
+    const pyProcess = spawn(pythonCommand, [
         path.join(__dirname, '../engine/simulator.py'),
         JSON.stringify(payload)
     ]);

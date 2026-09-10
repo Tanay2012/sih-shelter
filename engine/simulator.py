@@ -1,56 +1,46 @@
 import sys
 import json
-import numpy as np
+import math # Replaced numpy with built-in math so Render doesn't crash!
 
 def run_ansys_fea(l, w, h, k, rho, cp, t_amb, wind_speed):
     """Executes structural finite element thermal analysis via ANSYS MAPDL."""
     from ansys.mapdl.core import launch_mapdl
     
-    # Launch MAPDL in headless mode (silent background execution)
     mapdl = launch_mapdl(loglevel="ERROR")
     mapdl.clear()
     mapdl.prep7()
     
-    # 1. Define Thermal Solid Element (SOLID70 for 3D thermal conduction)
     mapdl.et(1, "SOLID70")
-    
-    # 2. Assign Material Properties
     mapdl.mp("KXX", 1, k)
     mapdl.mp("DENS", 1, rho)
     mapdl.mp("C", 1, cp)
     
-    # 3. Create Shelter Geometry Block
     mapdl.block(0, l, 0, w, 0, h)
-    
-    # 4. Mesh the Volume
     mapdl.esize(max(l, w) / 4.0)
     mapdl.vmesh("ALL")
     
-    # 5. Solution Phase - Boundary Conditions
     mapdl.run("/SOLU")
     mapdl.antype("STATIC")
     
-    # Apply ambient temperature and WIND CONVECTION to exterior nodes
     mapdl.nsel("S", "EXT") 
-    h_conv = 10.0 + (4.0 * wind_speed) # Wind speed directly affects ANSYS convection
+    h_conv = 10.0 + (4.0 * wind_speed)
     mapdl.sf("ALL", "CONV", h_conv, t_amb)
     mapdl.nsel("ALL")
     
-    # Solve thermal matrix
     mapdl.solve()
     mapdl.finish()
     
-    # 6. Post-Processing: Extract internal nodal temperature
     mapdl.post1()
     mapdl.set("LAST")
     all_temps = mapdl.post_processing.nodal_temperatures
-    avg_internal = float(np.mean(all_temps)) + 12.0 # Heat retention offset
+    
+    # Using standard Python math instead of numpy
+    avg_internal = float(sum(all_temps) / len(all_temps)) + 12.0 
     
     mapdl.exit()
     return avg_internal
 
 def run_simulation(payload):
-    # Extract data
     geom = payload.get("geometry", {})
     mat = payload.get("materials", {})
     env = payload.get("environment", {}) 
@@ -69,7 +59,6 @@ def run_simulation(payload):
     
     ambient_profile = [-12, -14, -15, -15, -14, -12, -8, -3, 1, 4, 6, 7, 5, 2, -1, -4, -7, -9, -10, -11, -12, -13, -13, -14]
     
-    # --- COMMON MATH (Always runs to calculate Heat Loss & Snow Load) ---
     h_out_convective = 10.0 + (4.0 * wind_speed) 
     surface_area = 2 * (l*w + l*h + w*h)
     if high_snow:
@@ -82,15 +71,14 @@ def run_simulation(payload):
 
     engine_used = "Tactical Thermodynamic Model (Math Fallback)"
     
-    # --- HYBRID EXECUTION: TRY ANSYS FIRST, FALLBACK TO MATH ---
     try:
-        # This will ONLY succeed on her laptop with ANSYS installed
+        # This succeeds on your teammate's laptop, fails silently on Render
         ansys_temp = run_ansys_fea(l, w, h, k, rho, cp, ambient_profile[0], wind_speed)
-        # Generate the 24-hour curve based on the ANSYS FEA baseline
-        inside_profile = [round(ansys_temp + 3.0 * np.sin((i - 6) / 24 * 2 * np.pi) - wind_penalty, 2) for i in range(24)]
+        # Using standard math library here
+        inside_profile = [round(ansys_temp + 3.0 * math.sin((i - 6) / 24 * 2 * math.pi) - wind_penalty, 2) for i in range(24)]
         engine_used = "ANSYS PyMAPDL (DRDO FEA Core)"
     except Exception as e:
-        # Seamless Fallback (Runs on Render cloud or if ANSYS license fails)
+        # Seamless Fallback triggered instantly on Render
         inside_profile = [round(amb + (18.0 / (k * 10 + 0.5)) - wind_penalty, 2) for amb in ambient_profile]
 
     return {
