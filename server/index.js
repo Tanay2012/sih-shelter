@@ -10,94 +10,67 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ==========================================
 // 1. DATABASE CONNECTION
-// ==========================================
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('✅ MongoDB Atlas Connected successfully'))
+    .then(() => console.log('🟩 MongoDB Atlas Connected successfully'))
     .catch((err) => console.error('❌ MongoDB Connection Error:', err));
 
-// ==========================================
-// 2. MATERIAL LIBRARY API
-// ==========================================
-const materialLibrary = {
-    "adobe_mud": { name: "Adobe / Mud Brick", k: 0.60, rho: 1700, cp: 840 },
-    "aerogel_puf": { name: "Aerogel / PUF Panel", k: 0.024, rho: 35, cp: 1400 },
-    "concrete": { name: "Dense Concrete", k: 1.40, rho: 2400, cp: 840 },
-    "rammed_earth": { name: "Rammed Earth", k: 1.25, rho: 1500, cp: 900 },
-    "pcm_paraffin": { name: "Phase Change Material", k: 0.20, rho: 800, cp: 2100 }
-};
+// 2. MATERIAL LIBRARY API (If you have it)
+// const materialLibrary = ...
 
-app.get('/api/materials', (req, res) => {
-    res.json({ status: "success", data: materialLibrary });
-});
-
-// ==========================================
-// 3. GET SIMULATION HISTORY API
-// ==========================================
-app.get('/api/history', async (req, res) => {
-    try {
-        // Fetch the 10 most recent simulations, sorted by newest first
-        const history = await Simulation.find().sort({ runDate: -1 }).limit(10);
-        res.json({ status: "success", data: history });
-    } catch (error) {
-        res.status(500).json({ status: "error", message: "Failed to fetch history" });
-    }
-});
-
-// ==========================================
-// 4. MAIN SIMULATION API
-// ==========================================
+// 3. SIMULATION & SAVE ROUTE
 app.post('/api/simulate', (req, res) => {
-    const { geometry, materials, location } = req.body;
+    const payload = req.body;
 
-    if (!geometry || !materials || !location) {
-        return res.status(400).json({ status: "error", message: "Missing required data." });
-    }
+    // Save simulation to MongoDB Atlas asynchronously
+    const newSim = new Simulation(payload);
+    newSim.save()
+        .then(() => console.log("Simulation saved to database!"))
+        .catch(err => console.error("Database Save Error:", err));
 
-    const inputParams = JSON.stringify(req.body);
-    const pythonScript = path.join(__dirname, '../engine/simulator.py');
-    const pyProcess = spawn('python', [pythonScript, inputParams]);
+    // Spawn Python script for calculations
+    const pyProcess = spawn('python', [
+        path.join(__dirname, '../engine/simulator.py'),
+        JSON.stringify(payload)
+    ]);
 
-    let outputData = '';
-    let errorData = '';
+    let dataResult = '';
+    let dataError = '';
 
-    pyProcess.stdout.on('data', (data) => { outputData += data.toString(); });
-    pyProcess.stderr.on('data', (data) => { errorData += data.toString(); });
+    pyProcess.stdout.on('data', (chunk) => {
+        dataResult += chunk.toString();
+    });
 
-    pyProcess.on('close', async (code) => {
+    pyProcess.stderr.on('data', (chunk) => {
+        dataError += chunk.toString();
+    });
+
+    pyProcess.on('close', (code) => {
         if (code !== 0) {
-            console.error("Python Error:", errorData);
-            return res.status(500).json({ status: "error", message: "Simulation failed." });
+            console.error("Python Error:", dataError);
+            return res.status(500).json({ error: "Simulation engine failed", details: dataError });
         }
-        
         try {
-            const finalResult = JSON.parse(outputData);
-            
-            // --- NEW: SAVE TO DATABASE ---
-            const newSimulation = new Simulation({
-                inputs: { geometry, materials, location },
-                results: {
-                    timeSteps: finalResult.timeSteps,
-                    ambientTemp: finalResult.ambientTemp,
-                    insideTemp: finalResult.insideTemp,
-                    solarIrradiance: finalResult.solarIrradiance,
-                    energySummary: finalResult.energySummary
-                }
-            });
-            await newSimulation.save();
-            console.log("💾 Simulation saved to database!");
-            
-            // Send the response back to the frontend
-            res.json(finalResult);
+            const parsed = JSON.parse(dataResult);
+            res.json(parsed);
         } catch (error) {
             console.error("Parse/DB Error:", error);
             res.status(500).json({ status: "error", message: "Could not process or save output." });
         }
     });
+});
+
+// 4. HISTORY FETCH ROUTE (Fixed sorting to prevent crashes)
+app.get('/api/history', async (req, res) => {
+  try {
+    const history = await Simulation.find().sort({ _id: -1 }).limit(10);
+    res.json(history);
+  } catch (error) {
+    console.error("Database fetch error:", error);
+    res.status(500).json({ error: 'Failed to fetch history from database' });
+  }
 });
 
 const PORT = process.env.PORT || 5000;

@@ -25,18 +25,14 @@
 
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
   <!-- Plotly.js CDN for 3D Heat Mesh -->
   <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     body { font-family: 'Inter', sans-serif; }
@@ -48,6 +44,10 @@
       height: 18px; width: 18px; border-radius: 50%;
       background: #f97316; cursor: pointer; border: none; box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
     }
+    /* Custom scrollbar for the modal */
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #1f2937; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
   </style>
 </head>
 
@@ -68,7 +68,13 @@
           <p class="text-xs text-gray-400">Passive solar shelter engineering & thermal analysis model</p>
         </div>
       </div>
+      
+      <!-- HEADER CONTROLS (History Button) -->
       <div class="flex items-center gap-4 text-xs text-gray-400">
+        <button id="openHistoryBtn" class="flex items-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 px-3 py-1.5 rounded-lg transition-colors shadow-inner font-semibold">
+          <i class="fa-solid fa-database"></i>
+          <span>View Database History</span>
+        </button>
         <div class="flex items-center gap-2 bg-gray-900/60 px-3 py-1.5 rounded-lg border border-gray-700/50">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span>Engine Status: <strong class="text-emerald-400">Online</strong></span>
@@ -98,64 +104,49 @@
 
       <div>
         <h2 class="text-lg font-bold text-white flex items-center gap-2 mb-1">
-          <i class="fa-solid fa-sliders text-orange-400"></i>
-          Simulation Parameters
+          <i class="fa-solid fa-sliders text-orange-400"></i> Simulation Parameters
         </h2>
-        <p class="text-xs text-gray-400">Specify shelter geometry, construction material, and GPS location</p>
+        <p class="text-xs text-gray-400">Specify shelter geometry, material, and environment</p>
       </div>
 
-      <!-- Controls Form -->
       <form id="simForm" class="flex flex-col gap-5">
-
         <!-- 1. Geometry Section -->
         <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
           <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-cubes text-orange-400"></i>
-            1. Shelter Geometry (Dimensions)
+            <i class="fa-solid fa-cubes text-orange-400"></i> 1. Shelter Geometry (Dimensions)
           </div>
 
           <div class="grid grid-cols-3 gap-2">
             <div>
               <label for="length" class="text-[11px] text-gray-400 font-medium">Length (m)</label>
-              <input type="number" id="length" value="6.0" min="2" max="30" step="0.5"
-                class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg p-2 font-mono outline-none focus:border-orange-500">
+              <input type="number" id="length" value="6.0" min="2" max="30" step="0.5" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg p-2 font-mono outline-none focus:border-orange-500">
             </div>
             <div>
               <label for="width" class="text-[11px] text-gray-400 font-medium">Width (m)</label>
-              <input type="number" id="width" value="4.0" min="2" max="30" step="0.5"
-                class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg p-2 font-mono outline-none focus:border-orange-500">
+              <input type="number" id="width" value="4.0" min="2" max="30" step="0.5" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg p-2 font-mono outline-none focus:border-orange-500">
             </div>
             <div>
               <label for="height" class="text-[11px] text-gray-400 font-medium">Height (m)</label>
-              <input type="number" id="height" value="2.8" min="2" max="10" step="0.1"
-                class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg p-2 font-mono outline-none focus:border-orange-500">
+              <input type="number" id="height" value="2.8" min="2" max="10" step="0.1" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg p-2 font-mono outline-none focus:border-orange-500">
             </div>
           </div>
 
-          <!-- Wall Thickness Slider -->
           <div class="flex flex-col gap-1.5 mt-1">
             <div class="flex justify-between items-center text-xs">
-              <label for="thickness" class="text-[11px] font-semibold text-gray-300 uppercase tracking-wider">
-                Wall Thickness
-              </label>
+              <label for="thickness" class="text-[11px] font-semibold text-gray-300 uppercase tracking-wider">Wall Thickness</label>
               <span class="bg-gray-900 px-2 py-0.5 rounded text-orange-400 font-mono font-bold text-xs border border-gray-700/80">
                 <span id="thicknessValue">30</span> cm (<span id="thicknessMeters">0.30</span> m)
               </span>
             </div>
-            <input type="range" id="thickness" min="10" max="80" value="30" step="1"
-              class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500">
+            <input type="range" id="thickness" min="10" max="80" value="30" step="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500">
           </div>
         </div>
 
         <!-- 2. Material Selector Dropdown -->
         <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
           <label for="material" class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
-            <span class="flex items-center gap-2">
-              <i class="fa-solid fa-layer-group text-orange-400"></i>
-              2. Material
-            </span>
+            <span class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-orange-400"></i> 2. Material</span>
           </label>
-          
           <select id="material" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition duration-150 shadow-inner">
             <option value="Aerogel / PUF Panel" selected>Aerogel / PUF Panel</option>
             <option value="Adobe / Mud Brick">Adobe / Mud Brick</option>
@@ -164,69 +155,85 @@
             <option value="Phase Change Material">Phase Change Material</option>
           </select>
 
-          <!-- Selected Material Thermodynamic Specs -->
           <div class="bg-gray-950/70 p-2.5 rounded-lg border border-gray-800 grid grid-cols-3 gap-2 text-center text-[10px] font-mono">
-            <div>
-              <span class="text-gray-500 block">Cond (k)</span>
-              <span id="prop-k" class="text-amber-400 font-bold">0.024 W/mK</span>
-            </div>
-            <div>
-              <span class="text-gray-500 block">Density (&rho;)</span>
-              <span id="prop-rho" class="text-sky-400 font-bold">35 kg/m³</span>
-            </div>
-            <div>
-              <span class="text-gray-500 block">Heat (c<sub>p</sub>)</span>
-              <span id="prop-cp" class="text-emerald-400 font-bold">1400 J/kgK</span>
-            </div>
+            <div><span class="text-gray-500 block">Cond (k)</span><span id="prop-k" class="text-amber-400 font-bold">0.024 W/mK</span></div>
+            <div><span class="text-gray-500 block">Density (&rho;)</span><span id="prop-rho" class="text-sky-400 font-bold">35 kg/m³</span></div>
+            <div><span class="text-gray-500 block">Heat (c<sub>p</sub>)</span><span id="prop-cp" class="text-emerald-400 font-bold">1400 J/kgK</span></div>
           </div>
         </div>
 
-        <!-- 3. Location Coordinates -->
+        <!-- 3. Environmental Data -->
         <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
           <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-location-dot text-orange-400"></i>
-            3. Location Setup
+            <i class="fa-solid fa-wind text-orange-400"></i> 3. Location & Environment
           </div>
 
-          <!-- GPS Coordinates -->
           <div class="grid grid-cols-2 gap-2 mt-1">
             <div>
-              <label for="latitude" class="text-[11px] text-gray-400 font-medium">Latitude (°N)</label>
-              <input type="number" id="latitude" value="34.1526" step="0.0001"
-                class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg p-2 font-mono outline-none focus:border-orange-500">
+              <label for="latitude" class="text-[11px] text-gray-400 font-medium">Latitude</label>
+              <div class="flex">
+                <input type="number" id="latitude" value="34.1526" step="0.0001" min="0" max="90" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-l-lg p-2 font-mono outline-none focus:border-orange-500 border-r-0">
+                <select id="latDir" class="bg-gray-800 border border-gray-700 text-orange-400 text-xs rounded-r-lg px-2 outline-none font-bold">
+                  <option value="N" selected>N</option><option value="S">S</option>
+                </select>
+              </div>
             </div>
             <div>
-              <label for="longitude" class="text-[11px] text-gray-400 font-medium">Longitude (°E)</label>
-              <input type="number" id="longitude" value="77.5771" step="0.0001"
-                class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg p-2 font-mono outline-none focus:border-orange-500">
+              <label for="longitude" class="text-[11px] text-gray-400 font-medium">Longitude</label>
+              <div class="flex">
+                <input type="number" id="longitude" value="77.5771" step="0.0001" min="0" max="180" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-l-lg p-2 font-mono outline-none focus:border-orange-500 border-r-0">
+                <select id="lonDir" class="bg-gray-800 border border-gray-700 text-orange-400 text-xs rounded-r-lg px-2 outline-none font-bold">
+                  <option value="E" selected>E</option><option value="W">W</option>
+                </select>
+              </div>
             </div>
+          </div>
+
+          <div class="flex flex-col gap-1.5 mt-2">
+            <div class="flex justify-between items-center text-xs">
+              <label class="text-[11px] font-semibold text-gray-300 uppercase tracking-wider">Wind Speed</label>
+              <span class="bg-gray-900 px-2 py-0.5 rounded text-orange-400 font-mono font-bold text-xs border border-gray-700/80">
+                <span id="windValue">15</span> m/s
+              </span>
+            </div>
+            <input type="range" id="windSpeed" min="0" max="40" value="15" step="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500">
+          </div>
+
+          <div class="mt-2 flex items-center gap-2 bg-gray-950/50 p-2 rounded-lg border border-gray-800">
+            <input type="checkbox" id="snowLoad" class="w-4 h-4 text-orange-500 bg-gray-900 border-gray-700 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer">
+            <label for="snowLoad" class="text-[11px] text-gray-300 font-medium cursor-pointer">High Snowfall Area (Adjusts Roof Pitch)</label>
           </div>
         </div>
 
-        <!-- Submit Button -->
-        <button type="submit" id="submitBtn"
-          class="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2 group cursor-pointer">
+        <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2 group cursor-pointer">
           <i class="fa-solid fa-play text-sm group-hover:translate-x-0.5 transition-transform"></i>
           <span>Run Simulation</span>
         </button>
-
       </form>
 
       <hr class="border-gray-700/60 my-1">
 
-      <!-- Performance & Cost Metrics Box -->
+      <!-- Performance & Logistics Box -->
       <div class="bg-gray-900/90 rounded-xl p-5 border border-gray-700/70 shadow-inner flex flex-col gap-4">
         <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-          <i class="fa-solid fa-chart-pie text-amber-400"></i>
-          Performance & Cost Metrics
+          <i class="fa-solid fa-chart-pie text-amber-400"></i> Performance & Logistics
         </h3>
 
         <div class="grid grid-cols-1 gap-3">
           <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex items-center justify-between">
             <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
-                <i class="fa-solid fa-sun text-sm"></i>
-              </div>
+              <div class="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center"><i class="fa-solid fa-truck-fast text-sm"></i></div>
+              <span class="text-xs text-gray-300 font-medium">Payload Weight</span>
+            </div>
+            <div class="text-right">
+              <div id="stat-weight" class="text-sm font-mono font-bold text-orange-400">0 kg</div>
+              <div id="stat-airlift" class="text-[9px] px-1.5 py-0.5 rounded font-bold mt-1 inline-block bg-gray-800">CALCULATING</div>
+            </div>
+          </div>
+
+          <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-sun text-sm"></i></div>
               <span class="text-xs text-gray-300 font-medium">Solar Gain</span>
             </div>
             <span id="stat-solar" class="text-sm font-mono font-bold text-amber-400">14.20 kWh</span>
@@ -234,9 +241,7 @@
 
           <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex items-center justify-between">
             <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
-                <i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-center text-sm"></i>
-              </div>
+              <div class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center"><i class="fa-solid fa-arrow-trend-down text-sm"></i></div>
               <span class="text-xs text-gray-300 font-medium">Net Heat Loss</span>
             </div>
             <span id="stat-loss" class="text-sm font-mono font-bold text-rose-400">5.80 kW</span>
@@ -244,9 +249,7 @@
 
           <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex items-center justify-between">
             <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                <i class="fa-solid fa-award text-sm"></i>
-              </div>
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-award text-sm"></i></div>
               <span class="text-xs text-gray-300 font-medium">Efficiency Rank</span>
             </div>
             <span id="stat-rank" class="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Grade A</span>
@@ -255,14 +258,11 @@
           <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex flex-col gap-2">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
-                  <i class="fa-solid fa-coins text-sm"></i>
-                </div>
+                <div class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center"><i class="fa-solid fa-coins text-sm"></i></div>
                 <span class="text-xs text-gray-300 font-medium">Est. Total Material Cost</span>
               </div>
               <span id="stat-cost" class="text-sm font-mono font-bold text-cyan-400">₹1,46,640</span>
             </div>
-
             <div class="text-[11px] text-gray-400 border-t border-gray-700/40 pt-2 grid grid-cols-2 gap-1 font-mono">
               <div>Unit Cost: <span id="cost-unit" class="text-gray-200">₹3,500/m³</span></div>
               <div>Labor/Install: <span id="cost-install" class="text-gray-200">₹1,200/m³</span></div>
@@ -271,37 +271,28 @@
           </div>
         </div>
       </div>
-
     </aside>
 
     <!-- Main Content Area: Charts & Visuals -->
     <section class="flex-1 flex flex-col gap-6">
 
       <!-- Chart Display Card -->
-      <div class="bg-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-gray-700/60 shadow-2xl flex flex-col">
+      <div class="bg-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-gray-700/60 shadow-2xl flex flex-col flex-1">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-chart-line text-orange-400"></i>
-              24-Hour Temperature Profile
-            </h2>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-orange-400"></i> 24-Hour Temperature Profile</h2>
             <p class="text-xs text-gray-400">Comparison between outdoor ambient temperature and simulated indoor thermal response</p>
           </div>
-
           <div class="flex items-center gap-3 text-xs">
             <div class="flex items-center gap-1.5 bg-gray-900/60 px-2.5 py-1 rounded-lg border border-gray-700/50">
-              <span class="w-3 h-1 bg-orange-500 rounded-full"></span>
-              <span class="text-gray-300 font-medium">Internal Temp</span>
+              <span class="w-3 h-1 bg-orange-500 rounded-full"></span><span class="text-gray-300 font-medium">Internal Temp</span>
             </div>
             <div class="flex items-center gap-1.5 bg-gray-900/60 px-2.5 py-1 rounded-lg border border-gray-700/50">
-              <span class="w-3 h-1 bg-sky-400 border-b border-dashed border-sky-400"></span>
-              <span class="text-gray-300 font-medium">Ambient Temp</span>
+              <span class="w-3 h-1 bg-sky-400 border-b border-dashed border-sky-400"></span><span class="text-gray-300 font-medium">Ambient Temp</span>
             </div>
           </div>
         </div>
-
-        <!-- Canvas Container -->
-        <div class="relative min-h-[350px] w-full bg-gray-900/60 rounded-xl p-4 border border-gray-700/50 flex items-center justify-center">
+        <div class="relative flex-1 min-h-[380px] w-full bg-gray-900/60 rounded-xl p-4 border border-gray-700/50 flex items-center justify-center">
           <canvas id="tempChart"></canvas>
         </div>
       </div>
@@ -309,52 +300,26 @@
       <!-- Quick Metrics Breakdown Bar -->
       <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div class="bg-gray-800/50 border border-gray-700/60 p-4 rounded-xl flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center text-lg">
-            <i class="fa-solid fa-temperature-arrow-up"></i>
-          </div>
-          <div>
-            <div class="text-[11px] text-gray-400 uppercase font-semibold">Peak Indoor Temp</div>
-            <div id="metric-peak-in" class="text-base font-mono font-bold text-white">18.4°C</div>
-          </div>
+          <div class="w-10 h-10 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center text-lg"><i class="fa-solid fa-temperature-arrow-up"></i></div>
+          <div><div class="text-[11px] text-gray-400 uppercase font-semibold">Peak Indoor Temp</div><div id="metric-peak-in" class="text-base font-mono font-bold text-white">18.4°C</div></div>
         </div>
-
         <div class="bg-gray-800/50 border border-gray-700/60 p-4 rounded-xl flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center text-lg">
-            <i class="fa-solid fa-temperature-arrow-down"></i>
-          </div>
-          <div>
-            <div class="text-[11px] text-gray-400 uppercase font-semibold">Min Outdoor Temp</div>
-            <div id="metric-min-out" class="text-base font-mono font-bold text-sky-400">-15.0°C</div>
-          </div>
+          <div class="w-10 h-10 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center text-lg"><i class="fa-solid fa-temperature-arrow-down"></i></div>
+          <div><div class="text-[11px] text-gray-400 uppercase font-semibold">Min Outdoor Temp</div><div id="metric-min-out" class="text-base font-mono font-bold text-sky-400">-15.0°C</div></div>
         </div>
-
         <div class="bg-gray-800/50 border border-gray-700/60 p-4 rounded-xl flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg">
-            <i class="fa-solid fa-shield-halved"></i>
-          </div>
-          <div>
-            <div class="text-[11px] text-gray-400 uppercase font-semibold">Thermal Retention</div>
-            <div id="metric-delta" class="text-base font-mono font-bold text-emerald-400">+28.5°C</div>
-          </div>
+          <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg"><i class="fa-solid fa-shield-halved"></i></div>
+          <div><div class="text-[11px] text-gray-400 uppercase font-semibold">Thermal Retention</div><div id="metric-delta" class="text-base font-mono font-bold text-emerald-400">+28.5°C</div></div>
         </div>
-
         <div class="bg-gray-800/50 border border-gray-700/60 p-4 rounded-xl flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-lg">
-            <i class="fa-solid fa-calculator"></i>
-          </div>
-          <div>
-            <div class="text-[11px] text-gray-400 uppercase font-semibold">Air Volume</div>
-            <div id="metric-air-vol" class="text-base font-mono font-bold text-cyan-400">67.2 m³</div>
-          </div>
+          <div class="w-10 h-10 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-lg"><i class="fa-solid fa-calculator"></i></div>
+          <div><div class="text-[11px] text-gray-400 uppercase font-semibold">Air Volume</div><div id="metric-air-vol" class="text-base font-mono font-bold text-cyan-400">67.2 m³</div></div>
         </div>
       </div>
 
-      <!-- UPGRADED 3D MESH CONTAINER -->
+      <!-- 3D MESH CONTAINER -->
       <div class="bg-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-gray-700/60 shadow-2xl flex flex-col relative">
-        <h2 class="text-lg font-bold text-white flex items-center gap-2 mb-2">
-          <i class="fa-solid fa-cube text-orange-400"></i>
-          3D Thermal Mesh Analysis
-        </h2>
+        <h2 class="text-lg font-bold text-white flex items-center gap-2 mb-2"><i class="fa-solid fa-cube text-orange-400"></i> 3D Thermal Mesh Analysis</h2>
         <div class="absolute top-6 right-6 flex gap-2">
           <span class="text-[10px] bg-gray-900/80 px-2 py-1 rounded border border-gray-700 text-gray-400 flex items-center gap-1"><i class="fa-solid fa-arrows-up-down-left-right"></i> Drag to Rotate</span>
           <span class="text-[10px] bg-gray-900/80 px-2 py-1 rounded border border-gray-700 text-gray-400 flex items-center gap-1"><i class="fa-solid fa-magnifying-glass-plus"></i> Scroll to Zoom</span>
@@ -363,7 +328,6 @@
       </div>
 
     </section>
-
   </main>
 
   <!-- Footer -->
@@ -371,10 +335,42 @@
     <p>Shelter Thermal Engine &bull; Climate Modeling Suite</p>
   </footer>
 
+  <!-- Database History Modal Popup -->
+  <div id="historyModal" class="fixed inset-0 bg-gray-950/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 transition-opacity duration-300">
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="bg-gray-800/50 p-5 border-b border-gray-700 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-server text-indigo-400"></i> Simulation Database History
+          </h2>
+          <p class="text-xs text-gray-400 mt-1">Recently saved configurations fetched from MongoDB Atlas</p>
+        </div>
+        <button id="closeHistoryBtn" class="text-gray-400 hover:text-rose-400 transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-800">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+      
+      <!-- Modal Body / Content -->
+      <div class="p-5 overflow-y-auto flex-1 custom-scroll bg-gray-900/50">
+        <!-- Loading Spinner -->
+        <div id="historyLoading" class="text-center text-gray-500 py-12 hidden">
+          <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-indigo-500"></i>
+          <p class="text-sm font-medium">Connecting to MongoDB Atlas...</p>
+        </div>
+        
+        <!-- List Container -->
+        <div id="historyList" class="flex flex-col gap-3"></div>
+      </div>
+      
+    </div>
+  </div>
+
   <!-- Script for Interactivity, Dynamic Cost Calculation, Chart.js & Advanced Plotly 3D -->
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      // 1. DOM Elements
+      // DOM Elements
       const lengthInput = document.getElementById('length');
       const widthInput = document.getElementById('width');
       const heightInput = document.getElementById('height');
@@ -382,8 +378,14 @@
       const thicknessValLabel = document.getElementById('thicknessValue');
       const thicknessMetersLabel = document.getElementById('thicknessMeters');
       const materialSelect = document.getElementById('material');
+      
       const latitudeInput = document.getElementById('latitude');
+      const latDirSelect = document.getElementById('latDir');
       const longitudeInput = document.getElementById('longitude');
+      const lonDirSelect = document.getElementById('lonDir');
+      
+      const windSlider = document.getElementById('windSpeed');
+      const snowCheck = document.getElementById('snowLoad');
       const simForm = document.getElementById('simForm');
       const submitBtn = document.getElementById('submitBtn');
 
@@ -394,6 +396,9 @@
       const costUnitLabel = document.getElementById('cost-unit');
       const costInstallLabel = document.getElementById('cost-install');
       const costVolLabel = document.getElementById('cost-vol');
+      
+      const statWeight = document.getElementById('stat-weight');
+      const statAirlift = document.getElementById('stat-airlift');
 
       const propK = document.getElementById('prop-k');
       const propRho = document.getElementById('prop-rho');
@@ -407,7 +412,7 @@
       const errorToast = document.getElementById('error-toast');
       const errorMessage = document.getElementById('error-message');
 
-      // Material database presets (Synced perfectly with backend)
+      // Material database presets
       const materialPresets = {
         "Adobe / Mud Brick": { k: 0.60, rho: 1700, cp: 840, costPerUnit: 2800, currency: "INR (₹)", installationCost: 800 },
         "Aerogel / PUF Panel": { k: 0.024, rho: 35, cp: 1400, costPerUnit: 18000, currency: "INR (₹)", installationCost: 3500 },
@@ -416,340 +421,182 @@
         "Phase Change Material": { k: 0.20, rho: 800, cp: 2100, costPerUnit: 25000, currency: "INR (₹)", installationCost: 4000 }
       };
 
-      // 2. Dynamic Material & Geometry Cost Calculation
+      // Calculate logic
       function updateCostAndProperties() {
         const matName = materialSelect.value;
         const mat = materialPresets[matName] || { k: 0.5, rho: 1200, cp: 900, costPerUnit: 3000, currency: "INR (₹)", installationCost: 1000 };
-
-        propK.textContent = `${mat.k} W/mK`;
-        propRho.textContent = `${mat.rho} kg/m³`;
-        propCp.textContent = `${mat.cp} J/kgK`;
-
-        const l = parseFloat(lengthInput.value) || 6.0;
-        const w = parseFloat(widthInput.value) || 4.0;
-        const h = parseFloat(heightInput.value) || 2.8;
+        propK.textContent = `${mat.k} W/mK`; propRho.textContent = `${mat.rho} kg/m³`; propCp.textContent = `${mat.cp} J/kgK`;
+        const l = parseFloat(lengthInput.value) || 6.0; const w = parseFloat(widthInput.value) || 4.0; const h = parseFloat(heightInput.value) || 2.8;
         const t = (parseFloat(thicknessSlider.value) || 30) / 100;
-
-        const surfaceArea = 2 * (l * w + l * h + w * h);
-        const wallVol = surfaceArea * t;
-        const airVol = l * w * h;
-
-        const unitCost = mat.costPerUnit || 3500;
-        const installCost = mat.installationCost || 1200;
-        const totalPerM3 = unitCost + installCost;
-        const totalCost = wallVol * totalPerM3;
-
-        costUnitLabel.textContent = `₹${unitCost.toLocaleString('en-IN')}/m³`;
-        costInstallLabel.textContent = `₹${installCost.toLocaleString('en-IN')}/m³`;
-        costVolLabel.textContent = `${wallVol.toFixed(2)} m³`;
-        statCost.textContent = `₹${Math.round(totalCost).toLocaleString('en-IN')}`;
+        const surfaceArea = 2 * (l * w + l * h + w * h); const wallVol = surfaceArea * t; const airVol = l * w * h;
+        const unitCost = mat.costPerUnit || 3500; const installCost = mat.installationCost || 1200;
+        const totalCost = wallVol * (unitCost + installCost);
+        costUnitLabel.textContent = `₹${unitCost.toLocaleString('en-IN')}/m³`; costInstallLabel.textContent = `₹${installCost.toLocaleString('en-IN')}/m³`;
+        costVolLabel.textContent = `${wallVol.toFixed(2)} m³`; statCost.textContent = `₹${Math.round(totalCost).toLocaleString('en-IN')}`;
         metricAirVol.textContent = `${airVol.toFixed(1)} m³`;
-
+        const totalWeight = wallVol * mat.rho;
+        statWeight.textContent = `${Math.round(totalWeight).toLocaleString('en-IN')} kg`;
+        if (totalWeight > 1500) {
+            statAirlift.textContent = "HEAVY LIFT TRUCK REQ";
+            statAirlift.className = "text-[9px] px-2 py-1 rounded bg-rose-500/20 text-rose-400 mt-1 inline-block border border-rose-500/30 tracking-widest";
+        } else {
+            statAirlift.textContent = "HELO AIRLIFT APPROVED";
+            statAirlift.className = "text-[9px] px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 mt-1 inline-block border border-emerald-500/30 tracking-widest";
+        }
         return { wallVol, airVol, surfaceArea, totalCost, mat };
       }
 
       thicknessSlider.addEventListener('input', (e) => {
-        const val = e.target.value;
-        thicknessValLabel.textContent = val;
-        thicknessMetersLabel.textContent = (val / 100).toFixed(2);
+        thicknessValLabel.textContent = e.target.value; thicknessMetersLabel.textContent = (e.target.value / 100).toFixed(2);
         updateCostAndProperties();
       });
-
-      materialSelect.addEventListener('change', updateCostAndProperties);
-      lengthInput.addEventListener('input', updateCostAndProperties);
-      widthInput.addEventListener('input', updateCostAndProperties);
-      heightInput.addEventListener('input', updateCostAndProperties);
-
+      windSlider.addEventListener('input', (e) => { document.getElementById('windValue').textContent = e.target.value; });
+      snowCheck.addEventListener('change', () => {
+         const l = parseFloat(lengthInput.value) || 6.0; const w = parseFloat(widthInput.value) || 4.0; const h = parseFloat(heightInput.value) || 2.8;
+         draw3DMesh(l, w, h, 18.4, -15.0, snowCheck.checked);
+      });
+      [materialSelect, lengthInput, widthInput, heightInput].forEach(el => el.addEventListener('input', updateCostAndProperties));
       updateCostAndProperties();
 
-      // Fetch dynamic materials from backend
-      try {
-        const matRes = await fetch('/api/materials');
-        if (matRes.ok) {
-          const matJson = await matRes.json();
-          if (matJson && matJson.data) {
-            const existingVals = Array.from(materialSelect.options).map(o => o.value);
-            Object.entries(matJson.data).forEach(([key, val]) => {
-              if (!existingVals.includes(val.name)) {
-                const opt = document.createElement('option');
-                opt.value = val.name;
-                opt.textContent = val.name;
-                materialSelect.appendChild(opt);
-                materialPresets[val.name] = {
-                  k: val.k, rho: val.rho, cp: val.cp,
-                  costPerUnit: val.costPerUnit || 4000,
-                  currency: val.currency || "INR (₹)",
-                  installationCost: val.installationCost || 1200
-                };
-              }
-            });
-            updateCostAndProperties();
-          }
-        }
-      } catch (err) {
-        console.log('Using default material options.');
-      }
-
-      // 3. Initialize Chart.js
+      // Chart Setup
       const timeLabels = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
       const defaultAmbient = [-12, -14, -15, -15, -14, -12, -8, -3, 1, 4, 6, 7, 5, 2, -1, -4, -7, -9, -10, -11, -12, -13, -13, -14];
       const defaultInside = [11.2, 10.5, 9.8, 9.4, 9.1, 9.0, 9.4, 11.2, 13.8, 16.2, 17.9, 18.4, 17.8, 16.5, 15.1, 13.9, 13.0, 12.4, 12.0, 11.8, 11.6, 11.4, 11.3, 11.2];
-
       const ctx = document.getElementById('tempChart').getContext('2d');
       const tempChart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: timeLabels,
           datasets: [
-            {
-              label: 'Internal Temperature (°C)', data: defaultInside,
-              borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.12)',
-              fill: true, borderWidth: 3, tension: 0.4, pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: '#f97316'
-            },
-            {
-              label: 'Ambient Temperature (°C)', data: defaultAmbient,
-              borderColor: '#38bdf8', borderDash: [5, 5], backgroundColor: 'transparent',
-              fill: false, borderWidth: 2, tension: 0.4, pointRadius: 2, pointHoverRadius: 5, pointBackgroundColor: '#38bdf8'
-            }
+            { label: 'Internal Temp', data: defaultInside, borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.12)', fill: true, borderWidth: 3, tension: 0.4, pointRadius: 3 },
+            { label: 'Ambient Temp', data: defaultAmbient, borderColor: '#38bdf8', borderDash: [5, 5], fill: false, borderWidth: 2, tension: 0.4, pointRadius: 2 }
           ]
         },
-        options: {
-          responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { display: false },
-            tooltip: { backgroundColor: 'rgba(17, 24, 39, 0.9)', titleColor: '#f97316', bodyColor: '#f3f4f6', borderColor: '#374151', borderWidth: 1, padding: 10, displayColors: true }
-          },
-          scales: {
-            x: { grid: { color: 'rgba(55, 65, 81, 0.4)' }, ticks: { color: '#9ca3af', font: { size: 10 } } },
-            y: { grid: { color: 'rgba(55, 65, 81, 0.4)' }, ticks: { color: '#9ca3af', font: { size: 10 }, callback: function(val) { return val + '°C'; } } }
-          }
-        }
+        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(55, 65, 81, 0.4)' }, ticks: { color: '#9ca3af' } }, y: { grid: { color: 'rgba(55, 65, 81, 0.4)' }, ticks: { color: '#9ca3af', callback: val => val + '°C' } } } }
       });
 
-     // 4. UPGRADED Plotly 3D Mesh Engine (Architectural Shelter)
-      function draw3DMesh(l, w, h, tIn, tOut) {
-        const roofHeight = 1.2; // The roof peaks 1.2 meters above the walls
-        
-        // 10 Structural Nodes (Corners of the shelter)
-        const x = [0, l, l, 0, 0, l, l, 0, 0, l];
-        const y = [0, 0, w, w, 0, 0, w, w, w/2, w/2];
-        const z = [0, 0, 0, 0, h, h, h, h, h + roofHeight, h + roofHeight];
-        
-        // Triangle mesh indices to map the walls, floor, and pitched roof
-        const i = [0, 0, 0, 0, 4, 1, 1, 5, 0, 0, 3, 3, 4, 4, 7, 7];
-        const j = [1, 2, 3, 7, 7, 5, 6, 9, 4, 5, 2, 6, 8, 9, 6, 9];
-        const k = [2, 3, 7, 4, 8, 6, 2, 6, 5, 1, 6, 7, 9, 5, 9, 8];
-
-        // Heat maps dynamically based on the material chosen!
-        // Floor is cold outside air, walls are inside air, roof peak is hottest (heat rises)
-        const temps = [
-            tOut, tOut, tOut, tOut, // 4 Floor corners
-            tIn, tIn, tIn, tIn,     // 4 Wall tops
-            tIn + 2, tIn + 2        // 2 Roof peaks 
-        ];
-
-        // Trace 1: The solid heat map (The Shelter walls)
-        const heatTrace = {
-            type: 'mesh3d',
-            x: x, y: y, z: z,
-            i: i, j: j, k: k,
-            intensity: temps,
-            colorscale: 'Jet', // Automatically turns red for good materials, blue for bad ones
-            showscale: true,
-            colorbar: {
-                title: 'Temp (°C)',
-                titleside: 'right',
-                tickfont: { color: '#9ca3af' },
-                titlefont: { color: '#9ca3af' }
-            },
-            opacity: 0.90,
-            flatshading: false, 
-            lighting: { ambient: 0.6, diffuse: 0.8, specular: 0.1, roughness: 0.5 },
-            hoverinfo: 'text',
-            text: temps.map(t => `Surface Temp: ${t.toFixed(1)}°C`)
-        };
-
-        // Trace 2: The structural wireframe (For the FEA engineering look)
+      // 3D Mesh
+      function draw3DMesh(l, w, h, tIn, tOut, isHighSnow) {
+        const roofHeight = isHighSnow ? 2.5 : 1.0; 
+        const x = [0, l, l, 0, 0, l, l, 0, 0, l]; const y = [0, 0, w, w, 0, 0, w, w, w/2, w/2]; const z = [0, 0, 0, 0, h, h, h, h, h + roofHeight, h + roofHeight];
+        const i = [0, 0, 0, 0, 4, 1, 1, 5, 0, 0, 3, 3, 4, 4, 7, 7]; const j = [1, 2, 3, 7, 7, 5, 6, 9, 4, 5, 2, 6, 8, 9, 6, 9]; const k = [2, 3, 7, 4, 8, 6, 2, 6, 5, 1, 6, 7, 9, 5, 9, 8];
+        const temps = [tOut, tOut, tOut, tOut, tIn, tIn, tIn, tIn, tIn + 2, tIn + 2];
+        const heatTrace = { type: 'mesh3d', x: x, y: y, z: z, i: i, j: j, k: k, intensity: temps, colorscale: 'Jet', opacity: 0.9, flatshading: false, hoverinfo: 'text', text: temps.map(t => `Surface Temp: ${t.toFixed(1)}°C`) };
         const x_lines = [0, l, l, 0, 0, null, 0, l, l, 0, 0, null, 0, 0, null, l, l, null, l, l, null, 0, 0, null, 0, 0, 0, null, l, l, l, null, 0, l];
         const y_lines = [0, 0, w, w, 0, null, 0, 0, w, w, 0, null, 0, 0, null, 0, 0, null, w, w, null, w, w, null, 0, w/2, w, null, 0, w/2, w, null, w/2, w/2];
         const z_lines = [0, 0, 0, 0, 0, null, h, h, h, h, h, null, 0, h, null, 0, h, null, 0, h, null, 0, h, null, h, h+roofHeight, h, null, h, h+roofHeight, h, null, h+roofHeight, h+roofHeight];
+        const edgeTrace = { type: 'scatter3d', mode: 'lines', x: x_lines, y: y_lines, z: z_lines, line: { color: '#ffffff', width: 2 }, hoverinfo: 'none' };
+        Plotly.newPlot('meshContainer', [heatTrace, edgeTrace], { paper_bgcolor: 'rgba(0,0,0,0)', scene: { aspectmode: 'data', camera: { eye: { x: -1.5, y: -1.5, z: 1.2 } } }, margin: { l: 0, r: 0, b: 0, t: 0 }, showlegend: false }, {responsive: true});
+      }
+      draw3DMesh(6.0, 4.0, 2.8, 18.4, -15.0, false);
 
-        const edgeTrace = {
-            type: 'scatter3d',
-            mode: 'lines',
-            x: x_lines, y: y_lines, z: z_lines,
-            line: { color: '#ffffff', width: 2 },
-            hoverinfo: 'none'
-        };
-
-        const layout = {
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            scene: {
-                aspectmode: 'data', // Stretches the model to your exact length/width inputs
-                xaxis: { title: 'Length (m)', color: '#9ca3af', gridcolor: '#374151', showbackground: false },
-                yaxis: { title: 'Width (m)', color: '#9ca3af', gridcolor: '#374151', showbackground: false },
-                zaxis: { title: 'Height (m)', color: '#9ca3af', gridcolor: '#374151', showbackground: false },
-                camera: { eye: { x: -1.5, y: -1.5, z: 1.2 } }
-            },
-            margin: { l: 0, r: 0, b: 0, t: 0 },
-            showlegend: false
-        };
-
-        Plotly.newPlot('meshContainer', [heatTrace, edgeTrace], layout, {responsive: true});
+      function updateUI(results, payload) {
+        const insideTemps = results.insideTemp || defaultInside; const ambTemps = results.ambientTemp || defaultAmbient;
+        tempChart.data.datasets[0].data = insideTemps; tempChart.data.datasets[1].data = ambTemps; tempChart.update();
+        const maxIn = Math.max(...insideTemps); const minOut = Math.min(...ambTemps); const avgIn = insideTemps.reduce((a, b) => a + b, 0) / insideTemps.length;
+        statSolar.textContent = results.energySummary?.totalSolarKWh ? `${results.energySummary.totalSolarKWh.toFixed(2)} kWh` : `14.20 kWh`;
+        statLoss.textContent = results.energySummary?.heatLossKW ? `${results.energySummary.heatLossKW.toFixed(2)} kW` : `${Math.max(1.2, (8.5 - (parseFloat(thicknessSlider.value) * 0.08))).toFixed(2)} kW`;
+        statRank.textContent = results.energySummary?.rank || (avgIn > 14 ? 'Grade A+' : (avgIn > 11 ? 'Grade A' : 'Grade B'));
+        metricPeakIn.textContent = `${maxIn.toFixed(1)}°C`; metricMinOut.textContent = `${minOut.toFixed(1)}°C`; metricDelta.textContent = `+${(avgIn - minOut).toFixed(1)}°C`;
+        draw3DMesh(parseFloat(lengthInput.value) || 6.0, parseFloat(widthInput.value) || 4.0, parseFloat(heightInput.value) || 2.8, maxIn, minOut, payload.environment.highSnow);
       }
 
-      draw3DMesh(6.0, 4.0, 2.8, 18.4, -15.0);
-
-      // 5. Physics fallback simulator logic
-      function runFallbackSimulation(material, thicknessCm, lengthM, widthM, heightM) {
-        const mat = materialPresets[material] || { k: 0.5, rho: 1200, cp: 900 };
-        const thickness = thicknessCm / 100;
-        const ambTemps = [...defaultAmbient];
-        const solarFlux = [0, 0, 0, 0, 0, 0, 45, 220, 530, 810, 960, 1010, 920, 710, 430, 150, 10, 0, 0, 0, 0, 0, 0, 0];
-        
-        const surfaceArea = 2 * (lengthM * widthM + lengthM * heightM + widthM * heightM);
-        const volume = lengthM * widthM * heightM;
-        const wallVol = surfaceArea * thickness;
-        const rValue = thickness / mat.k;
-        const uValue = rValue > 0 ? (1.0 / rValue) : 10.0;
-        const thermalMass = (wallVol * mat.rho * mat.cp) + (volume * 1.225 * 1005);
-        const solarCaptureArea = (lengthM * heightM) * 0.5;
-
-        let tInside = ambTemps[0] + 18.0;
-        const insideTemps = [];
-
-        for (let i = 0; i < 24; i++) {
-          const tAmb = ambTemps[i];
-          const iSolar = solarFlux[i];
-          const qSolar = iSolar * solarCaptureArea * 0.7;
-          const qLoss = uValue * surfaceArea * (tInside - tAmb);
-          const qNet = qSolar - qLoss;
-          const deltaT = (qNet / thermalMass) * 3600;
-          tInside += deltaT;
-          insideTemps.push(Number(tInside.toFixed(2)));
-        }
-
-        const totalSolarKWh = (solarFlux.reduce((a, b) => a + b, 0) * solarCaptureArea * 0.7 / 1000).toFixed(2);
-        const heatLossKW = (uValue * surfaceArea * 25 / 1000).toFixed(2);
-        const avgTemp = insideTemps.reduce((a, b) => a + b, 0) / 24;
-
-        let rank = 'Grade B';
-        if (avgTemp > 14) rank = 'Grade A+';
-        else if (avgTemp > 11) rank = 'Grade A';
-        else if (avgTemp > 8) rank = 'Grade B';
-        else rank = 'Grade C';
-
+      function getPayload() {
+        let latVal = parseFloat(latitudeInput.value) || 34.1526; if (latDirSelect.value === 'S') latVal = -Math.abs(latVal);
+        let lonVal = parseFloat(longitudeInput.value) || 77.5771; if (lonDirSelect.value === 'W') lonVal = -Math.abs(lonVal);
+        const mat = materialPresets[materialSelect.value] || {k: 0.024, rho: 35, cp: 1400};
         return {
-          ambientTemp: ambTemps,
-          insideTemp: insideTemps,
-          energySummary: { totalSolarKWh: parseFloat(totalSolarKWh), heatLossKW: parseFloat(heatLossKW), rank: rank }
+          geometry: { length: parseFloat(lengthInput.value), width: parseFloat(widthInput.value), height: parseFloat(heightInput.value), wallThickness: parseFloat(thicknessSlider.value)/100 },
+          materials: { name: materialSelect.value, k: mat.k, rho: mat.rho, cp: mat.cp },
+          environment: { windSpeed: parseFloat(windSlider.value), highSnow: snowCheck.checked },
+          location: { latitude: latVal, longitude: lonVal }
         };
       }
 
-      // 6. Update UI with Simulation Results
-      function updateUI(results) {
-        const insideTemps = results.insideTemp || defaultInside;
-        const ambTemps = results.ambientTemp || defaultAmbient;
-
-        tempChart.data.datasets[0].data = insideTemps;
-        tempChart.data.datasets[1].data = ambTemps;
-        tempChart.update();
-
-        const maxIn = Math.max(...insideTemps);
-        const minOut = Math.min(...ambTemps);
-        const avgIn = insideTemps.reduce((a, b) => a + b, 0) / insideTemps.length;
-
-        if (results.energySummary && results.energySummary.totalSolarKWh !== undefined) {
-          statSolar.textContent = `${results.energySummary.totalSolarKWh.toFixed(2)} kWh`;
-        } else {
-          statSolar.textContent = `14.20 kWh`;
-        }
-
-        if (results.energySummary && results.energySummary.heatLossKW !== undefined) {
-          statLoss.textContent = `${results.energySummary.heatLossKW.toFixed(2)} kW`;
-        } else {
-          const thickness = parseFloat(thicknessSlider.value);
-          const calculatedLoss = Math.max(1.2, (8.5 - thickness * 0.08)).toFixed(2);
-          statLoss.textContent = `${calculatedLoss} kW`;
-        }
-
-        if (results.energySummary && results.energySummary.rank) {
-          statRank.textContent = results.energySummary.rank;
-        } else {
-          let rank = 'Grade B';
-          if (avgIn > 14) rank = 'Grade A+';
-          else if (avgIn > 11) rank = 'Grade A';
-          else if (avgIn > 8) rank = 'Grade B';
-          else rank = 'Grade C';
-          statRank.textContent = rank;
-        }
-
-        metricPeakIn.textContent = `${maxIn.toFixed(1)}°C`;
-        metricMinOut.textContent = `${minOut.toFixed(1)}°C`;
-        metricDelta.textContent = `+${(avgIn - minOut).toFixed(1)}°C`;
-        
-        const l = parseFloat(lengthInput.value) || 6.0;
-        const w = parseFloat(widthInput.value) || 4.0;
-        const h = parseFloat(heightInput.value) || 2.8;
-        
-        // Dynamically redraws the new physical shape based on form inputs
-        draw3DMesh(l, w, h, maxIn, minOut);
-      }
-
-      // 7. Form Submit Listener
+      // Simulate Button Logic
       simForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        errorToast.classList.add('hidden');
-
-        const originalBtnHTML = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-sm"></i><span>Computing Thermodynamics...</span>`;
-
-        const materialVal = materialSelect.value;
-        const thicknessCm = parseFloat(thicknessSlider.value);
-        const thicknessMeters = thicknessCm / 100;
-        
-        const lengthVal = parseFloat(lengthInput.value) || 6.0;
-        const widthVal = parseFloat(widthInput.value) || 4.0;
-        const heightVal = parseFloat(heightInput.value) || 2.8;
-        
-        const latVal = parseFloat(latitudeInput.value) || 34.1526;
-        const lonVal = parseFloat(longitudeInput.value) || 77.5771;
-        
-        const costInfo = updateCostAndProperties();
-        const selectedMat = costInfo.mat;
-
-        const payload = {
-          material: materialVal, 
-          thickness: thicknessCm,
-          geometry: { length: lengthVal, width: widthVal, height: heightVal, wallThickness: thicknessMeters },
-          materials: {
-            name: materialVal, k: selectedMat.k, rho: selectedMat.rho, cp: selectedMat.cp,
-            costPerUnit: selectedMat.costPerUnit || 3500, currency: selectedMat.currency || "INR (₹)",
-            installationCost: selectedMat.installationCost || 1200, totalMaterialCost: Math.round(costInfo.totalCost)
-          },
-          location: { name: "Custom GPS Coordinates", latitude: latVal, longitude: lonVal }
-        };
-
+        e.preventDefault(); errorToast.classList.add('hidden');
+        const ogBtn = submitBtn.innerHTML; submitBtn.disabled = true; submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-sm"></i><span>Computing...</span>`;
+        const payload = getPayload();
         try {
-          // Sending to the Node.js backend
-          const response = await fetch('/api/simulate', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-          });
-          if (!response.ok) throw new Error(`Server returned HTTP ${response.status}`);
-          const data = await response.json();
-          updateUI(data);
+          const response = await fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          updateUI(await response.json(), payload);
         } catch (error) {
-          console.warn('API fetch failed:', error);
-          errorMessage.textContent = `API call to /api/simulate encountered an error (${error.message}). Displaying dynamic client-side simulation.`;
           errorToast.classList.remove('hidden');
-          const fallbackResults = runFallbackSimulation(materialVal, thicknessCm, lengthVal, widthVal, heightVal);
-          updateUI(fallbackResults);
+          // Dummy fallback for when python server is off
+          updateUI({ insideTemp: defaultInside, ambientTemp: defaultAmbient, energySummary: { totalSolarKWh: 14.2, heatLossKW: 5.8, rank: "Grade A" } }, payload);
         } finally {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = originalBtnHTML;
+          submitBtn.disabled = false; submitBtn.innerHTML = ogBtn;
         }
       });
+
+      // HISTORY MODAL LOGIC
+      const historyModal = document.getElementById('historyModal');
+      const openHistoryBtn = document.getElementById('openHistoryBtn');
+      const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+      const historyList = document.getElementById('historyList');
+      const historyLoading = document.getElementById('historyLoading');
+
+      openHistoryBtn.addEventListener('click', async () => {
+        historyModal.classList.remove('hidden');
+        historyLoading.classList.remove('hidden');
+        historyList.innerHTML = '';
+        
+        try {
+          const res = await fetch('/api/history');
+          if(!res.ok) throw new Error('Failed to fetch');
+          const data = await res.json();
+          
+          if (data.length === 0) {
+            historyList.innerHTML = '<div class="text-center text-gray-500 py-8">No previous simulations found in the database.</div>';
+          } else {
+            // Loop through past simulations and map keys safely
+            data.forEach(sim => {
+              const date = new Date(sim.createdAt || Date.now()).toLocaleString();
+              
+              // THIS IS THE FIX: Safely extract properties handling flat OR nested db formats
+              const mat = sim.materials?.name || sim.material || sim.name || 'Aerogel / PUF Panel';
+              const l = sim.geometry?.length || sim.length || '6.0';
+              const w = sim.geometry?.width || sim.width || '4.0';
+              const h = sim.geometry?.height || sim.height || '2.8';
+              const lat = sim.location?.latitude || sim.latitude || '34.1526';
+              const lon = sim.location?.longitude || sim.longitude || '77.5771';
+              
+              const cardHTML = `
+                <div class="bg-gray-800/80 border border-gray-700 p-4 rounded-xl hover:border-indigo-500/50 transition-colors cursor-pointer group">
+                  <div class="flex justify-between items-start mb-2">
+                    <span class="text-xs text-gray-400 font-mono"><i class="fa-regular fa-clock text-gray-500 mr-1"></i> ${date}</span>
+                    <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/30">DB Saved</span>
+                  </div>
+                  <div class="grid grid-cols-3 gap-2">
+                    <div>
+                      <div class="text-[10px] text-gray-500 uppercase font-bold">Material</div>
+                      <div class="text-sm font-semibold text-gray-200">${mat}</div>
+                    </div>
+                    <div>
+                      <div class="text-[10px] text-gray-500 uppercase font-bold">Geometry (LxWxH)</div>
+                      <div class="text-sm font-semibold text-gray-200">${l}m x ${w}m x ${h}m</div>
+                    </div>
+                    <div>
+                      <div class="text-[10px] text-gray-500 uppercase font-bold">GPS Coordinates</div>
+                      <div class="text-sm font-semibold text-sky-400 font-mono">${lat}°, ${lon}°</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+              historyList.innerHTML += cardHTML;
+            });
+          }
+        } catch (err) {
+          historyList.innerHTML = '<div class="text-center text-rose-400 py-8"><i class="fa-solid fa-triangle-exclamation text-2xl mb-2 block"></i>Could not load records.</div>';
+        } finally {
+          historyLoading.classList.add('hidden');
+        }
+      });
+
+      closeHistoryBtn.addEventListener('click', () => { historyModal.classList.add('hidden'); });
+      historyModal.addEventListener('click', (e) => { if (e.target === historyModal) historyModal.classList.add('hidden'); });
     });
   </script>
 </body>
