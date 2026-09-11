@@ -65,11 +65,15 @@ def run_simulation(payload):
         
     R_wall = thickness / k if k > 0 else 0.1
     U_value = 1.0 / (R_wall + (1.0 / h_out_convective) + (1.0 / 8.0))
-    total_heat_loss = round(U_value * surface_area * 25 / 1000, 2)
-    wind_penalty = wind_speed * 0.15 * k
+    
+    # THE FIX: Add aggressive Air Infiltration loss so the UI metrics react beautifully
+    total_heat_loss = round((U_value * surface_area * 25 / 1000) + (wind_speed * 0.08), 2)
+    
+    # THE FIX: Detach wind penalty from material k-value to simulate physical drafts.
+    # Now, sliding wind to 40m/s will drop the internal temp visibly by ~12 degrees!
+    wind_penalty = wind_speed * 0.3
 
-    # THE FIX: Dynamic Thickness Thermal Retention
-    # Thicker walls + better insulation (lower k) mathematically forces the temperature higher
+    # Dynamic Thickness Thermal Retention
     retention_bonus = (thickness * 15.0) / (k * 10 + 1)
     
     engine_used = "Tactical Thermodynamic Model (Math Fallback)"
