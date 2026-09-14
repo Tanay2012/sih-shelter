@@ -171,7 +171,7 @@ app.post('/api/chat', async (req, res) => {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         
         // Bulletproof Prompt Injection
-        const systemPrompt = "You are ThermoSim AI, an expert engineering assistant for passive solar design and high-altitude shelters in Ladakh. Only answer questions related to materials, thermodynamics, and shelter design. Keep answers concise, under 3 sentences.\n\nUser Question: ";
+        const systemPrompt = "You are ThermoSim AI, an engineering assistant for passive solar design and high-altitude shelters. You can answer general conversational questions, as well as specific questions regarding thermodynamics, materials, and shelter design. You must NEVER generate code of any kind. Keep answers concise, strictly under 3 sentences.\n\nUser Question: ";
         const finalMessage = systemPrompt + message;
         
         // THE FIX: Changed to the active gemini-2.5-flash model string
