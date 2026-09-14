@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
@@ -161,6 +162,30 @@ app.get('/api/logout', (req, res) => {
 mongoose.connect(mongoUrl)
     .then(() => console.log('🟩 MongoDB Connected successfully'))
     .catch((err) => console.error('❌ MongoDB Connection Error:', err));
+
+
+// ── AI CHATBOT ROUTE ────────────────────────────────────────────────────────
+app.post('/api/chat', async (req, res) => {
+    try {
+        const { message } = req.body;
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        
+        // Bulletproof Prompt Injection
+        const systemPrompt = "You are ThermoSim AI, an expert engineering assistant for passive solar design and high-altitude shelters in Ladakh. Only answer questions related to materials, thermodynamics, and shelter design. Keep answers concise, under 3 sentences.\n\nUser Question: ";
+        const finalMessage = systemPrompt + message;
+        
+        // THE FIX: Changed to the active gemini-2.5-flash model string
+        const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash"});
+
+        const result = await model.generateContent(finalMessage);
+        const response = await result.response;
+        
+        res.json({ reply: response.text() });
+    } catch (error) {
+        console.error("AI Error:", error);
+        res.status(500).json({ reply: "Thermal AI is currently offline. Please check connections." });
+    }
+});
 
 // ── SIMULATION & SAVE ROUTE ─────────────────────────────────────────────────
 app.post('/api/simulate', (req, res) => {
