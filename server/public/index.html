@@ -497,6 +497,18 @@
           maxZoom: 19
         }).addTo(locationMap);
         locationMarker = L.marker(defaultLocation).addTo(locationMap);
+        locationMarker.bindPopup('Default location: Leh, Ladakh');
+
+        if (typeof navigator !== 'undefined' && 'geolocation' in navigator && typeof locationMap !== 'undefined' && typeof locationMarker !== 'undefined') {
+          navigator.geolocation.getCurrentPosition((position) => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            locationMap.setView([latitude, longitude], 13, { animate: true });
+            locationMarker.setLatLng([latitude, longitude]);
+            locationMarker.setPopupContent(`Current location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            updateLocationInputs(latitude, longitude);
+          }, () => {});
+        }
 
         locationMap.on('click', (event) => {
           locationMarker.setLatLng(event.latlng);
