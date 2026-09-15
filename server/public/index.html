@@ -27,6 +27,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Plotly.js CDN for 3D Heat Mesh -->
   <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <!-- Leaflet CSS and JS for the location picker -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Fonts -->
@@ -44,6 +47,8 @@
       height: 18px; width: 18px; border-radius: 50%;
       background: #f97316; cursor: pointer; border: none; box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
     }
+    #locationMap { height: 400px; width: 100%; }
+    .leaflet-container { background: #1f2937; font-family: inherit; }
     /* Custom scrollbar for the modal */
     .custom-scroll::-webkit-scrollbar { width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #1f2937; border-radius: 4px; }
@@ -168,8 +173,11 @@
 
         <!-- 3. Environmental Data -->
         <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
-          <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-wind text-orange-400"></i> 3. Location & Environment
+          <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between gap-2">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-wind text-orange-400"></i> 3. Location & Environment</span>
+            <button type="button" id="openLocationPickerBtn" class="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:text-orange-300 transition-colors flex items-center justify-center" aria-label="Open location picker" title="Choose location on map">
+              <i class="fa-solid fa-location-dot"></i>
+            </button>
           </div>
 
           <div class="grid grid-cols-2 gap-2 mt-1">
@@ -360,6 +368,20 @@
   </div>
   </main>
 
+  <!-- Location Picker Popup -->
+  <div id="locationPickerWindow" class="hidden fixed bottom-6 right-6 sm:right-[26rem] z-[60] w-[min(92vw,380px)] bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
+    <div class="bg-gray-800 p-3 border-b border-gray-700 flex justify-between items-center">
+      <span class="text-sm font-bold text-white"><i class="fa-solid fa-location-dot text-orange-400 mr-2"></i>Choose Location</span>
+      <button type="button" id="closeLocationPickerBtn" class="text-gray-400 hover:text-white w-7 h-7 flex items-center justify-center" aria-label="Close location picker">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="p-3 bg-gray-900">
+      <div id="locationMap" class="rounded-xl overflow-hidden border border-gray-700/80" aria-label="Interactive location picker"></div>
+      <p id="selectedCoordinates" class="text-xs text-orange-400 font-mono mt-3" aria-live="polite">Selected: 34.1526° N, 77.5771° E</p>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="bg-gray-800/40 border-t border-gray-800 text-center py-4 text-xs text-gray-500 mt-6">
     <p>Shelter Thermal Engine &bull; Climate Modeling Suite</p>
@@ -413,6 +435,10 @@
       const latDirSelect = document.getElementById('latDir');
       const longitudeInput = document.getElementById('longitude');
       const lonDirSelect = document.getElementById('lonDir');
+      const openLocationPickerBtn = document.getElementById('openLocationPickerBtn');
+      const closeLocationPickerBtn = document.getElementById('closeLocationPickerBtn');
+      const locationPickerWindow = document.getElementById('locationPickerWindow');
+      const selectedCoordinates = document.getElementById('selectedCoordinates');
       
       const windSlider = document.getElementById('windSpeed');
       const snowCheck = document.getElementById('snowLoad');
@@ -441,6 +467,48 @@
       
       const errorToast = document.getElementById('error-toast');
       const errorMessage = document.getElementById('error-message');
+
+      // Location picker is initialized only when opened so its hidden container has a valid size.
+      let locationMap;
+      let locationMarker;
+      const defaultLocation = [34.1526, 77.5771];
+
+      function updateLocationInputs(latitude, longitude) {
+        const latitudeDirection = latitude < 0 ? 'S' : 'N';
+        const longitudeDirection = longitude < 0 ? 'W' : 'E';
+        const selectedLatitude = Math.abs(latitude).toFixed(4);
+        const selectedLongitude = Math.abs(longitude).toFixed(4);
+
+        latitudeInput.value = selectedLatitude;
+        longitudeInput.value = selectedLongitude;
+        latDirSelect.value = latitudeDirection;
+        lonDirSelect.value = longitudeDirection;
+        selectedCoordinates.textContent = `Selected: ${selectedLatitude}° ${latitudeDirection}, ${selectedLongitude}° ${longitudeDirection}`;
+      }
+
+      function initializeLocationMap() {
+        if (locationMap) {
+          locationMap.invalidateSize();
+          return;
+        }
+
+        locationMap = L.map('locationMap', { attributionControl: false }).setView(defaultLocation, 9);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(locationMap);
+        locationMarker = L.marker(defaultLocation).addTo(locationMap);
+
+        locationMap.on('click', (event) => {
+          locationMarker.setLatLng(event.latlng);
+          updateLocationInputs(event.latlng.lat, event.latlng.lng);
+        });
+      }
+
+      openLocationPickerBtn.addEventListener('click', () => {
+        locationPickerWindow.classList.remove('hidden');
+        initializeLocationMap();
+      });
+      closeLocationPickerBtn.addEventListener('click', () => locationPickerWindow.classList.add('hidden'));
 
       // Material database presets
       const materialPresets = {
