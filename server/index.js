@@ -164,27 +164,49 @@ mongoose.connect(mongoUrl)
     .then(() => console.log('🟩 MongoDB Connected successfully'))
     .catch((err) => console.error('❌ MongoDB Connection Error:', err));
 
-
-// ── AI CHATBOT ROUTE ────────────────────────────────────────────────────────
+// ── CONTEXT-AWARE AI CHATBOT ROUTE (WITH AUTO-RETRY) ───────────────────────
 app.post('/api/chat', async (req, res) => {
     try {
-        const { message } = req.body;
+        const { message, context } = req.body;
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         
-        // Bulletproof Prompt Injection
-        const systemPrompt = "You are ThermoSim AI, an engineering assistant for passive solar design and high-altitude shelters. You can answer general conversational questions, as well as specific questions regarding thermodynamics, materials, and shelter design. You must NEVER generate code of any kind. Keep answers concise, strictly under 3 sentences.\n\nUser Question: ";
-        const finalMessage = systemPrompt + message;
+        let systemPrompt = "You are ThermoSim AI, an engineering assistant for passive solar design. You must NEVER generate code. Keep answers concise, strictly under 3 sentences.\n";
         
-        // THE FIX: Changed to the active gemini-2.5-flash model string
+        if (context) {
+            systemPrompt += `CURRENT SIMULATION CONTEXT: The user is testing a shelter using ${context.material}. The estimated cost is ${context.cost}. Peak indoor temp is ${context.peakTemp}, and heat loss is ${context.heatLoss}. Use these exact metrics if the user asks about their current design.\n\n`;
+        }
+        
+        const finalMessage = systemPrompt + "User Question: " + message;
+        
+        // Using the API's required model
         const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash"});
 
-        const result = await model.generateContent(finalMessage);
-        const response = await result.response;
+        let attempts = 0;
+        let responseText = "";
+
+        // Retry loop to bypass temporary 503 High Demand spikes
+        while (attempts < 3) {
+            try {
+                const result = await model.generateContent(finalMessage);
+                const response = await result.response;
+                responseText = response.text();
+                break; // Success, break out of the retry loop
+            } catch (apiError) {
+                attempts++;
+                if (apiError.status === 503 && attempts < 3) {
+                    console.log(`⚠️ AI Server busy (503). Retrying attempt ${attempts}...`);
+                    // Wait 2 seconds before trying again
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                } else {
+                    throw apiError; // Throw true errors (like 401 Unauthorized)
+                }
+            }
+        }
         
-        res.json({ reply: response.text() });
+        res.json({ reply: responseText });
     } catch (error) {
         console.error("AI Error:", error);
-        res.status(500).json({ reply: "Thermal AI is currently offline. Please check connections." });
+        res.status(500).json({ reply: "Thermal AI is experiencing high network traffic. Please try again in a moment." });
     }
 });
 

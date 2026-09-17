@@ -30,6 +30,9 @@
   <!-- Leaflet CSS and JS for the location picker -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- PDF Generation Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Fonts -->
@@ -220,6 +223,11 @@
         <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2 group cursor-pointer">
           <i class="fa-solid fa-play text-sm group-hover:translate-x-0.5 transition-transform"></i>
           <span>Run Simulation</span>
+        </button>
+        <!-- PDF Export Button -->
+        <button type="button" id="pdfBtn" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-2 group cursor-pointer mt-3">
+          <i class="fa-solid fa-file-pdf text-rose-400 group-hover:-translate-y-0.5 transition-transform"></i>
+          <span class="text-sm">Download Report</span>
         </button>
       </form>
 
@@ -869,25 +877,31 @@ function draw3DMesh(l, w, h, tIn, tOut, isHighSnow) {
     const text = chatInput.value.trim();
     if (!text) return;
     
-    // Append user message to UI
     chatLog.innerHTML += `<div class="bg-orange-500 text-white p-2.5 rounded-l-xl rounded-br-xl self-end max-w-[85%] shadow-md">${text}</div>`;
     chatInput.value = '';
     chatLog.scrollTop = chatLog.scrollHeight;
     
-    // Add loading indicator
     const loadingId = 'loading-' + Date.now();
     chatLog.innerHTML += `<div id="${loadingId}" class="text-gray-500 text-xs self-start ml-2"><i class="fa-solid fa-circle-notch fa-spin"></i> Thinking...</div>`;
     chatLog.scrollTop = chatLog.scrollHeight;
     
+    // 1. GRAB CURRENT DASHBOARD METRICS
+    const currentContext = {
+      material: document.getElementById('material').value,
+      cost: document.getElementById('stat-cost').innerText,
+      peakTemp: document.getElementById('metric-peak-in').innerText,
+      heatLoss: document.getElementById('stat-loss').innerText
+    };
+
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text })
+        // 2. SEND MESSAGE AND CONTEXT TO BACKEND
+        body: JSON.stringify({ message: text, context: currentContext })
       });
       const data = await res.json();
       
-      // Remove loading and append AI response
       document.getElementById(loadingId).remove();
       chatLog.innerHTML += `<div class="bg-gray-800 text-gray-300 p-2.5 rounded-r-xl rounded-bl-xl self-start max-w-[85%] border border-gray-700 leading-relaxed">${data.reply}</div>`;
     } catch (e) {
@@ -902,6 +916,110 @@ function draw3DMesh(l, w, h, tIn, tOut, isHighSnow) {
     if (e.key === 'Enter') sendChat.click();
   });
   
+ // ── FULL-FLEDGED PDF ENGINEERING REPORT LOGIC ─────────────────────────────
+  const pdfBtn = document.getElementById('pdfBtn');
+  if (pdfBtn) {
+    pdfBtn.addEventListener('click', () => {
+      const originalText = pdfBtn.innerHTML;
+      pdfBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-rose-400"></i><span class="text-sm">Compiling Data...</span>`;
+      
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4'); // Standard A4 PDF
+        
+        // Helper function for quick text formatting
+        const addText = (text, x, y, size, color = [50, 50, 50], font = "helvetica", style = "normal") => {
+          doc.setFont(font, style);
+          doc.setFontSize(size);
+          doc.setTextColor(color[0], color[1], color[2]);
+          doc.text(text, x, y);
+        };
+
+        // ── 1. HEADER ──
+        doc.setFillColor(15, 23, 42); // Dark Slate background for header
+        doc.rect(0, 0, 210, 40, 'F');
+        addText("ThermoSim SIH Engineering Report", 15, 20, 22, [249, 115, 22], "helvetica", "bold");
+        addText(`Generated on: ${new Date().toLocaleString()}`, 15, 30, 10, [200, 200, 200]);
+
+        // ── EXTRACT ALL LIVE PARAMETERS FROM THE DASHBOARD ──
+        const l = document.getElementById('length').value;
+        const w = document.getElementById('width').value;
+        const h = document.getElementById('height').value;
+        const th = document.getElementById('thicknessValue').innerText;
+        
+        const lat = document.getElementById('latitude').value + "° " + document.getElementById('latDir').value;
+        const lon = document.getElementById('longitude').value + "° " + document.getElementById('lonDir').value;
+        const wind = document.getElementById('windSpeed').value + " m/s";
+        const snow = document.getElementById('snowLoad').checked ? "High Snow Load (Pitched Roof)" : "Normal / Flat";
+
+        const matName = document.getElementById('material').value;
+        const k = document.getElementById('prop-k').innerText;
+        const rho = document.getElementById('prop-rho').innerText;
+        const cp = document.getElementById('prop-cp').innerText;
+
+        const rank = document.getElementById('stat-rank').innerText;
+        const peakTemp = document.getElementById('metric-peak-in').innerText;
+        const minTemp = document.getElementById('metric-min-out').innerText;
+        const retention = document.getElementById('metric-delta').innerText;
+        const solar = document.getElementById('stat-solar').innerText;
+        const heatLoss = document.getElementById('stat-loss').innerText;
+
+        const weight = document.getElementById('stat-weight').innerText;
+        const airlift = document.getElementById('stat-airlift').innerText;
+        const costVol = document.getElementById('cost-vol').innerText;
+        const totalCost = document.getElementById('stat-cost').innerText;
+
+        let y = 55; // Vertical tracker
+
+        // ── 2. SITE & GEOMETRY ──
+        addText("1. Site & Geometry Specifications", 15, y, 14, [0, 0, 0], "helvetica", "bold");
+        doc.setDrawColor(249, 115, 22); doc.setLineWidth(0.5); doc.line(15, y+3, 195, y+3); y += 12;
+        addText(`Dimensions (L x W x H):  ${l}m x ${w}m x ${h}m`, 20, y, 11);
+        addText(`Wall Thickness:  ${th} cm`, 115, y, 11); y += 8;
+        addText(`Coordinates:  ${lat}, ${lon}`, 20, y, 11);
+        addText(`Wind Speed:  ${wind}`, 115, y, 11); y += 8;
+        addText(`Roof Profile:  ${snow}`, 20, y, 11); y += 18;
+
+        // ── 3. MATERIAL THERMAL PROPERTIES ──
+        addText("2. Material Thermal Properties", 15, y, 14, [0, 0, 0], "helvetica", "bold");
+        doc.line(15, y+3, 195, y+3); y += 12;
+        addText(`Selected Material:  ${matName}`, 20, y, 11, [0, 0, 0], "helvetica", "bold"); y += 8;
+        addText(`Conductivity (k):  ${k}`, 20, y, 11);
+        addText(`Density:  ${rho}`, 85, y, 11);
+        addText(`Heat Capacity:  ${cp}`, 140, y, 11); y += 18;
+
+        // ── 4. PERFORMANCE METRICS ──
+        addText("3. Thermal Performance Analysis", 15, y, 14, [0, 0, 0], "helvetica", "bold");
+        doc.line(15, y+3, 195, y+3); y += 12;
+        addText(`Efficiency Rank:  ${rank}`, 20, y, 11, [16, 185, 129], "helvetica", "bold"); y += 8;
+        addText(`Peak Indoor Temp:  ${peakTemp}`, 20, y, 11);
+        addText(`Min Outdoor Temp:  ${minTemp}`, 85, y, 11);
+        addText(`Thermal Retention:  ${retention}`, 145, y, 11); y += 8;
+        addText(`Daily Solar Gain:  ${solar}`, 20, y, 11);
+        addText(`Net Heat Loss Rate:  ${heatLoss}`, 85, y, 11); y += 18;
+
+        // ── 5. LOGISTICS & COST (BOM) ──
+        addText("4. Logistics & Bill of Materials (BOM)", 15, y, 14, [0, 0, 0], "helvetica", "bold");
+        doc.line(15, y+3, 195, y+3); y += 12;
+        addText(`Total Payload Weight:  ${weight}`, 20, y, 11);
+        addText(`Transport Status:  ${airlift}`, 100, y, 11, [225, 29, 72], "helvetica", "bold"); y += 8;
+        addText(`Material Volume Req:  ${costVol}`, 20, y, 11); y += 12;
+        
+        // Total Cost Highlight Box
+        doc.setFillColor(249, 115, 22);
+        doc.rect(15, y, 180, 14, 'F');
+        addText(`ESTIMATED TOTAL COST:  ${totalCost}`, 20, y+9, 13, [255, 255, 255], "helvetica", "bold");
+
+        // Execute Download
+        doc.save(`ThermoSim_Engineering_Report_${Date.now()}.pdf`);
+        pdfBtn.innerHTML = originalText;
+        
+      } catch (error) {
+        console.error("PDF Compilation Error:", error);
+        pdfBtn.innerHTML = originalText;
+      }
+    });
+  }
   </script>
 </body>
 </html>
