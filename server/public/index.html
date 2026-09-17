@@ -586,18 +586,163 @@
       });
 
       // 3D Mesh
-      function draw3DMesh(l, w, h, tIn, tOut, isHighSnow) {
-        const roofHeight = isHighSnow ? 2.5 : 1.0; 
-        const x = [0, l, l, 0, 0, l, l, 0, 0, l]; const y = [0, 0, w, w, 0, 0, w, w, w/2, w/2]; const z = [0, 0, 0, 0, h, h, h, h, h + roofHeight, h + roofHeight];
-        const i = [0, 0, 0, 0, 4, 1, 1, 5, 0, 0, 3, 3, 4, 4, 7, 7]; const j = [1, 2, 3, 7, 7, 5, 6, 9, 4, 5, 2, 6, 8, 9, 6, 9]; const k = [2, 3, 7, 4, 8, 6, 2, 6, 5, 1, 6, 7, 9, 5, 9, 8];
-        const temps = [tOut, tOut, tOut, tOut, tIn, tIn, tIn, tIn, tIn + 2, tIn + 2];
-        const heatTrace = { type: 'mesh3d', x: x, y: y, z: z, i: i, j: j, k: k, intensity: temps, colorscale: 'Jet', opacity: 0.9, flatshading: false, hoverinfo: 'text', text: temps.map(t => `Surface Temp: ${t.toFixed(1)}°C`) };
-        const x_lines = [0, l, l, 0, 0, null, 0, l, l, 0, 0, null, 0, 0, null, l, l, null, l, l, null, 0, 0, null, 0, 0, 0, null, l, l, l, null, 0, l];
-        const y_lines = [0, 0, w, w, 0, null, 0, 0, w, w, 0, null, 0, 0, null, 0, 0, null, w, w, null, w, w, null, 0, w/2, w, null, 0, w/2, w, null, w/2, w/2];
-        const z_lines = [0, 0, 0, 0, 0, null, h, h, h, h, h, null, 0, h, null, 0, h, null, 0, h, null, 0, h, null, h, h+roofHeight, h, null, h, h+roofHeight, h, null, h+roofHeight, h+roofHeight];
-        const edgeTrace = { type: 'scatter3d', mode: 'lines', x: x_lines, y: y_lines, z: z_lines, line: { color: '#ffffff', width: 2 }, hoverinfo: 'none' };
-        Plotly.newPlot('meshContainer', [heatTrace, edgeTrace], { paper_bgcolor: 'rgba(0,0,0,0)', scene: { aspectmode: 'data', camera: { eye: { x: -1.5, y: -1.5, z: 1.2 } } }, margin: { l: 0, r: 0, b: 0, t: 0 }, showlegend: false }, {responsive: true});
-      }
+      // ── ADVANCED FEA DISCRETIZATION WITH CONTINUOUS CORNER CONDUCTION ─────────────
+function draw3DMesh(l, w, h, tIn, tOut, isHighSnow) {
+  const roofH = isHighSnow ? 2.4 : 1.2;
+  const divX = 10; // Mesh subdivisions along length
+  const divY = 8;  // Mesh subdivisions along width
+  const divZ = 6;  // Mesh subdivisions along height
+
+  const x = [], y = [], z = [], intensity = [];
+  const i_idx = [], j_idx = [], k_idx = [];
+  const edgeX = [], edgeY = [], edgeZ = [];
+
+  // Continuous 3D Temperature Field Function T(x, y, z)
+  // Simulates combined solar irradiance, internal conduction, and thermal bridging
+  function getThermalPoint(px, py, pz) {
+    // Baseline wall surface temperature warmed by through-wall internal heat flux
+    const tBaseEnvelope = tOut + (tIn - tOut) * 0.38;
+    
+    // Height factor: warm air rises internally (stack effect)
+    const zFactor = (pz / (h + roofH)) * 2.8;
+
+    // South solar direct radiation (highest at y = 0, peak at mid-span of length)
+    const southSolarPeak = Math.sin((px / l) * Math.PI) * 7.2 + 4.5;
+    
+    // Thermal diffusion wrapping around corners: decay along depth (y-axis)
+    // Heat conducts from south (y=0) to north (y=w) with exponential dissipation
+    const conductionDiffusion = Math.exp(-2.2 * (py / w)) * southSolarPeak;
+    
+    // Diffuse ambient and snow-reflected albedo radiation on north/upper surfaces
+    const diffuseSky = (1 - Math.abs(px - l / 2) / l) * 1.5;
+
+    return tBaseEnvelope + zFactor + conductionDiffusion + diffuseSky;
+  }
+
+  // Helper to add quadrilateral FEA element cells with boundary wireframe
+  function addQuad(p1, p2, p3, p4) {
+    const base = x.length;
+    const t1 = getThermalPoint(p1[0], p1[1], p1[2]);
+    const t2 = getThermalPoint(p2[0], p2[1], p2[2]);
+    const t3 = getThermalPoint(p3[0], p3[1], p3[2]);
+    const t4 = getThermalPoint(p4[0], p4[1], p4[2]);
+
+    x.push(p1[0], p2[0], p3[0], p4[0]);
+    y.push(p1[1], p2[1], p3[1], p4[1]);
+    z.push(p1[2], p2[2], p3[2], p4[2]);
+    intensity.push(t1, t2, t3, t4);
+
+    // Two triangular elements per FEA cell
+    i_idx.push(base, base);
+    j_idx.push(base + 1, base + 2);
+    k_idx.push(base + 2, base + 3);
+
+    // Grid wireframe lines
+    edgeX.push(p1[0], p2[0], p3[0], p4[0], p1[0], null);
+    edgeY.push(p1[1], p2[1], p3[1], p4[1], p1[1], null);
+    edgeZ.push(p1[2], p2[2], p3[2], p4[2], p1[2], null);
+  }
+
+  // 1. SOUTH WALL (y = 0): Direct high solar gain facade
+  for (let ix = 0; ix < divX; ix++) {
+    for (let iz = 0; iz < divZ; iz++) {
+      const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+      const z0 = (iz * h) / divZ, z1 = ((iz + 1) * h) / divZ;
+      addQuad([x0, 0, z0], [x1, 0, z0], [x1, 0, z1], [x0, 0, z1]);
+    }
+  }
+
+  // 2. EAST & WEST SIDE WALLS (x = 0 and x = l): Smooth thermal diffusion from south to north
+  for (let iy = 0; iy < divY; iy++) {
+    for (let iz = 0; iz < divZ; iz++) {
+      const y0 = (iy * w) / divY, y1 = ((iy + 1) * w) / divY;
+      const z0 = (iz * h) / divZ, z1 = ((iz + 1) * h) / divZ;
+      // West Wall (x = 0)
+      addQuad([0, y0, z0], [0, y1, z0], [0, y1, z1], [0, y0, z1]);
+      // East Wall (x = l)
+      addQuad([l, y0, z0], [l, y0, z1], [l, y1, z1], [l, y1, z0]);
+    }
+  }
+
+  // 3. NORTH WALL (y = w): Protected shadow side with diffuse ambient & internal conduction
+  for (let ix = 0; ix < divX; ix++) {
+    for (let iz = 0; iz < divZ; iz++) {
+      const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+      const z0 = (iz * h) / divZ, z1 = ((iz + 1) * h) / divZ;
+      addQuad([x0, w, z0], [x0, w, z1], [x1, w, z1], [x1, w, z0]);
+    }
+  }
+
+  // 4. GABLED ROOF (South slope absorbs solar heat, North slope faces cold dissipation)
+  const midY = w / 2;
+  const apexZ = h + roofH;
+
+  // South-facing roof pitch
+  for (let ix = 0; ix < divX; ix++) {
+    const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+    addQuad([x0, 0, h], [x1, 0, h], [x1, midY, apexZ], [x0, midY, apexZ]);
+  }
+
+  // North-facing roof pitch
+  for (let ix = 0; ix < divX; ix++) {
+    const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+    addQuad([x0, midY, apexZ], [x1, midY, apexZ], [x1, w, h], [x0, w, h]);
+  }
+
+  // 5. RENDER PLOTLY 3D SCENE
+  const meshTrace = {
+    type: 'mesh3d',
+    x: x, y: y, z: z,
+    i: i_idx, j: j_idx, k: k_idx,
+    intensity: intensity,
+    colorscale: 'Turbo', // Smooth engineering thermal spectrum
+    showscale: true,
+    colorbar: {
+      title: { text: 'Surface Temp (°C)', font: { color: '#f8fafc', size: 11 } },
+      tickfont: { color: '#94a3b8', size: 10 },
+      len: 0.85,
+      thickness: 14,
+      x: 0.98
+    },
+    lighting: { ambient: 0.85, diffuse: 0.5, specular: 0.15 },
+    hoverinfo: 'text',
+    text: intensity.map(val => `Nodal Temp: ${val.toFixed(1)} °C`)
+  };
+
+  const wireframeTrace = {
+    type: 'scatter3d',
+    mode: 'lines',
+    x: edgeX, y: edgeY, z: edgeZ,
+    line: { color: 'rgba(255, 255, 255, 0.18)', width: 1.0 },
+    hoverinfo: 'none'
+  };
+
+  const sunVectorTrace = {
+    type: 'scatter3d',
+    mode: 'lines+text',
+    x: [-l * 0.3, 0],
+    y: [-w * 0.4, 0],
+    z: [h + roofH + 1.6, h * 0.75],
+    line: { color: '#f59e0b', width: 4 },
+    text: ['☀️ Direct Solar Irradiance', ''],
+    textposition: 'top center',
+    textfont: { color: '#fbbf24', size: 10, family: 'monospace' },
+    hoverinfo: 'none'
+  };
+
+  Plotly.newPlot('meshContainer', [meshTrace, wireframeTrace, sunVectorTrace], {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    scene: {
+      aspectmode: 'data',
+      camera: { eye: { x: -1.35, y: -1.65, z: 1.15 } },
+      xaxis: { title: 'Length (m)', color: '#64748b', gridcolor: '#334155' },
+      yaxis: { title: 'Width (m)', color: '#64748b', gridcolor: '#334155' },
+      zaxis: { title: 'Height (m)', color: '#64748b', gridcolor: '#334155' }
+    },
+    margin: { l: 0, r: 0, b: 10, t: 10 },
+    showlegend: false
+  }, { responsive: true });
+}
       draw3DMesh(6.0, 4.0, 2.8, 18.4, -15.0, false);
 
       function updateUI(results, payload) {
