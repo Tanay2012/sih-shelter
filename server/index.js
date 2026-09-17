@@ -17,6 +17,7 @@ app.use(express.json());
 
 // Determine Mongo URI from environment variables with fallback
 const mongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/sih-shelter';
+//const mongoUrl = process.env.MONGO_URI || 'mongodb+srv://td961381_db_user:cgh3zydDkrSHTJEp@cluster0.vigurv8.mongodb.net/shelter_sim?appName=Cluster0';
 
 // ── THE INDESTRUCTIBLE SESSION STORE ────────────────────────────────────────
 // This checks every possible version of connect-mongo. If it still fails, 
