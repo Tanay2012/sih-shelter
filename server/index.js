@@ -5,7 +5,7 @@ const cors = require('cors');
 const session = require('express-session');
 const connectMongo = require('connect-mongo');
 const bcrypt = require('bcryptjs');
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const path = require('path');
 const mongoose = require('mongoose');
 const Simulation = require('./models/Simulation');
@@ -212,6 +212,13 @@ app.post('/api/chat', async (req, res) => {
 
 // ── SIMULATION & SAVE ROUTE ─────────────────────────────────────────────────
 app.post('/api/simulate', (req, res) => {
+    // 1. PRE-EMPTIVE CLEANUP: Kill any lingering ANSYS processes
+    if (process.platform === 'win32') {
+        try {
+            execSync('taskkill /F /IM ansys* /T > NUL 2>&1');
+        } catch (e) {}
+    }
+
     const payload = req.body;
 
     // Save simulation to MongoDB Atlas asynchronously
@@ -269,3 +276,19 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Backend Simulation API running on http://localhost:${PORT}`);
 });
+
+// ── SERVER SHUTDOWN CLEANUP ─────────────────────────────────────────────────
+function cleanupAndExit() {
+    console.log('\n🛑 Shutting down server... cleaning up ANSYS processes...');
+    if (process.platform === 'win32') {
+        try {
+            execSync('taskkill /F /IM ansys* /T > NUL 2>&1');
+            console.log('✅ All background physics engines terminated.');
+        } catch (e) {}
+    }
+    process.exit(0);
+}
+
+process.on('SIGINT', cleanupAndExit);  
+process.on('SIGTERM', cleanupAndExit); 
+process.on('exit', cleanupAndExit);
