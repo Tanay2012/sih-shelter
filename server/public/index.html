@@ -27,9 +27,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Plotly.js CDN for 3D Heat Mesh -->
   <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-  <!-- Leaflet CSS and JS for the location picker -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- MapLibre GL v5 (True 3D Globe + High-Res Satellite Zoom Tiles) -->
+  <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
   <!-- PDF Generation Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -50,8 +50,42 @@
       height: 18px; width: 18px; border-radius: 50%;
       background: #f97316; cursor: pointer; border: none; box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
     }
-    #locationMap { height: 400px; width: 100%; }
-    .leaflet-container { background: #1f2937; font-family: inherit; }
+    /* Deep space background for the 3D Satellite Globe */
+    #locationMap {
+      height: 430px;
+      width: 100%;
+      background: radial-gradient(circle at center, #1e293b 0%, #090d16 75%);
+    }
+    /* Clean, minimal Precision GPS Reticle */
+    .gps-reticle {
+      width: 22px;
+      height: 22px;
+      border: 1.5px solid rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      background: rgba(249, 115, 22, 0.2);
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .gps-reticle-dot {
+      width: 8px;
+      height: 8px;
+      background: #f97316;
+      border: 1.5px solid #ffffff;
+      border-radius: 50%;
+    }
+    /* Dark theme styling for MapLibre zoom controls */
+    .maplibregl-ctrl-group {
+      background: #111827 !important;
+      border: 1px solid #374151 !important;
+      border-radius: 10px !important;
+      overflow: hidden;
+    }
+    .maplibregl-ctrl-group button {
+      filter: invert(1) brightness(0.9);
+    }
     /* Custom scrollbar for the modal */
     .custom-scroll::-webkit-scrollbar { width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #1f2937; border-radius: 4px; }
@@ -174,16 +208,48 @@
           </div>
         </div>
 
-        <!-- 3. Environmental Data -->
+        <!-- 3. Environmental Data + 3D Globe & Live Weather Telemetry -->
         <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
           <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between gap-2">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-wind text-orange-400"></i> 3. Location & Environment</span>
-            <button type="button" id="openLocationPickerBtn" class="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:text-orange-300 transition-colors flex items-center justify-center" aria-label="Open location picker" title="Choose location on map">
-              <i class="fa-solid fa-location-dot"></i>
+            <span class="flex items-center gap-2"><i class="fa-solid fa-earth-asia text-orange-400"></i> 3. Location & Environment</span>
+            <button type="button" id="openLocationPickerBtn" class="px-2.5 py-1 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/40 text-orange-400 hover:text-orange-300 transition-colors flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer" aria-label="Open 3D Globe" title="Open 3D Satellite Globe">
+              <i class="fa-solid fa-globe"></i>
+              <span>3D Globe</span>
             </button>
           </div>
 
-          <div class="grid grid-cols-2 gap-2 mt-1">
+          <!-- Live Telemetry Readout Box -->
+          <div class="bg-gray-950/70 p-3 rounded-lg border border-gray-800 flex flex-col gap-2">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-1.5">
+              <div class="text-[11px] font-semibold text-gray-200 flex items-center gap-1.5 truncate">
+                <i class="fa-solid fa-crosshairs text-orange-400"></i>
+                <span id="locationName" class="truncate">Leh, Ladakh (Default)</span>
+              </div>
+              <span id="syncBadge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shrink-0">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live
+              </span>
+            </div>
+            <div class="grid grid-cols-4 gap-1.5 text-center text-[10px] font-mono pt-0.5">
+              <div class="bg-gray-900/80 p-1.5 rounded border border-gray-800/80">
+                <span class="text-gray-500 block text-[9px]">Temp</span>
+                <span id="wx-temp" class="text-orange-400 font-bold">--°C</span>
+              </div>
+              <div class="bg-gray-900/80 p-1.5 rounded border border-gray-800/80">
+                <span class="text-gray-500 block text-[9px]">Humidity</span>
+                <span id="wx-humidity" class="text-sky-400 font-bold">--%</span>
+              </div>
+              <div class="bg-gray-900/80 p-1.5 rounded border border-gray-800/80">
+                <span class="text-gray-500 block text-[9px]">Wind</span>
+                <span id="wx-wind" class="text-emerald-400 font-bold">--m/s</span>
+              </div>
+              <div class="bg-gray-900/80 p-1.5 rounded border border-gray-800/80">
+                <span class="text-gray-500 block text-[9px]">Elev</span>
+                <span id="wx-elev" class="text-purple-400 font-bold">--m</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mt-0.5">
             <div>
               <label for="latitude" class="text-[11px] text-gray-400 font-medium">Latitude</label>
               <div class="flex">
@@ -211,7 +277,7 @@
                 <span id="windValue">15</span> m/s
               </span>
             </div>
-            <input type="range" id="windSpeed" min="0" max="40" value="15" step="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500">
+            <input type="range" id="windSpeed" min="0" max="40" value="15" step="0.5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500">
           </div>
 
           <div class="mt-2 flex items-center gap-2 bg-gray-950/50 p-2 rounded-lg border border-gray-800">
@@ -349,44 +415,81 @@
     </section>
 
     <!-- Floating AI Chat Widget -->
-  <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-    <!-- Chat Window (Hidden by default) -->
-    <div id="chatWindow" class="hidden bg-gray-900 border border-gray-700 rounded-2xl w-80 sm:w-96 shadow-2xl mb-4 overflow-hidden flex flex-col">
-      <div class="bg-gray-800 p-3 border-b border-gray-700 flex justify-between items-center">
-        <span class="text-sm font-bold text-white"><i class="fa-solid fa-robot text-orange-400 mr-2"></i>ThermoSim AI</span>
-        <button id="closeChatBtn" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div id="chatLog" class="p-4 h-72 overflow-y-auto flex flex-col gap-3 text-xs custom-scroll">
-        <div class="bg-gray-800 text-gray-300 p-2.5 rounded-r-xl rounded-bl-xl self-start max-w-[85%] border border-gray-700">
-          Hello! I'm your thermal engineering assistant. Ask me about insulation materials, solar gain, or Ladakh building techniques.
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+      <!-- Chat Window (Hidden by default) -->
+      <div id="chatWindow" class="hidden bg-gray-900 border border-gray-700 rounded-2xl w-80 sm:w-96 shadow-2xl mb-4 overflow-hidden flex flex-col">
+        <div class="bg-gray-800 p-3 border-b border-gray-700 flex justify-between items-center">
+          <span class="text-sm font-bold text-white"><i class="fa-solid fa-robot text-orange-400 mr-2"></i>ThermoSim AI</span>
+          <button id="closeChatBtn" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="chatLog" class="p-4 h-72 overflow-y-auto flex flex-col gap-3 text-xs custom-scroll">
+          <div class="bg-gray-800 text-gray-300 p-2.5 rounded-r-xl rounded-bl-xl self-start max-w-[85%] border border-gray-700">
+            Hello! I'm your thermal engineering assistant. Ask me about insulation materials, solar gain, or Ladakh building techniques.
+          </div>
+        </div>
+        <div class="p-3 bg-gray-800 border-t border-gray-700 flex gap-2">
+          <input type="text" id="chatInput" class="flex-1 bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-orange-500" placeholder="Ask about materials...">
+          <button id="sendChatBtn" class="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-transform active:scale-95">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
         </div>
       </div>
-      <div class="p-3 bg-gray-800 border-t border-gray-700 flex gap-2">
-        <input type="text" id="chatInput" class="flex-1 bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-orange-500" placeholder="Ask about materials...">
-        <button id="sendChatBtn" class="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-transform active:scale-95">
-          <i class="fa-solid fa-paper-plane"></i>
-        </button>
-      </div>
+      
+      <!-- Floating Toggle Button -->
+      <button id="chatToggleBtn" class="w-14 h-14 bg-gradient-to-r from-orange-500 to-amber-600 rounded-full shadow-lg shadow-orange-500/30 flex items-center justify-center text-white text-xl hover:scale-105 transition-transform border border-orange-400/50">
+        <i class="fa-solid fa-comment-dots"></i>
+      </button>
     </div>
-    
-    <!-- Floating Toggle Button -->
-    <button id="chatToggleBtn" class="w-14 h-14 bg-gradient-to-r from-orange-500 to-amber-600 rounded-full shadow-lg shadow-orange-500/30 flex items-center justify-center text-white text-xl hover:scale-105 transition-transform border border-orange-400/50">
-      <i class="fa-solid fa-comment-dots"></i>
-    </button>
-  </div>
   </main>
 
-  <!-- Location Picker Popup -->
-  <div id="locationPickerWindow" class="hidden fixed bottom-6 right-6 sm:right-[26rem] z-[60] w-[min(92vw,380px)] bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
-    <div class="bg-gray-800 p-3 border-b border-gray-700 flex justify-between items-center">
-      <span class="text-sm font-bold text-white"><i class="fa-solid fa-location-dot text-orange-400 mr-2"></i>Choose Location</span>
-      <button type="button" id="closeLocationPickerBtn" class="text-gray-400 hover:text-white w-7 h-7 flex items-center justify-center" aria-label="Close location picker">
+  <!-- 3D Satellite Globe & Live Telemetry Popup -->
+  <div id="locationPickerWindow" class="hidden fixed bottom-6 right-6 sm:right-[6.5rem] z-[60] w-[min(94vw,540px)] bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
+    <div class="bg-gray-800 p-3.5 border-b border-gray-700 flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-earth-asia text-orange-400"></i>
+        <span class="text-sm font-bold text-white">3D Satellite Globe & Live Telemetry</span>
+      </div>
+      <button type="button" id="closeLocationPickerBtn" class="text-gray-400 hover:text-white w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-700/60" aria-label="Close location picker">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
-    <div class="p-3 bg-gray-900">
-      <div id="locationMap" class="rounded-xl overflow-hidden border border-gray-700/80" aria-label="Interactive location picker"></div>
-      <p id="selectedCoordinates" class="text-xs text-orange-400 font-mono mt-3" aria-live="polite">Selected: 34.1526° N, 77.5771° E</p>
+
+    <div class="p-3 bg-gray-900 relative">
+      <!-- Overlay Pill inside Globe -->
+      <div class="absolute top-6 left-6 z-10 bg-gray-900/85 backdrop-blur-md border border-gray-700 px-3 py-1.5 rounded-xl pointer-events-none shadow-lg">
+        <div id="globeLocationTitle" class="text-xs font-bold text-white flex items-center gap-1.5">
+          <i class="fa-solid fa-crosshairs text-orange-400"></i>
+          <span>Leh, Ladakh</span>
+        </div>
+        <p id="selectedCoordinates" class="text-[11px] text-orange-400 font-mono mt-0.5" aria-live="polite">Selected: 34.1526° N, 77.5771° E</p>
+      </div>
+
+      <div class="absolute top-6 right-6 z-10 bg-gray-900/85 backdrop-blur-md border border-gray-700 px-2.5 py-1 rounded-lg pointer-events-none text-[10px] text-gray-300">
+        <i class="fa-solid fa-magnifying-glass-plus text-orange-400 mr-1"></i> Scroll HD Zoom &bull; Click to Pin
+      </div>
+
+      <!-- 3D Globe Container -->
+      <div id="locationMap" class="rounded-xl overflow-hidden border border-gray-700/80 cursor-crosshair" aria-label="Interactive 3D satellite globe"></div>
+
+      <!-- Bottom Telemetry Summary Bar in Modal -->
+      <div class="mt-3 grid grid-cols-4 gap-2 text-center text-xs font-mono">
+        <div class="bg-gray-800/90 border border-gray-700/70 p-2 rounded-lg">
+          <span class="text-[10px] text-gray-400 block font-sans">Ambient Temp</span>
+          <span id="modal-wx-temp" class="text-orange-400 font-bold">-- °C</span>
+        </div>
+        <div class="bg-gray-800/90 border border-gray-700/70 p-2 rounded-lg">
+          <span class="text-[10px] text-gray-400 block font-sans">Humidity</span>
+          <span id="modal-wx-humidity" class="text-sky-400 font-bold">-- %</span>
+        </div>
+        <div class="bg-gray-800/90 border border-gray-700/70 p-2 rounded-lg">
+          <span class="text-[10px] text-gray-400 block font-sans">Wind Speed</span>
+          <span id="modal-wx-wind" class="text-emerald-400 font-bold">-- m/s</span>
+        </div>
+        <div class="bg-gray-800/90 border border-gray-700/70 p-2 rounded-lg">
+          <span class="text-[10px] text-gray-400 block font-sans">Elevation</span>
+          <span id="modal-wx-elev" class="text-purple-400 font-bold">-- m</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -427,7 +530,7 @@
     </div>
   </div>
 
-  <!-- Script for Interactivity, Dynamic Cost Calculation, Chart.js & Advanced Plotly 3D -->
+  <!-- Script for Interactivity, 3D Satellite Globe, Live Telemetry, Chart.js & Plotly 3D -->
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       // DOM Elements
@@ -474,12 +577,12 @@
       const metricAirVol = document.getElementById('metric-air-vol');
       
       const errorToast = document.getElementById('error-toast');
-      const errorMessage = document.getElementById('error-message');
 
-      // Location picker is initialized only when opened so its hidden container has a valid size.
-      let locationMap;
-      let locationMarker;
-      const defaultLocation = [34.1526, 77.5771];
+      // ── 3D SATELLITE GLOBE & LIVE WEATHER TELEMETRY ───────────────────────────
+      let globeMap;
+      let globeMarker;
+      const defaultLat = 34.1526;
+      const defaultLng = 77.5771;
 
       function updateLocationInputs(latitude, longitude) {
         const latitudeDirection = latitude < 0 ? 'S' : 'N';
@@ -494,41 +597,147 @@
         selectedCoordinates.textContent = `Selected: ${selectedLatitude}° ${latitudeDirection}, ${selectedLongitude}° ${longitudeDirection}`;
       }
 
+      async function fetchLiveWeatherAndLocation(lat, lng) {
+        updateLocationInputs(lat, lng);
+        if (globeMarker) {
+          globeMarker.setLngLat([lng, lat]);
+        }
+
+        const badge = document.getElementById('syncBadge');
+        badge.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Syncing`;
+
+        try {
+          const [wxRes, geoRes] = await Promise.all([
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,snowfall&wind_speed_unit=ms`),
+            fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`)
+          ]);
+
+          const wxData = await wxRes.json();
+          const geoData = await geoRes.json();
+
+          const place = geoData.city || geoData.locality || geoData.principalSubdivision || geoData.countryName || "Remote Coordinate";
+          const country = geoData.countryCode ? `, ${geoData.countryCode}` : '';
+          const fullPlaceName = `${place}${country}`;
+
+          document.getElementById('locationName').textContent = fullPlaceName;
+          document.getElementById('globeLocationTitle').innerHTML = `<i class="fa-solid fa-crosshairs text-orange-400"></i><span>${fullPlaceName}</span>`;
+
+          const temp = wxData.current.temperature_2m;
+          const humidity = wxData.current.relative_humidity_2m;
+          const windSpeed = wxData.current.wind_speed_10m;
+          const snowfall = wxData.current.snowfall;
+          const elevation = wxData.elevation || 0;
+
+          // Update Sidebar Telemetry
+          document.getElementById('wx-temp').textContent = `${temp.toFixed(1)}°C`;
+          document.getElementById('wx-humidity').textContent = `${humidity}%`;
+          document.getElementById('wx-wind').textContent = `${windSpeed.toFixed(1)}m/s`;
+          document.getElementById('wx-elev').textContent = `${Math.round(elevation)}m`;
+
+          // Update Modal Telemetry
+          document.getElementById('modal-wx-temp').textContent = `${temp.toFixed(1)} °C`;
+          document.getElementById('modal-wx-humidity').textContent = `${humidity} %`;
+          document.getElementById('modal-wx-wind').textContent = `${windSpeed.toFixed(1)} m/s`;
+          document.getElementById('modal-wx-elev').textContent = `${Math.round(elevation)} m`;
+
+          // Auto-Sync Wind Speed Slider & Snow Load Checkbox
+          const clampedWind = Math.min(40, Math.max(0, windSpeed));
+          windSlider.value = clampedWind;
+          document.getElementById('windValue').textContent = clampedWind.toFixed(1);
+
+          const isHighSnowZone = (snowfall > 0 || temp < 0 || elevation > 3000);
+          snowCheck.checked = isHighSnowZone;
+
+          // Update 3D Mesh Roof Pitch live
+          const l = parseFloat(lengthInput.value) || 6.0;
+          const w = parseFloat(widthInput.value) || 4.0;
+          const h = parseFloat(heightInput.value) || 2.8;
+          draw3DMesh(l, w, h, 18.4, temp, isHighSnowZone);
+
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live`;
+        } catch (err) {
+          console.error("Weather Telemetry Error:", err);
+          badge.innerHTML = `Offline`;
+        }
+      }
+
       function initializeLocationMap() {
-        if (locationMap) {
-          locationMap.invalidateSize();
+        if (globeMap) {
+          globeMap.resize();
           return;
         }
 
-        locationMap = L.map('locationMap', { attributionControl: false }).setView(defaultLocation, 9);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19
-        }).addTo(locationMap);
-        locationMarker = L.marker(defaultLocation).addTo(locationMap);
-        locationMarker.bindPopup('Default location: Leh, Ladakh');
+        let currentLat = parseFloat(latitudeInput.value) || defaultLat;
+        if (latDirSelect.value === 'S') currentLat = -Math.abs(currentLat);
+        let currentLng = parseFloat(longitudeInput.value) || defaultLng;
+        if (lonDirSelect.value === 'W') currentLng = -Math.abs(currentLng);
 
-        if (typeof navigator !== 'undefined' && 'geolocation' in navigator && typeof locationMap !== 'undefined' && typeof locationMarker !== 'undefined') {
-          navigator.geolocation.getCurrentPosition((position) => {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            locationMap.setView([latitude, longitude], 13, { animate: true });
-            locationMarker.setLatLng([latitude, longitude]);
-            locationMarker.setPopupContent(`Current location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-            updateLocationInputs(latitude, longitude);
-          }, () => {});
-        }
+        globeMap = new maplibregl.Map({
+          container: 'locationMap',
+          attributionControl: false,
+          style: {
+            version: 8,
+            projection: { type: 'globe' },
+            sources: {
+              'esri-satellite': {
+                type: 'raster',
+                tiles: [
+                  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                ],
+                tileSize: 256,
+                maxzoom: 19
+              },
+              'carto-labels': {
+                type: 'raster',
+                tiles: [
+                  'https://basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}@2x.png'
+                ],
+                tileSize: 256,
+                maxzoom: 19
+              }
+            },
+            layers: [
+              { id: 'satellite-layer', type: 'raster', source: 'esri-satellite' },
+              { id: 'labels-layer', type: 'raster', source: 'carto-labels', paint: { 'raster-opacity': 0.9 } }
+            ]
+          },
+          center: [currentLng, currentLat],
+          zoom: 2.6
+        });
 
-        locationMap.on('click', (event) => {
-          locationMarker.setLatLng(event.latlng);
-          updateLocationInputs(event.latlng.lat, event.latlng.lng);
+        globeMap.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+
+        const reticleEl = document.createElement('div');
+        reticleEl.className = 'gps-reticle';
+        reticleEl.innerHTML = '<div class="gps-reticle-dot"></div>';
+
+        globeMarker = new maplibregl.Marker({ element: reticleEl, anchor: 'center' })
+          .setLngLat([currentLng, currentLat])
+          .addTo(globeMap);
+
+        globeMap.on('click', (e) => {
+          const { lng, lat } = e.lngLat;
+          fetchLiveWeatherAndLocation(lat, lng);
         });
       }
 
       openLocationPickerBtn.addEventListener('click', () => {
         locationPickerWindow.classList.remove('hidden');
-        initializeLocationMap();
+        setTimeout(initializeLocationMap, 50);
       });
       closeLocationPickerBtn.addEventListener('click', () => locationPickerWindow.classList.add('hidden'));
+
+      // Sync manual coordinate input edits with telemetry
+      [latitudeInput, longitudeInput, latDirSelect, lonDirSelect].forEach(el => {
+        el.addEventListener('change', () => {
+          let latVal = parseFloat(latitudeInput.value) || defaultLat;
+          if (latDirSelect.value === 'S') latVal = -Math.abs(latVal);
+          let lonVal = parseFloat(longitudeInput.value) || defaultLng;
+          if (lonDirSelect.value === 'W') lonVal = -Math.abs(lonVal);
+          fetchLiveWeatherAndLocation(latVal, lonVal);
+          if (globeMap) globeMap.flyTo({ center: [lonVal, latVal] });
+        });
+      });
 
       // Material database presets
       const materialPresets = {
@@ -593,165 +802,139 @@
         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(55, 65, 81, 0.4)' }, ticks: { color: '#9ca3af' } }, y: { grid: { color: 'rgba(55, 65, 81, 0.4)' }, ticks: { color: '#9ca3af', callback: val => val + '°C' } } } }
       });
 
-      // 3D Mesh
       // ── ADVANCED FEA DISCRETIZATION WITH CONTINUOUS CORNER CONDUCTION ─────────────
-function draw3DMesh(l, w, h, tIn, tOut, isHighSnow) {
-  const roofH = isHighSnow ? 2.4 : 1.2;
-  const divX = 10; // Mesh subdivisions along length
-  const divY = 8;  // Mesh subdivisions along width
-  const divZ = 6;  // Mesh subdivisions along height
+      function draw3DMesh(l, w, h, tIn, tOut, isHighSnow) {
+        const roofH = isHighSnow ? 2.4 : 1.2;
+        const divX = 10;
+        const divY = 8;
+        const divZ = 6;
 
-  const x = [], y = [], z = [], intensity = [];
-  const i_idx = [], j_idx = [], k_idx = [];
-  const edgeX = [], edgeY = [], edgeZ = [];
+        const x = [], y = [], z = [], intensity = [];
+        const i_idx = [], j_idx = [], k_idx = [];
+        const edgeX = [], edgeY = [], edgeZ = [];
 
-  // Continuous 3D Temperature Field Function T(x, y, z)
-  // Simulates combined solar irradiance, internal conduction, and thermal bridging
-  function getThermalPoint(px, py, pz) {
-    // Baseline wall surface temperature warmed by through-wall internal heat flux
-    const tBaseEnvelope = tOut + (tIn - tOut) * 0.38;
-    
-    // Height factor: warm air rises internally (stack effect)
-    const zFactor = (pz / (h + roofH)) * 2.8;
+        function getThermalPoint(px, py, pz) {
+          const tBaseEnvelope = tOut + (tIn - tOut) * 0.38;
+          const zFactor = (pz / (h + roofH)) * 2.8;
+          const southSolarPeak = Math.sin((px / l) * Math.PI) * 7.2 + 4.5;
+          const conductionDiffusion = Math.exp(-2.2 * (py / w)) * southSolarPeak;
+          const diffuseSky = (1 - Math.abs(px - l / 2) / l) * 1.5;
+          return tBaseEnvelope + zFactor + conductionDiffusion + diffuseSky;
+        }
 
-    // South solar direct radiation (highest at y = 0, peak at mid-span of length)
-    const southSolarPeak = Math.sin((px / l) * Math.PI) * 7.2 + 4.5;
-    
-    // Thermal diffusion wrapping around corners: decay along depth (y-axis)
-    // Heat conducts from south (y=0) to north (y=w) with exponential dissipation
-    const conductionDiffusion = Math.exp(-2.2 * (py / w)) * southSolarPeak;
-    
-    // Diffuse ambient and snow-reflected albedo radiation on north/upper surfaces
-    const diffuseSky = (1 - Math.abs(px - l / 2) / l) * 1.5;
+        function addQuad(p1, p2, p3, p4) {
+          const base = x.length;
+          const t1 = getThermalPoint(p1[0], p1[1], p1[2]);
+          const t2 = getThermalPoint(p2[0], p2[1], p2[2]);
+          const t3 = getThermalPoint(p3[0], p3[1], p3[2]);
+          const t4 = getThermalPoint(p4[0], p4[1], p4[2]);
 
-    return tBaseEnvelope + zFactor + conductionDiffusion + diffuseSky;
-  }
+          x.push(p1[0], p2[0], p3[0], p4[0]);
+          y.push(p1[1], p2[1], p3[1], p4[1]);
+          z.push(p1[2], p2[2], p3[2], p4[2]);
+          intensity.push(t1, t2, t3, t4);
 
-  // Helper to add quadrilateral FEA element cells with boundary wireframe
-  function addQuad(p1, p2, p3, p4) {
-    const base = x.length;
-    const t1 = getThermalPoint(p1[0], p1[1], p1[2]);
-    const t2 = getThermalPoint(p2[0], p2[1], p2[2]);
-    const t3 = getThermalPoint(p3[0], p3[1], p3[2]);
-    const t4 = getThermalPoint(p4[0], p4[1], p4[2]);
+          i_idx.push(base, base);
+          j_idx.push(base + 1, base + 2);
+          k_idx.push(base + 2, base + 3);
 
-    x.push(p1[0], p2[0], p3[0], p4[0]);
-    y.push(p1[1], p2[1], p3[1], p4[1]);
-    z.push(p1[2], p2[2], p3[2], p4[2]);
-    intensity.push(t1, t2, t3, t4);
+          edgeX.push(p1[0], p2[0], p3[0], p4[0], p1[0], null);
+          edgeY.push(p1[1], p2[1], p3[1], p4[1], p1[1], null);
+          edgeZ.push(p1[2], p2[2], p3[2], p4[2], p1[2], null);
+        }
 
-    // Two triangular elements per FEA cell
-    i_idx.push(base, base);
-    j_idx.push(base + 1, base + 2);
-    k_idx.push(base + 2, base + 3);
+        for (let ix = 0; ix < divX; ix++) {
+          for (let iz = 0; iz < divZ; iz++) {
+            const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+            const z0 = (iz * h) / divZ, z1 = ((iz + 1) * h) / divZ;
+            addQuad([x0, 0, z0], [x1, 0, z0], [x1, 0, z1], [x0, 0, z1]);
+          }
+        }
 
-    // Grid wireframe lines
-    edgeX.push(p1[0], p2[0], p3[0], p4[0], p1[0], null);
-    edgeY.push(p1[1], p2[1], p3[1], p4[1], p1[1], null);
-    edgeZ.push(p1[2], p2[2], p3[2], p4[2], p1[2], null);
-  }
+        for (let iy = 0; iy < divY; iy++) {
+          for (let iz = 0; iz < divZ; iz++) {
+            const y0 = (iy * w) / divY, y1 = ((iy + 1) * w) / divY;
+            const z0 = (iz * h) / divZ, z1 = ((iz + 1) * h) / divZ;
+            addQuad([0, y0, z0], [0, y1, z0], [0, y1, z1], [0, y0, z1]);
+            addQuad([l, y0, z0], [l, y0, z1], [l, y1, z1], [l, y1, z0]);
+          }
+        }
 
-  // 1. SOUTH WALL (y = 0): Direct high solar gain facade
-  for (let ix = 0; ix < divX; ix++) {
-    for (let iz = 0; iz < divZ; iz++) {
-      const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
-      const z0 = (iz * h) / divZ, z1 = ((iz + 1) * h) / divZ;
-      addQuad([x0, 0, z0], [x1, 0, z0], [x1, 0, z1], [x0, 0, z1]);
-    }
-  }
+        for (let ix = 0; ix < divX; ix++) {
+          for (let iz = 0; iz < divZ; iz++) {
+            const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+            const z0 = (iz * h) / divZ, z1 = ((iz + 1) * h) / divZ;
+            addQuad([x0, w, z0], [x0, w, z1], [x1, w, z1], [x1, w, z0]);
+          }
+        }
 
-  // 2. EAST & WEST SIDE WALLS (x = 0 and x = l): Smooth thermal diffusion from south to north
-  for (let iy = 0; iy < divY; iy++) {
-    for (let iz = 0; iz < divZ; iz++) {
-      const y0 = (iy * w) / divY, y1 = ((iy + 1) * w) / divY;
-      const z0 = (iz * h) / divZ, z1 = ((iz + 1) * h) / divZ;
-      // West Wall (x = 0)
-      addQuad([0, y0, z0], [0, y1, z0], [0, y1, z1], [0, y0, z1]);
-      // East Wall (x = l)
-      addQuad([l, y0, z0], [l, y0, z1], [l, y1, z1], [l, y1, z0]);
-    }
-  }
+        const midY = w / 2;
+        const apexZ = h + roofH;
+        for (let ix = 0; ix < divX; ix++) {
+          const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+          addQuad([x0, 0, h], [x1, 0, h], [x1, midY, apexZ], [x0, midY, apexZ]);
+        }
+        for (let ix = 0; ix < divX; ix++) {
+          const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+          addQuad([x0, midY, apexZ], [x1, midY, apexZ], [x1, w, h], [x0, w, h]);
+        }
 
-  // 3. NORTH WALL (y = w): Protected shadow side with diffuse ambient & internal conduction
-  for (let ix = 0; ix < divX; ix++) {
-    for (let iz = 0; iz < divZ; iz++) {
-      const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
-      const z0 = (iz * h) / divZ, z1 = ((iz + 1) * h) / divZ;
-      addQuad([x0, w, z0], [x0, w, z1], [x1, w, z1], [x1, w, z0]);
-    }
-  }
+        const meshTrace = {
+          type: 'mesh3d',
+          x: x, y: y, z: z,
+          i: i_idx, j: j_idx, k: k_idx,
+          intensity: intensity,
+          colorscale: 'Turbo',
+          showscale: true,
+          colorbar: {
+            title: { text: 'Surface Temp (°C)', font: { color: '#f8fafc', size: 11 } },
+            tickfont: { color: '#94a3b8', size: 10 },
+            len: 0.85,
+            thickness: 14,
+            x: 0.98
+          },
+          lighting: { ambient: 0.85, diffuse: 0.5, specular: 0.15 },
+          hoverinfo: 'text',
+          text: intensity.map(val => `Nodal Temp: ${val.toFixed(1)} °C`)
+        };
 
-  // 4. GABLED ROOF (South slope absorbs solar heat, North slope faces cold dissipation)
-  const midY = w / 2;
-  const apexZ = h + roofH;
+        const wireframeTrace = {
+          type: 'scatter3d',
+          mode: 'lines',
+          x: edgeX, y: edgeY, z: edgeZ,
+          line: { color: 'rgba(255, 255, 255, 0.18)', width: 1.0 },
+          hoverinfo: 'none'
+        };
 
-  // South-facing roof pitch
-  for (let ix = 0; ix < divX; ix++) {
-    const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
-    addQuad([x0, 0, h], [x1, 0, h], [x1, midY, apexZ], [x0, midY, apexZ]);
-  }
+        const sunVectorTrace = {
+          type: 'scatter3d',
+          mode: 'lines+text',
+          x: [-l * 0.3, 0],
+          y: [-w * 0.4, 0],
+          z: [h + roofH + 1.6, h * 0.75],
+          line: { color: '#f59e0b', width: 4 },
+          text: ['☀️ Direct Solar Irradiance', ''],
+          textposition: 'top center',
+          textfont: { color: '#fbbf24', size: 10, family: 'monospace' },
+          hoverinfo: 'none'
+        };
 
-  // North-facing roof pitch
-  for (let ix = 0; ix < divX; ix++) {
-    const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
-    addQuad([x0, midY, apexZ], [x1, midY, apexZ], [x1, w, h], [x0, w, h]);
-  }
+        Plotly.newPlot('meshContainer', [meshTrace, wireframeTrace, sunVectorTrace], {
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          scene: {
+            aspectmode: 'data',
+            camera: { eye: { x: -1.35, y: -1.65, z: 1.15 } },
+            xaxis: { title: 'Length (m)', color: '#64748b', gridcolor: '#334155' },
+            yaxis: { title: 'Width (m)', color: '#64748b', gridcolor: '#334155' },
+            zaxis: { title: 'Height (m)', color: '#64748b', gridcolor: '#334155' }
+          },
+          margin: { l: 0, r: 0, b: 10, t: 10 },
+          showlegend: false
+        }, { responsive: true });
+      }
 
-  // 5. RENDER PLOTLY 3D SCENE
-  const meshTrace = {
-    type: 'mesh3d',
-    x: x, y: y, z: z,
-    i: i_idx, j: j_idx, k: k_idx,
-    intensity: intensity,
-    colorscale: 'Turbo', // Smooth engineering thermal spectrum
-    showscale: true,
-    colorbar: {
-      title: { text: 'Surface Temp (°C)', font: { color: '#f8fafc', size: 11 } },
-      tickfont: { color: '#94a3b8', size: 10 },
-      len: 0.85,
-      thickness: 14,
-      x: 0.98
-    },
-    lighting: { ambient: 0.85, diffuse: 0.5, specular: 0.15 },
-    hoverinfo: 'text',
-    text: intensity.map(val => `Nodal Temp: ${val.toFixed(1)} °C`)
-  };
-
-  const wireframeTrace = {
-    type: 'scatter3d',
-    mode: 'lines',
-    x: edgeX, y: edgeY, z: edgeZ,
-    line: { color: 'rgba(255, 255, 255, 0.18)', width: 1.0 },
-    hoverinfo: 'none'
-  };
-
-  const sunVectorTrace = {
-    type: 'scatter3d',
-    mode: 'lines+text',
-    x: [-l * 0.3, 0],
-    y: [-w * 0.4, 0],
-    z: [h + roofH + 1.6, h * 0.75],
-    line: { color: '#f59e0b', width: 4 },
-    text: ['☀️ Direct Solar Irradiance', ''],
-    textposition: 'top center',
-    textfont: { color: '#fbbf24', size: 10, family: 'monospace' },
-    hoverinfo: 'none'
-  };
-
-  Plotly.newPlot('meshContainer', [meshTrace, wireframeTrace, sunVectorTrace], {
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    scene: {
-      aspectmode: 'data',
-      camera: { eye: { x: -1.35, y: -1.65, z: 1.15 } },
-      xaxis: { title: 'Length (m)', color: '#64748b', gridcolor: '#334155' },
-      yaxis: { title: 'Width (m)', color: '#64748b', gridcolor: '#334155' },
-      zaxis: { title: 'Height (m)', color: '#64748b', gridcolor: '#334155' }
-    },
-    margin: { l: 0, r: 0, b: 10, t: 10 },
-    showlegend: false
-  }, { responsive: true });
-}
       draw3DMesh(6.0, 4.0, 2.8, 18.4, -15.0, false);
+      fetchLiveWeatherAndLocation(defaultLat, defaultLng);
 
       function updateUI(results, payload) {
         const insideTemps = results.insideTemp || defaultInside; const ambTemps = results.ambientTemp || defaultAmbient;
@@ -787,7 +970,6 @@ function draw3DMesh(l, w, h, tIn, tOut, isHighSnow) {
           updateUI(await response.json(), payload);
         } catch (error) {
           errorToast.classList.remove('hidden');
-          // Dummy fallback for when python server is off
           updateUI({ insideTemp: defaultInside, ambientTemp: defaultAmbient, energySummary: { totalSolarKWh: 14.2, heatLossKW: 5.8, rank: "Grade A" } }, payload);
         } finally {
           submitBtn.disabled = false; submitBtn.innerHTML = ogBtn;
@@ -814,11 +996,8 @@ function draw3DMesh(l, w, h, tIn, tOut, isHighSnow) {
           if (data.length === 0) {
             historyList.innerHTML = '<div class="text-center text-gray-500 py-8">No previous simulations found in the database.</div>';
           } else {
-            // Loop through past simulations and map keys safely
             data.forEach(sim => {
               const date = new Date(sim.createdAt || Date.now()).toLocaleString();
-              
-              // THIS IS THE FIX: Safely extract properties handling flat OR nested db formats
               const mat = sim.materials?.name || sim.material || sim.name || 'Aerogel / PUF Panel';
               const l = sim.geometry?.length || sim.length || '6.0';
               const w = sim.geometry?.width || sim.width || '4.0';
@@ -863,163 +1042,168 @@ function draw3DMesh(l, w, h, tIn, tOut, isHighSnow) {
     });
 
     // AI Chatbot Logic
-  const chatToggle = document.getElementById('chatToggleBtn');
-  const chatWindow = document.getElementById('chatWindow');
-  const closeChat = document.getElementById('closeChatBtn');
-  const sendChat = document.getElementById('sendChatBtn');
-  const chatInput = document.getElementById('chatInput');
-  const chatLog = document.getElementById('chatLog');
+    const chatToggle = document.getElementById('chatToggleBtn');
+    const chatWindow = document.getElementById('chatWindow');
+    const closeChat = document.getElementById('closeChatBtn');
+    const sendChat = document.getElementById('sendChatBtn');
+    const chatInput = document.getElementById('chatInput');
+    const chatLog = document.getElementById('chatLog');
 
-  chatToggle.addEventListener('click', () => chatWindow.classList.toggle('hidden'));
-  closeChat.addEventListener('click', () => chatWindow.classList.add('hidden'));
+    chatToggle.addEventListener('click', () => chatWindow.classList.toggle('hidden'));
+    closeChat.addEventListener('click', () => chatWindow.classList.add('hidden'));
 
-  sendChat.addEventListener('click', async () => {
-    const text = chatInput.value.trim();
-    if (!text) return;
-    
-    chatLog.innerHTML += `<div class="bg-orange-500 text-white p-2.5 rounded-l-xl rounded-br-xl self-end max-w-[85%] shadow-md">${text}</div>`;
-    chatInput.value = '';
-    chatLog.scrollTop = chatLog.scrollHeight;
-    
-    const loadingId = 'loading-' + Date.now();
-    chatLog.innerHTML += `<div id="${loadingId}" class="text-gray-500 text-xs self-start ml-2"><i class="fa-solid fa-circle-notch fa-spin"></i> Thinking...</div>`;
-    chatLog.scrollTop = chatLog.scrollHeight;
-    
-    // 1. GRAB CURRENT DASHBOARD METRICS
-    const currentContext = {
-      material: document.getElementById('material').value,
-      cost: document.getElementById('stat-cost').innerText,
-      peakTemp: document.getElementById('metric-peak-in').innerText,
-      heatLoss: document.getElementById('stat-loss').innerText
-    };
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // 2. SEND MESSAGE AND CONTEXT TO BACKEND
-        body: JSON.stringify({ message: text, context: currentContext })
-      });
-      const data = await res.json();
+    sendChat.addEventListener('click', async () => {
+      const text = chatInput.value.trim();
+      if (!text) return;
       
-      document.getElementById(loadingId).remove();
-      chatLog.innerHTML += `<div class="bg-gray-800 text-gray-300 p-2.5 rounded-r-xl rounded-bl-xl self-start max-w-[85%] border border-gray-700 leading-relaxed">${data.reply}</div>`;
-    } catch (e) {
-      document.getElementById(loadingId).remove();
-      chatLog.innerHTML += `<div class="bg-rose-900/50 text-rose-300 p-2.5 rounded-r-xl rounded-bl-xl self-start max-w-[85%] border border-rose-500/30">Network error connecting to AI engine.</div>`;
-    }
-    chatLog.scrollTop = chatLog.scrollHeight;
-  });
-
-  // Allow pressing Enter to send
-  chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendChat.click();
-  });
-  
- // ── FULL-FLEDGED PDF ENGINEERING REPORT LOGIC ─────────────────────────────
-  const pdfBtn = document.getElementById('pdfBtn');
-  if (pdfBtn) {
-    pdfBtn.addEventListener('click', () => {
-      const originalText = pdfBtn.innerHTML;
-      pdfBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-rose-400"></i><span class="text-sm">Compiling Data...</span>`;
+      chatLog.innerHTML += `<div class="bg-orange-500 text-white p-2.5 rounded-l-xl rounded-br-xl self-end max-w-[85%] shadow-md">${text}</div>`;
+      chatInput.value = '';
+      chatLog.scrollTop = chatLog.scrollHeight;
       
+      const loadingId = 'loading-' + Date.now();
+      chatLog.innerHTML += `<div id="${loadingId}" class="text-gray-500 text-xs self-start ml-2"><i class="fa-solid fa-circle-notch fa-spin"></i> Thinking...</div>`;
+      chatLog.scrollTop = chatLog.scrollHeight;
+      
+      // Grab Current Dashboard & Live Satellite Weather Metrics
+      const currentContext = {
+        material: document.getElementById('material').value,
+        cost: document.getElementById('stat-cost').innerText,
+        peakTemp: document.getElementById('metric-peak-in').innerText,
+        heatLoss: document.getElementById('stat-loss').innerText,
+        locationName: document.getElementById('locationName').innerText,
+        liveTemp: document.getElementById('wx-temp').innerText,
+        liveHumidity: document.getElementById('wx-humidity').innerText,
+        elevation: document.getElementById('wx-elev').innerText
+      };
+
       try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4'); // Standard A4 PDF
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, context: currentContext })
+        });
+        const data = await res.json();
         
-        // Helper function for quick text formatting
-        const addText = (text, x, y, size, color = [50, 50, 50], font = "helvetica", style = "normal") => {
-          doc.setFont(font, style);
-          doc.setFontSize(size);
-          doc.setTextColor(color[0], color[1], color[2]);
-          doc.text(text, x, y);
-        };
-
-        // ── 1. HEADER ──
-        doc.setFillColor(15, 23, 42); // Dark Slate background for header
-        doc.rect(0, 0, 210, 40, 'F');
-        addText("ThermoSim SIH Engineering Report", 15, 20, 22, [249, 115, 22], "helvetica", "bold");
-        addText(`Generated on: ${new Date().toLocaleString()}`, 15, 30, 10, [200, 200, 200]);
-
-        // ── EXTRACT ALL LIVE PARAMETERS FROM THE DASHBOARD ──
-        const l = document.getElementById('length').value;
-        const w = document.getElementById('width').value;
-        const h = document.getElementById('height').value;
-        const th = document.getElementById('thicknessValue').innerText;
-        
-        const lat = document.getElementById('latitude').value + "° " + document.getElementById('latDir').value;
-        const lon = document.getElementById('longitude').value + "° " + document.getElementById('lonDir').value;
-        const wind = document.getElementById('windSpeed').value + " m/s";
-        const snow = document.getElementById('snowLoad').checked ? "High Snow Load (Pitched Roof)" : "Normal / Flat";
-
-        const matName = document.getElementById('material').value;
-        const k = document.getElementById('prop-k').innerText;
-        const rho = document.getElementById('prop-rho').innerText;
-        const cp = document.getElementById('prop-cp').innerText;
-
-        const rank = document.getElementById('stat-rank').innerText;
-        const peakTemp = document.getElementById('metric-peak-in').innerText;
-        const minTemp = document.getElementById('metric-min-out').innerText;
-        const retention = document.getElementById('metric-delta').innerText;
-        const solar = document.getElementById('stat-solar').innerText;
-        const heatLoss = document.getElementById('stat-loss').innerText;
-
-        const weight = document.getElementById('stat-weight').innerText;
-        const airlift = document.getElementById('stat-airlift').innerText;
-        const costVol = document.getElementById('cost-vol').innerText;
-        const totalCost = document.getElementById('stat-cost').innerText;
-
-        let y = 55; // Vertical tracker
-
-        // ── 2. SITE & GEOMETRY ──
-        addText("1. Site & Geometry Specifications", 15, y, 14, [0, 0, 0], "helvetica", "bold");
-        doc.setDrawColor(249, 115, 22); doc.setLineWidth(0.5); doc.line(15, y+3, 195, y+3); y += 12;
-        addText(`Dimensions (L x W x H):  ${l}m x ${w}m x ${h}m`, 20, y, 11);
-        addText(`Wall Thickness:  ${th} cm`, 115, y, 11); y += 8;
-        addText(`Coordinates:  ${lat}, ${lon}`, 20, y, 11);
-        addText(`Wind Speed:  ${wind}`, 115, y, 11); y += 8;
-        addText(`Roof Profile:  ${snow}`, 20, y, 11); y += 18;
-
-        // ── 3. MATERIAL THERMAL PROPERTIES ──
-        addText("2. Material Thermal Properties", 15, y, 14, [0, 0, 0], "helvetica", "bold");
-        doc.line(15, y+3, 195, y+3); y += 12;
-        addText(`Selected Material:  ${matName}`, 20, y, 11, [0, 0, 0], "helvetica", "bold"); y += 8;
-        addText(`Conductivity (k):  ${k}`, 20, y, 11);
-        addText(`Density:  ${rho}`, 85, y, 11);
-        addText(`Heat Capacity:  ${cp}`, 140, y, 11); y += 18;
-
-        // ── 4. PERFORMANCE METRICS ──
-        addText("3. Thermal Performance Analysis", 15, y, 14, [0, 0, 0], "helvetica", "bold");
-        doc.line(15, y+3, 195, y+3); y += 12;
-        addText(`Efficiency Rank:  ${rank}`, 20, y, 11, [16, 185, 129], "helvetica", "bold"); y += 8;
-        addText(`Peak Indoor Temp:  ${peakTemp}`, 20, y, 11);
-        addText(`Min Outdoor Temp:  ${minTemp}`, 85, y, 11);
-        addText(`Thermal Retention:  ${retention}`, 145, y, 11); y += 8;
-        addText(`Daily Solar Gain:  ${solar}`, 20, y, 11);
-        addText(`Net Heat Loss Rate:  ${heatLoss}`, 85, y, 11); y += 18;
-
-        // ── 5. LOGISTICS & COST (BOM) ──
-        addText("4. Logistics & Bill of Materials (BOM)", 15, y, 14, [0, 0, 0], "helvetica", "bold");
-        doc.line(15, y+3, 195, y+3); y += 12;
-        addText(`Total Payload Weight:  ${weight}`, 20, y, 11);
-        addText(`Transport Status:  ${airlift}`, 100, y, 11, [225, 29, 72], "helvetica", "bold"); y += 8;
-        addText(`Material Volume Req:  ${costVol}`, 20, y, 11); y += 12;
-        
-        // Total Cost Highlight Box
-        doc.setFillColor(249, 115, 22);
-        doc.rect(15, y, 180, 14, 'F');
-        addText(`ESTIMATED TOTAL COST:  ${totalCost}`, 20, y+9, 13, [255, 255, 255], "helvetica", "bold");
-
-        // Execute Download
-        doc.save(`ThermoSim_Engineering_Report_${Date.now()}.pdf`);
-        pdfBtn.innerHTML = originalText;
-        
-      } catch (error) {
-        console.error("PDF Compilation Error:", error);
-        pdfBtn.innerHTML = originalText;
+        document.getElementById(loadingId).remove();
+        chatLog.innerHTML += `<div class="bg-gray-800 text-gray-300 p-2.5 rounded-r-xl rounded-bl-xl self-start max-w-[85%] border border-gray-700 leading-relaxed">${data.reply}</div>`;
+      } catch (e) {
+        document.getElementById(loadingId).remove();
+        chatLog.innerHTML += `<div class="bg-rose-900/50 text-rose-300 p-2.5 rounded-r-xl rounded-bl-xl self-start max-w-[85%] border border-rose-500/30">Network error connecting to AI engine.</div>`;
       }
+      chatLog.scrollTop = chatLog.scrollHeight;
     });
-  }
+
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendChat.click();
+    });
+  
+    // ── FULL-FLEDGED PDF ENGINEERING REPORT LOGIC ─────────────────────────────
+    const pdfBtn = document.getElementById('pdfBtn');
+    if (pdfBtn) {
+      pdfBtn.addEventListener('click', () => {
+        const originalText = pdfBtn.innerHTML;
+        pdfBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-rose-400"></i><span class="text-sm">Compiling Data...</span>`;
+        
+        try {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF('p', 'mm', 'a4');
+          
+          const addText = (text, x, y, size, color = [50, 50, 50], font = "helvetica", style = "normal") => {
+            doc.setFont(font, style);
+            doc.setFontSize(size);
+            doc.setTextColor(color[0], color[1], color[2]);
+            doc.text(text, x, y);
+          };
+
+          // ── 1. HEADER ──
+          doc.setFillColor(15, 23, 42);
+          doc.rect(0, 0, 210, 40, 'F');
+          addText("ThermoSim SIH Engineering Report", 15, 20, 22, [249, 115, 22], "helvetica", "bold");
+          addText(`Generated on: ${new Date().toLocaleString()}`, 15, 30, 10, [200, 200, 200]);
+
+          // ── EXTRACT ALL LIVE PARAMETERS FROM THE DASHBOARD ──
+          const l = document.getElementById('length').value;
+          const w = document.getElementById('width').value;
+          const h = document.getElementById('height').value;
+          const th = document.getElementById('thicknessValue').innerText;
+          
+          const locName = document.getElementById('locationName').innerText;
+          const lat = document.getElementById('latitude').value + "° " + document.getElementById('latDir').value;
+          const lon = document.getElementById('longitude').value + "° " + document.getElementById('lonDir').value;
+          const wind = document.getElementById('windSpeed').value + " m/s";
+          const snow = document.getElementById('snowLoad').checked ? "High Snow Load (Pitched Roof)" : "Normal / Flat";
+          const wxTemp = document.getElementById('wx-temp').innerText;
+          const wxHum = document.getElementById('wx-humidity').innerText;
+          const wxElev = document.getElementById('wx-elev').innerText;
+
+          const matName = document.getElementById('material').value;
+          const k = document.getElementById('prop-k').innerText;
+          const rho = document.getElementById('prop-rho').innerText;
+          const cp = document.getElementById('prop-cp').innerText;
+
+          const rank = document.getElementById('stat-rank').innerText;
+          const peakTemp = document.getElementById('metric-peak-in').innerText;
+          const minTemp = document.getElementById('metric-min-out').innerText;
+          const retention = document.getElementById('metric-delta').innerText;
+          const solar = document.getElementById('stat-solar').innerText;
+          const heatLoss = document.getElementById('stat-loss').innerText;
+
+          const weight = document.getElementById('stat-weight').innerText;
+          const airlift = document.getElementById('stat-airlift').innerText;
+          const costVol = document.getElementById('cost-vol').innerText;
+          const totalCost = document.getElementById('stat-cost').innerText;
+
+          let y = 55;
+
+          // ── 2. SITE, SATELLITE TELEMETRY & GEOMETRY ──
+          addText("1. Site Telemetry & Geometry Specifications", 15, y, 14, [0, 0, 0], "helvetica", "bold");
+          doc.setDrawColor(249, 115, 22); doc.setLineWidth(0.5); doc.line(15, y+3, 195, y+3); y += 12;
+          addText(`Site Location:  ${locName} (${lat}, ${lon})`, 20, y, 11, [0, 0, 0], "helvetica", "bold"); y += 8;
+          addText(`Live Telemetry:  Temp ${wxTemp} | Humidity ${wxHum} | Elevation ${wxElev}`, 20, y, 11); y += 8;
+          addText(`Dimensions (L x W x H):  ${l}m x ${w}m x ${h}m`, 20, y, 11);
+          addText(`Wall Thickness:  ${th} cm`, 115, y, 11); y += 8;
+          addText(`Wind Speed:  ${wind}`, 20, y, 11);
+          addText(`Roof Profile:  ${snow}`, 85, y, 11); y += 18;
+
+          // ── 3. MATERIAL THERMAL PROPERTIES ──
+          addText("2. Material Thermal Properties", 15, y, 14, [0, 0, 0], "helvetica", "bold");
+          doc.line(15, y+3, 195, y+3); y += 12;
+          addText(`Selected Material:  ${matName}`, 20, y, 11, [0, 0, 0], "helvetica", "bold"); y += 8;
+          addText(`Conductivity (k):  ${k}`, 20, y, 11);
+          addText(`Density:  ${rho}`, 85, y, 11);
+          addText(`Heat Capacity:  ${cp}`, 140, y, 11); y += 18;
+
+          // ── 4. PERFORMANCE METRICS ──
+          addText("3. Thermal Performance Analysis", 15, y, 14, [0, 0, 0], "helvetica", "bold");
+          doc.line(15, y+3, 195, y+3); y += 12;
+          addText(`Efficiency Rank:  ${rank}`, 20, y, 11, [16, 185, 129], "helvetica", "bold"); y += 8;
+          addText(`Peak Indoor Temp:  ${peakTemp}`, 20, y, 11);
+          addText(`Min Outdoor Temp:  ${minTemp}`, 85, y, 11);
+          addText(`Thermal Retention:  ${retention}`, 145, y, 11); y += 8;
+          addText(`Daily Solar Gain:  ${solar}`, 20, y, 11);
+          addText(`Net Heat Loss Rate:  ${heatLoss}`, 85, y, 11); y += 18;
+
+          // ── 5. LOGISTICS & COST (BOM) ──
+          addText("4. Logistics & Bill of Materials (BOM)", 15, y, 14, [0, 0, 0], "helvetica", "bold");
+          doc.line(15, y+3, 195, y+3); y += 12;
+          addText(`Total Payload Weight:  ${weight}`, 20, y, 11);
+          addText(`Transport Status:  ${airlift}`, 100, y, 11, [225, 29, 72], "helvetica", "bold"); y += 8;
+          addText(`Material Volume Req:  ${costVol}`, 20, y, 11); y += 12;
+          
+          // Total Cost Highlight Box
+          doc.setFillColor(249, 115, 22);
+          doc.rect(15, y, 180, 14, 'F');
+          addText(`ESTIMATED TOTAL COST:  ${totalCost}`, 20, y+9, 13, [255, 255, 255], "helvetica", "bold");
+
+          doc.save(`ThermoSim_Engineering_Report_${Date.now()}.pdf`);
+          pdfBtn.innerHTML = originalText;
+          
+        } catch (error) {
+          console.error("PDF Compilation Error:", error);
+          pdfBtn.innerHTML = originalText;
+        }
+      });
+    }
   </script>
 </body>
 </html>

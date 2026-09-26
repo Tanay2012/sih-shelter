@@ -17,11 +17,8 @@ app.use(express.json());
 
 // Determine Mongo URI from environment variables with fallback
 const mongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/sih-shelter';
-//const mongoUrl = process.env.MONGO_URI || 'mongodb+srv://td961381_db_user:cgh3zydDkrSHTJEp@cluster0.vigurv8.mongodb.net/shelter_sim?appName=Cluster0';
 
 // ── THE INDESTRUCTIBLE SESSION STORE ────────────────────────────────────────
-// This checks every possible version of connect-mongo. If it still fails, 
-// it forces the server to use MemoryStore so you do not crash during your demo.
 let sessionStore;
 try {
     if (connectMongo && typeof connectMongo.create === 'function') {
@@ -57,17 +54,14 @@ function requireAuth(req, res, next) {
 }
 
 // ── PUBLIC & PROTECTED PAGE ROUTES ──────────────────────────────────────────
-// Unprotected Root Route: Serves the Project Overview Landing Page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'overview.html'));
 });
 
-// Auth Route Shortcut
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Protected Simulation Dashboard Route
 app.get('/dashboard', requireAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -80,7 +74,6 @@ const DEMO_CREDENTIALS = [
     { email: 'engineer@ladakh.org', password: 'password123' }
 ];
 
-// POST /api/signup - Register new user in MongoDB
 app.post('/api/signup', async (req, res) => {
     try {
         const { email, password } = req.body || {};
@@ -89,24 +82,18 @@ app.post('/api/signup', async (req, res) => {
         }
 
         const cleanEmail = email.trim().toLowerCase();
-
-        // Check if user already exists in MongoDB users collection
         const existingUser = await User.findOne({ email: cleanEmail });
         if (existingUser) {
             return res.status(400).json({ success: false, message: 'Email is already registered.' });
         }
 
-        // Hash password with bcrypt
         const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Save new user
         const newUser = new User({
             email: cleanEmail,
             password: hashedPassword
         });
         await newUser.save();
 
-        // Establish session on signup
         req.session.user = { id: newUser._id, email: newUser.email };
         return res.status(201).json({ success: true, message: 'Account created successfully.' });
     } catch (err) {
@@ -115,7 +102,6 @@ app.post('/api/signup', async (req, res) => {
     }
 });
 
-// POST /api/login - Authenticate user against MongoDB
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body || {};
@@ -124,8 +110,6 @@ app.post('/api/login', async (req, res) => {
         }
 
         const cleanEmail = email.trim().toLowerCase();
-
-        // Find user by email in MongoDB users collection
         const user = await User.findOne({ email: cleanEmail });
         if (user) {
             const isMatch = await bcrypt.compare(password, user.password);
@@ -136,7 +120,6 @@ app.post('/api/login', async (req, res) => {
             return res.json({ success: true, message: 'Login successful.' });
         }
 
-        // Fallback for demo credentials
         const match = DEMO_CREDENTIALS.find(
             (c) => c.email === cleanEmail && c.password === password
         );
@@ -152,7 +135,6 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// GET /api/logout - End session and redirect
 app.get('/api/logout', (req, res) => {
     req.session.destroy(() => {
         res.redirect('/');
@@ -164,7 +146,7 @@ mongoose.connect(mongoUrl)
     .then(() => console.log('🟩 MongoDB Connected successfully'))
     .catch((err) => console.error('❌ MongoDB Connection Error:', err));
 
-// ── CONTEXT-AWARE AI CHATBOT ROUTE (WITH AUTO-RETRY) ───────────────────────
+// ── CONTEXT-AWARE AI CHATBOT ROUTE (WITH AUTO-RETRY & GLOBE TELEMETRY) ──────
 app.post('/api/chat', async (req, res) => {
     try {
         const { message, context } = req.body;
@@ -173,32 +155,28 @@ app.post('/api/chat', async (req, res) => {
         let systemPrompt = "You are ThermoSim AI, an engineering assistant for passive solar design. You must NEVER generate code. Keep answers concise, strictly under 3 sentences.\n";
         
         if (context) {
-            systemPrompt += `CURRENT SIMULATION CONTEXT: The user is testing a shelter using ${context.material}. The estimated cost is ${context.cost}. Peak indoor temp is ${context.peakTemp}, and heat loss is ${context.heatLoss}. Use these exact metrics if the user asks about their current design.\n\n`;
+            systemPrompt += `CURRENT SIMULATION CONTEXT: The user is testing a shelter at ${context.locationName || 'Leh, Ladakh'} (Elevation: ${context.elevation || '3500m'}, Live Ambient Temp: ${context.liveTemp || '-15°C'}, Humidity: ${context.liveHumidity || '40%'}) using ${context.material}. The estimated cost is ${context.cost}. Peak indoor temp is ${context.peakTemp}, and heat loss is ${context.heatLoss}. Use these exact metrics if the user asks about their current design or site conditions.\n\n`;
         }
         
         const finalMessage = systemPrompt + "User Question: " + message;
-        
-        // Using the API's required model
         const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash"});
 
         let attempts = 0;
         let responseText = "";
 
-        // Retry loop to bypass temporary 503 High Demand spikes
         while (attempts < 3) {
             try {
                 const result = await model.generateContent(finalMessage);
                 const response = await result.response;
                 responseText = response.text();
-                break; // Success, break out of the retry loop
+                break;
             } catch (apiError) {
                 attempts++;
                 if (apiError.status === 503 && attempts < 3) {
                     console.log(`⚠️ AI Server busy (503). Retrying attempt ${attempts}...`);
-                    // Wait 2 seconds before trying again
                     await new Promise(resolve => setTimeout(resolve, 2000));
                 } else {
-                    throw apiError; // Throw true errors (like 401 Unauthorized)
+                    throw apiError;
                 }
             }
         }
