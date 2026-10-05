@@ -5,8 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ThermoSim | Climate Modeling</title>
-  <meta name="description"
-    content="Engineering thermal simulation & material cost estimation tool for passive climate modeling of sustainable shelters.">
+  <meta name="description" content="Engineering thermal simulation & material cost estimation tool for passive climate modeling of sustainable shelters.">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -105,7 +104,7 @@
         <div>
           <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
             ThermoSim
-            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">v3.5 Finale</span>
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">v4.0</span>
           </h1>
           <p class="text-xs text-gray-400">Passive solar shelter engineering, fenestration & 3D FEA thermal model</p>
         </div>
@@ -180,6 +179,16 @@
               <input type="number" id="height" value="2.8" min="2" max="10" step="0.1" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg p-2 font-mono outline-none focus:border-orange-500">
             </div>
           </div>
+          
+          <!-- Shelter Roof Profile Dropdown -->
+          <div class="flex flex-col gap-1.5 mt-1 mb-2">
+            <label class="text-[11px] font-semibold text-gray-300 uppercase tracking-wider">Shelter Roof Profile</label>
+            <select id="shelterShape" class="w-full bg-gray-950 border border-gray-700 text-sky-400 font-semibold text-xs rounded-lg p-2.5 outline-none focus:border-orange-500 shadow-inner cursor-pointer">
+              <option value="barrel" selected>Barrel Vault (Igloo / High Wind)</option>
+              <option value="pitched">Gabled / Pitched Roof (High Snowfall)</option>
+              <option value="flat">Flat Roof (Standard Modular Bunker)</option>
+            </select>
+          </div>
 
           <div class="flex flex-col gap-1.5 mt-1">
             <div class="flex justify-between items-center text-xs">
@@ -192,10 +201,10 @@
           </div>
         </div>
 
-       <!-- 2. Material Selector Dropdown (Official DRDO High-Altitude Specs) -->
+       <!-- 2. Material Selector Dropdown -->
         <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
           <label for="material" class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-orange-400"></i> 2. DRDO Shelter Material</span>
+            <span class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-orange-400"></i> 2. Shelter Material</span>
             <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30 font-mono">MIL-SPEC</span>
           </label>
           <select id="material" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition duration-150 shadow-inner">
@@ -285,14 +294,9 @@
             </div>
             <input type="range" id="windSpeed" min="0" max="40" value="15" step="0.5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500">
           </div>
-
-          <div class="mt-1 flex items-center gap-2 bg-gray-950/50 p-2 rounded-lg border border-gray-800">
-            <input type="checkbox" id="snowLoad" class="w-4 h-4 text-orange-500 bg-gray-900 border-gray-700 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer">
-            <label for="snowLoad" class="text-[11px] text-gray-300 font-medium cursor-pointer">High Snowfall Area (Adjusts Roof Pitch)</label>
-          </div>
         </div>
 
-        <!-- 4. NEW: Openings & Fenestration (Doors, Windows, Ventilation) -->
+        <!-- 4. Openings & Fenestration (Doors, Windows, Ventilation) -->
         <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3.5">
           <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
             <span class="flex items-center gap-2"><i class="fa-solid fa-door-open text-orange-400"></i> 4. Openings & Fenestration</span>
@@ -360,6 +364,23 @@
           </div>
         </div>
 
+        <!-- 5. Human Occupancy & Internal Heat Gain -->
+        <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
+          <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-users text-orange-400"></i> 5. Human Occupancy</span>
+            <span id="metabolicBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Gain: 480 W</span>
+          </div>
+
+          <div class="flex flex-col gap-1.5 mt-1">
+            <div class="flex justify-between items-center text-xs">
+              <label class="text-[11px] font-semibold text-gray-400">Soldiers / Occupants</label>
+              <span class="font-mono text-emerald-400 font-bold"><span id="occupantsVal">4</span> Personnel</span>
+            </div>
+            <input type="range" id="occupants" min="0" max="12" value="4" step="1" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+            <p class="text-[9px] text-gray-500 mt-1 text-right">Standard metabolic output: ~120W per person</p>
+          </div>
+        </div>
+
         <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2 group cursor-pointer">
           <i class="fa-solid fa-play text-sm group-hover:translate-x-0.5 transition-transform"></i>
           <span>Run Simulation</span>
@@ -394,7 +415,7 @@
           <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex items-center justify-between">
             <div class="flex items-center gap-2.5">
               <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-sun text-sm"></i></div>
-              <span class="text-xs text-gray-300 font-medium">Solar Gain (Glazing)</span>
+              <span class="text-xs text-gray-300 font-medium">Daily Heat Gain (Solar + Metabolic)</span>
             </div>
             <span id="stat-solar" class="text-sm font-mono font-bold text-amber-400">14.20 kWh</span>
           </div>
@@ -632,7 +653,6 @@
       const selectedCoordinates = document.getElementById('selectedCoordinates');
       
       const windSlider = document.getElementById('windSpeed');
-      const snowCheck = document.getElementById('snowLoad');
       const simForm = document.getElementById('simForm');
       const submitBtn = document.getElementById('submitBtn');
       const autoOptimizeBtn = document.getElementById('autoOptimizeBtn');
@@ -675,7 +695,7 @@
       let currentAmbientTemp = -15.0;
       let currentIndoorPeak = 18.4;
 
-      // Official DRDO & Military High-Altitude Material Presets
+      // Official & Military High-Altitude Material Presets
       const materialPresets = {
         "FRP-PUF Sandwich Panel": {
           k: 0.022, rho: 45, cp: 1450, costPerUnit: 14500, currency: "INR (₹)", installationCost: 2800
@@ -715,28 +735,44 @@
       });
 
       // ── HELPER: MAP OPENING TO 3D WALL COORDINATES & VECTORS ──────────────────
-      function getOpening3DGeometry(wall, area, type, l, w, h) {
+      function getOpening3DGeometry(wall, area, type, l, w, h, shape) {
+        let wallH = h;
+        if (shape === 'barrel') wallH = h * 0.75; // Matches the 3D generation logic
+
         let widthO, heightO, zCenter, alongRatio;
         if (type === 'door') {
           widthO = Math.min(1.4, Math.sqrt(area * 0.45));
           heightO = Math.min(h * 0.85, area / Math.max(0.6, widthO));
-          zCenter = heightO / 2; // Sits flush on floor (z = 0)
+          zCenter = heightO / 2; 
           alongRatio = 0.28;
         } else if (type === 'window') {
           widthO = Math.sqrt(area * 1.35);
           heightO = area / Math.max(0.4, widthO);
-          zCenter = h * 0.52; // Mid-wall height
+          zCenter = h * 0.45; // lower baseline to fit vertical walls
           alongRatio = 0.65;
         } else {
-          // Ventilation Louver
           widthO = Math.sqrt(area * 1.8);
           heightO = area / Math.max(0.2, widthO);
-          zCenter = h * 0.82; // High exhaust placement
+          zCenter = h * 0.75; // lower baseline to fit vertical walls
           alongRatio = 0.48;
         }
 
+        // Clamp the Z height so openings perfectly sit flush on the flat vertical wall
+        let maxZ = h;
+        if (shape === 'barrel' && (wall === 'South' || wall === 'North')) {
+            maxZ = wallH; 
+        } else if (shape === 'pitched' && (wall === 'South' || wall === 'North')) {
+            maxZ = h; 
+        } else if (shape === 'barrel' && (wall === 'East' || wall === 'West')) {
+            maxZ = wallH + (h * 0.25); // East/West endcaps go to the arch peak
+        }
+
+        if (zCenter + heightO / 2 > maxZ) {
+            zCenter = Math.max(heightO / 2, maxZ - heightO / 2 - 0.02);
+        }
+
         let cx, cy, cz = zCenter;
-        let nx = 0, ny = 0, ux = 0, uy = 0; // Outward normal (n) and wall horizontal tangent (u)
+        let nx = 0, ny = 0, ux = 0, uy = 0; 
 
         if (wall === 'South') {
           cx = l * alongRatio; cy = 0;
@@ -748,12 +784,10 @@
           cx = 0; cy = w * alongRatio;
           nx = -1; ny = 0; ux = 0; uy = 1;
         } else {
-          // East
           cx = l; cy = w * alongRatio;
           nx = 1; ny = 0; ux = 0; uy = 1;
         }
 
-        // Helper to convert local 2D opening coordinates (du, dz, normalOffset) to 3D world space
         const to3D = (du, dz, dn = 0.04) => [
           cx + ux * du + nx * dn,
           cy + uy * du + ny * dn,
@@ -773,13 +807,11 @@
         return { wall, area, type, cx, cy, cz, widthO, heightO, nx, ny, ux, uy, to3D, corners };
       }
 
-      // ── CALCULATE COST, LOGISTICS & OPENINGS HEAT BALANCE ─────────────────────
+      // ── CALCULATE COST, LOGISTICS & THERMAL BALANCE (INC. OCCUPANTS) ─────────
       function updateAllPhysicsAndVisuals() {
         const matName = materialSelect.value;
         const mat = materialPresets[matName] || { k: 0.5, rho: 1200, cp: 900, costPerUnit: 3000, installationCost: 1000 };
-        propK.textContent = `${mat.k} W/mK`;
-        propRho.textContent = `${mat.rho} kg/m³`;
-        propCp.textContent = `${mat.cp} J/kgK`;
+        propK.textContent = `${mat.k} W/mK`; propRho.textContent = `${mat.rho} kg/m³`; propCp.textContent = `${mat.cp} J/kgK`;
 
         const l = parseFloat(lengthInput.value) || 6.0;
         const w = parseFloat(widthInput.value) || 4.0;
@@ -787,19 +819,23 @@
         const t = (parseFloat(thicknessSlider.value) || 30) / 100;
         const wind = parseFloat(windSlider.value) || 15;
 
-        // Openings Parameters
-        const winWall = winWallSelect.value;
+        // Openings & Occupants
         const winArea = parseFloat(winAreaSlider.value) || 0;
-        const doorWall = doorWallSelect.value;
         const doorArea = parseFloat(doorAreaSlider.value) || 1.8;
-        const ventWall = ventWallSelect.value;
         const ventArea = parseFloat(ventAreaSlider.value) || 0.3;
+        
+        const occupants = parseInt(document.getElementById('occupants').value) || 0;
+        document.getElementById('occupantsVal').textContent = occupants;
 
         winAreaVal.textContent = winArea.toFixed(1);
         doorAreaVal.textContent = doorArea.toFixed(1);
         ventAreaVal.textContent = ventArea.toFixed(2);
 
-        // Subtract opening cutouts from solid wall volume
+        // Metabolic Heat Calculation (120W per person)
+        const metabolicGainW = occupants * 120;
+        const metabolicGainKW = metabolicGainW / 1000;
+        document.getElementById('metabolicBadge').textContent = `Gain: +${metabolicGainW} W`;
+
         const grossSurfaceArea = 2 * (l * w + l * h + w * h);
         const totalOpeningArea = winArea + doorArea + ventArea;
         const netSurfaceArea = Math.max(10, grossSurfaceArea - totalOpeningArea);
@@ -808,8 +844,7 @@
 
         const unitCost = mat.costPerUnit || 3500;
         const installCost = mat.installationCost || 1200;
-        const openingsHardwareCost = (winArea * 4500) + (doorArea * 6000) + (ventArea * 3000);
-        const totalCost = wallVol * (unitCost + installCost) + openingsHardwareCost;
+        const totalCost = wallVol * (unitCost + installCost) + (winArea * 4500) + (doorArea * 6000) + (ventArea * 3000);
 
         costUnitLabel.textContent = `₹${unitCost.toLocaleString('en-IN')}/m³`;
         costInstallLabel.textContent = `₹${installCost.toLocaleString('en-IN')}/m³`;
@@ -819,6 +854,8 @@
 
         const totalWeight = wallVol * mat.rho + (totalOpeningArea * 22);
         statWeight.textContent = `${Math.round(totalWeight).toLocaleString('en-IN')} kg`;
+        
+        const statAirlift = document.getElementById('stat-airlift');
         if (totalWeight > 1500) {
           statAirlift.textContent = "HEAVY LIFT TRUCK REQ";
           statAirlift.className = "text-[9px] px-2 py-1 rounded bg-rose-500/20 text-rose-400 mt-1 inline-block border border-rose-500/30 tracking-widest";
@@ -827,33 +864,26 @@
           statAirlift.className = "text-[9px] px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 mt-1 inline-block border border-emerald-500/30 tracking-widest";
         }
 
-        // Physics: Openings Heat Loss & Solar Gain
-        const deltaT = 30; // Nominal design delta-T
+        // Physics: Heat Loss & Solar/Metabolic Gain
+        const deltaT = 30; 
         const uWall = mat.k / t;
-        const wallLossKW = (uWall * netSurfaceArea * deltaT) / 1000;
+        const totalLossKW = ((uWall * netSurfaceArea * deltaT) + (2.4 * winArea * deltaT) + ((3.2 + wind * 0.08) * doorArea * deltaT) + ((12.0 + wind * 0.45) * ventArea * deltaT)) / 1000;
 
-        // Window U-value (~2.4 W/m2K), Door U-value (~3.2 W/m2K + wind infiltration), Vent infiltration
-        const winLossKW = (2.4 * winArea * deltaT) / 1000;
-        const doorLossKW = ((3.2 + wind * 0.08) * doorArea * deltaT) / 1000;
-        const ventLossKW = ((12.0 + wind * 0.45) * ventArea * deltaT) / 1000;
-        const openingsLossKW = winLossKW + doorLossKW + ventLossKW;
-        const totalLossKW = wallLossKW + openingsLossKW;
-
-        openingsLossBadge.textContent = `Openings Loss: ${openingsLossKW.toFixed(2)} kW`;
+        openingsLossBadge.textContent = `Leakage: ${(((2.4 * winArea * deltaT) + ((3.2 + wind * 0.08) * doorArea * deltaT) + ((12.0 + wind * 0.45) * ventArea * deltaT)) / 1000).toFixed(2)} kW`;
         statLoss.textContent = `${totalLossKW.toFixed(2)} kW`;
 
-        // Solar Gain depends on Window Area & Wall Orientation
-        const orientationMultiplier = winWall === 'South' ? 1.0 : (winWall === 'East' || winWall === 'West' ? 0.55 : 0.22);
+        const orientationMultiplier = winWallSelect.value === 'South' ? 1.0 : (winWallSelect.value === 'East' || winWallSelect.value === 'West' ? 0.55 : 0.22);
         const solarGainKWh = 6.5 + (winArea * 3.85 * orientationMultiplier);
-        statSolar.textContent = `${solarGainKWh.toFixed(2)} kWh`;
+        
+        // Total Daily Gain includes solar AND constant metabolic output over 24h
+        const totalGainKWh = solarGainKWh + (metabolicGainKW * 24);
+        statSolar.textContent = `${totalGainKWh.toFixed(2)} kWh`;
 
-        // Winter Diesel Saved (120 days heating season)
-        const netSavedKW = Math.max(0.8, (12.5 - totalLossKW) + (solarGainKWh / 8));
-        const dieselSavedLiters = Math.round(netSavedKW * 38);
-        statFuel.textContent = `${dieselSavedLiters} L Diesel`;
+        const netSavedKW = Math.max(0.8, (12.5 - totalLossKW) + (totalGainKWh / 8));
+        statFuel.textContent = `${Math.round(netSavedKW * 38)} L Diesel`;
 
-        // Dynamic Indoor Temperature Shift based on Insulation + Openings
-        const thermalShift = ((solarGainKWh - 12.0) * 0.35) - ((totalLossKW - 4.5) * 0.85);
+        // Shift indoor temp graph based on insulation + total heat gains
+        const thermalShift = ((totalGainKWh - 12.0) * 0.35) - ((totalLossKW - 4.5) * 0.85);
         const adjustedInside = defaultInside.map(val => +(val + thermalShift).toFixed(1));
         tempChart.data.datasets[0].data = adjustedInside;
         tempChart.update();
@@ -866,36 +896,44 @@
         metricDelta.textContent = `+${(avgIn - currentAmbientTemp).toFixed(1)}°C`;
         statRank.textContent = avgIn > 14 ? 'Grade A+' : (avgIn > 10.5 ? 'Grade A' : (avgIn > 7 ? 'Grade B' : 'Grade C'));
 
-        draw3DMesh(l, w, h, maxIn, currentAmbientTemp, snowCheck.checked);
+        const shape = document.getElementById('shelterShape').value;
+        draw3DMesh(l, w, h, maxIn, currentAmbientTemp, shape);
       }
       
-      // ── 3D FEA THERMAL MESH + CAD OPENINGS + CFD STREAMLINES ──────────────────
-      function draw3DMesh(l, w, h, tIn, tOut, isHighSnow) {
-        const roofH = isHighSnow ? 2.4 : 1.2;
-        const divX = 18; // High-resolution FEA discretization
-        const divY = 14;
-        const divZ = 10;
+      // ── 3D FEA THERMAL MESH (DYNAMIC MULTI-SHAPE ARCHITECTURE) ────────────
+      function draw3DMesh(l, w, h, tIn, tOut, shape) {
+        const divX = 20; 
+        const divY = 18;
+        const divZ = 8;
+        
+        let wallH = h;
+        let roofH = 0;
+        if (shape === 'barrel') {
+          wallH = h * 0.75; 
+          roofH = h * 0.25;
+        } else if (shape === 'pitched') {
+          roofH = 1.2; 
+        }
 
         const wind = parseFloat(windSlider.value) || 15;
-        const winGeom = getOpening3DGeometry(winWallSelect.value, parseFloat(winAreaSlider.value) || 0, 'window', l, w, h);
-        const doorGeom = getOpening3DGeometry(doorWallSelect.value, parseFloat(doorAreaSlider.value) || 1.8, 'door', l, w, h);
-        const ventGeom = getOpening3DGeometry(ventWallSelect.value, parseFloat(ventAreaSlider.value) || 0.3, 'vent', l, w, h);
+        const winGeom = getOpening3DGeometry(winWallSelect.value, parseFloat(winAreaSlider.value) || 0, 'window', l, w, h, shape);
+        const doorGeom = getOpening3DGeometry(doorWallSelect.value, parseFloat(doorAreaSlider.value) || 1.8, 'door', l, w, h, shape);
+        const ventGeom = getOpening3DGeometry(ventWallSelect.value, parseFloat(ventAreaSlider.value) || 0.3, 'vent', l, w, h, shape);
         const openingsList = [winGeom, doorGeom, ventGeom];
 
         const x = [], y = [], z = [], intensity = [], hoverLabels = [];
         const i_idx = [], j_idx = [], k_idx = [];
         const edgeX = [], edgeY = [], edgeZ = [];
 
-        // Continuous 3D Temperature Field T(x, y, z) + Opening Perturbations
         function getThermalPoint(px, py, pz) {
           const tBaseEnvelope = tOut + (tIn - tOut) * 0.38;
-          const zFactor = (pz / (h + roofH)) * 2.8;
+          const zFactor = (pz / (wallH + roofH)) * 3.2; 
           const southSolarPeak = Math.sin((px / l) * Math.PI) * 7.2 + 4.5;
           const conductionDiffusion = Math.exp(-2.2 * (py / w)) * southSolarPeak;
           const diffuseSky = (1 - Math.abs(px - l / 2) / l) * 1.5;
 
           let temp = tBaseEnvelope + zFactor + conductionDiffusion + diffuseSky;
-          let activeZone = "Insulated Wall Envelope";
+          let activeZone = pz > wallH ? "Roof Structure" : "Insulated Wall Envelope";
 
           openingsList.forEach(op => {
             if (op.area <= 0.01) return;
@@ -903,30 +941,23 @@
             const sigma = Math.max(0.45, Math.sqrt(op.area) * 0.65);
             const influence = Math.exp(-distSq / (2 * sigma * sigma));
 
-            let deltaOp = 0;
             if (op.type === 'window') {
-              deltaOp = (op.wall === 'South') ? (4.5 * Math.sqrt(op.area / 2.0)) : (-7.0 * Math.sqrt(op.area / 2.0));
-              if (influence > 0.35) activeZone = `${op.wall} Glazed Window Zone`;
+              temp += ((op.wall === 'South') ? 4.5 : -7.0) * Math.sqrt(op.area / 2.0) * influence;
+              if (influence > 0.35) activeZone = `${op.wall} Glazed Window`;
             } else if (op.type === 'door') {
-              deltaOp = -(6.5 + wind * 0.15) * Math.sqrt(op.area / 1.8);
+              temp += -(6.5 + wind * 0.15) * Math.sqrt(op.area / 1.8) * influence;
               if (influence > 0.35) activeZone = `${op.wall} Door Thermal Bridge`;
             } else if (op.type === 'vent') {
-              deltaOp = -(8.8 + wind * 0.24) * Math.sqrt(op.area / 0.3);
-              if (influence > 0.35) activeZone = `${op.wall} Ventilation Plume`;
+              temp += -(8.8 + wind * 0.24) * Math.sqrt(op.area / 0.3) * influence;
+              if (influence > 0.35) activeZone = `${op.wall} Vent Plume`;
             }
-
-            temp += deltaOp * influence;
           });
-
           return { temp, activeZone };
         }
 
         function addQuad(p1, p2, p3, p4) {
           const base = x.length;
-          const r1 = getThermalPoint(p1[0], p1[1], p1[2]);
-          const r2 = getThermalPoint(p2[0], p2[1], p2[2]);
-          const r3 = getThermalPoint(p3[0], p3[1], p3[2]);
-          const r4 = getThermalPoint(p4[0], p4[1], p4[2]);
+          const r1 = getThermalPoint(...p1), r2 = getThermalPoint(...p2), r3 = getThermalPoint(...p3), r4 = getThermalPoint(...p4);
 
           x.push(p1[0], p2[0], p3[0], p4[0]);
           y.push(p1[1], p2[1], p3[1], p4[1]);
@@ -939,234 +970,160 @@
             `Nodal Temp: ${r4.temp.toFixed(1)}°C<br>${r4.activeZone}`
           );
 
-          i_idx.push(base, base);
-          j_idx.push(base + 1, base + 2);
-          k_idx.push(base + 2, base + 3);
-
+          i_idx.push(base, base); j_idx.push(base + 1, base + 2); k_idx.push(base + 2, base + 3);
           edgeX.push(p1[0], p2[0], p3[0], p4[0], p1[0], null);
           edgeY.push(p1[1], p2[1], p3[1], p4[1], p1[1], null);
           edgeZ.push(p1[2], p2[2], p3[2], p4[2], p1[2], null);
         }
 
-        // 1. Walls & Gabled Roof FEA Quads
+        // 1. Generate Vertical Lower Walls
         for (let ix = 0; ix < divX; ix++) {
           for (let iz = 0; iz < divZ; iz++) {
             const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
-            const z0 = (iz * h) / divZ, z1 = ((iz + 1) * h) / divZ;
-            addQuad([x0, 0, z0], [x1, 0, z0], [x1, 0, z1], [x0, 0, z1]); // South
-            addQuad([x0, w, z0], [x0, w, z1], [x1, w, z1], [x1, w, z0]); // North
+            const z0 = (iz * wallH) / divZ, z1 = ((iz + 1) * wallH) / divZ;
+            addQuad([x0, 0, z0], [x1, 0, z0], [x1, 0, z1], [x0, 0, z1]); 
+            addQuad([x0, w, z0], [x0, w, z1], [x1, w, z1], [x1, w, z0]); 
           }
         }
         for (let iy = 0; iy < divY; iy++) {
           for (let iz = 0; iz < divZ; iz++) {
             const y0 = (iy * w) / divY, y1 = ((iy + 1) * w) / divY;
-            const z0 = (iz * h) / divZ, z1 = ((iz + 1) * h) / divZ;
-            addQuad([0, y0, z0], [0, y1, z0], [0, y1, z1], [0, y0, z1]); // West
-            addQuad([l, y0, z0], [l, y0, z1], [l, y1, z1], [l, y1, z0]); // East
+            const z0 = (iz * wallH) / divZ, z1 = ((iz + 1) * wallH) / divZ;
+            addQuad([0, y0, z0], [0, y1, z0], [0, y1, z1], [0, y0, z1]); 
+            addQuad([l, y0, z0], [l, y0, z1], [l, y1, z1], [l, y1, z0]); 
           }
         }
-        const midY = w / 2, apexZ = h + roofH;
-        for (let ix = 0; ix < divX; ix++) {
-          const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
-          addQuad([x0, 0, h], [x1, 0, h], [x1, midY, apexZ], [x0, midY, apexZ]);
-          addQuad([x0, midY, apexZ], [x1, midY, apexZ], [x1, w, h], [x0, w, h]);
+
+        // 2. Generate Dynamic Roof Structures
+        if (shape === 'barrel') {
+          for (let ix = 0; ix < divX; ix++) {
+            for (let iy = 0; iy < divY; iy++) {
+              const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+              const ang0 = (iy / divY) * Math.PI, ang1 = ((iy + 1) / divY) * Math.PI;
+              const y0 = (w / 2) - (w / 2) * Math.cos(ang0), y1 = (w / 2) - (w / 2) * Math.cos(ang1);
+              const z0 = wallH + roofH * Math.sin(ang0), z1 = wallH + roofH * Math.sin(ang1);
+
+              addQuad([x0, y0, z0], [x1, y0, z0], [x1, y1, z1], [x0, y1, z1]);
+              if (ix === 0) addQuad([0, y0, wallH], [0, y1, wallH], [0, y1, z1], [0, y0, z0]); 
+              if (ix === divX - 1) addQuad([l, y0, wallH], [l, y0, z0], [l, y1, z1], [l, y1, wallH]); 
+            }
+          }
+        } else if (shape === 'pitched') {
+          const midY = w / 2;
+          const apexZ = wallH + roofH;
+          for (let ix = 0; ix < divX; ix++) {
+            const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+            addQuad([x0, 0, wallH], [x1, 0, wallH], [x1, midY, apexZ], [x0, midY, apexZ]); 
+            addQuad([x0, midY, apexZ], [x1, midY, apexZ], [x1, w, wallH], [x0, w, wallH]); 
+            if (ix === 0) addQuad([0, 0, wallH], [0, w, wallH], [0, midY, apexZ], [0, 0, wallH]);
+            if (ix === divX - 1) addQuad([l, 0, wallH], [l, w, wallH], [l, midY, apexZ], [l, 0, wallH]);
+          }
+        } else {
+          for (let ix = 0; ix < divX; ix++) {
+            for (let iy = 0; iy < divY; iy++) {
+              const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+              const y0 = (iy * w) / divY, y1 = ((iy + 1) * w) / divY;
+              addQuad([x0, y0, wallH], [x1, y0, wallH], [x1, y1, wallH], [x0, y1, wallH]);
+            }
+          }
         }
 
         const meshTrace = {
-          type: 'mesh3d',
-          x: x, y: y, z: z,
-          i: i_idx, j: j_idx, k: k_idx,
-          intensity: intensity,
-          colorscale: 'Turbo',
-          showscale: true,
-          colorbar: {
-            title: { text: 'Surface Temp (°C)', font: { color: '#f8fafc', size: 11 } },
-            tickfont: { color: '#94a3b8', size: 10 },
-            len: 0.85,
-            thickness: 14,
-            x: 0.98
-          },
-          lighting: { ambient: 0.82, diffuse: 0.65, specular: 0.25, roughness: 0.4 },
-          hoverinfo: 'text',
-          text: hoverLabels
+          type: 'mesh3d', x: x, y: y, z: z, i: i_idx, j: j_idx, k: k_idx, intensity: intensity,
+          colorscale: 'Turbo', showscale: true,
+          colorbar: { title: { text: 'Temp (°C)', font: { color: '#f8fafc' } }, tickfont: { color: '#94a3b8' }, len: 0.85, x: 0.95 },
+          lighting: { ambient: 0.85, diffuse: 0.65, specular: 0.35, roughness: 0.3 },
+          hoverinfo: 'text', text: hoverLabels
         };
 
         const wireframeTrace = {
-          type: 'scatter3d',
-          mode: 'lines',
-          x: edgeX, y: edgeY, z: edgeZ,
-          line: { color: 'rgba(255, 255, 255, 0.13)', width: 1.0 },
-          hoverinfo: 'none'
+          type: 'scatter3d', mode: 'lines', x: edgeX, y: edgeY, z: edgeZ,
+          line: { color: 'rgba(255, 255, 255, 0.15)', width: 1.0 }, hoverinfo: 'none'
         };
 
-        // 2. 3D Ground Reference Apron & Cardinal Orientation Compass (N/S/E/W)
+        const padMargin = 4.0;
+        const groundTrace = {
+          type: 'mesh3d', x: [-padMargin, l + padMargin, l + padMargin, -padMargin], y: [-padMargin, -padMargin, w + padMargin, w + padMargin], z: [-0.05, -0.05, -0.05, -0.05],
+          i: [0, 0], j: [1, 2], k: [2, 3], color: '#e2e8f0', opacity: 0.35, hoverinfo: 'none'
+        };
+
         const compassTrace = {
-          type: 'scatter3d',
-          mode: 'text',
-          x: [l / 2, l / 2, l + 0.85, -0.85],
-          y: [-0.85, w + 0.85, w / 2, w / 2],
-          z: [0, 0, 0, 0],
+          type: 'scatter3d', mode: 'text',
+          x: [l / 2, l / 2, l + 1.2, -1.2], y: [-1.2, w + 1.2, w / 2, w / 2], z: [0, 0, 0, 0],
           text: ['☀️ SOUTH (Solar Front)', '❄️ NORTH (Cold Rear)', 'EAST', 'WEST'],
-          textfont: {
-            color: ['#fbbf24', '#38bdf8', '#94a3b8', '#94a3b8'],
-            size: [11, 11, 10, 10],
-            family: 'Inter, monospace'
-          },
-          hoverinfo: 'none'
+          textfont: { color: ['#fbbf24', '#38bdf8', '#cbd5e1', '#cbd5e1'], size: [11, 11, 10, 10], family: 'Inter, monospace' }, hoverinfo: 'none'
         };
 
-        // 3. Build Detailed 3D CAD Components & CFD Streamlines for Window, Door, and Vent
         const cadTraces = [];
-
         openingsList.forEach(op => {
           if (op.area <= 0.01) return;
-          const hw = op.widthO / 2;
-          const hh = op.heightO / 2;
-          const p0 = op.to3D(-hw, -hh, 0.035);
-          const p1 = op.to3D(hw, -hh, 0.035);
-          const p2 = op.to3D(hw, hh, 0.035);
-          const p3 = op.to3D(-hw, hh, 0.035);
+          const hw = op.widthO / 2; const hh = op.heightO / 2;
+          const p0 = op.to3D(-hw, -hh, 0.035), p1 = op.to3D(hw, -hh, 0.035), p2 = op.to3D(hw, hh, 0.035), p3 = op.to3D(-hw, hh, 0.035);
 
-          // A. Translucent 3D Surface Pane (Glass / Door Slab / Vent Grille)
           const paneColors = { window: '#38bdf8', door: '#d97706', vent: '#9333ea' };
-          const paneOpacities = { window: 0.52, door: 0.82, vent: 0.68 };
           cadTraces.push({
-            type: 'mesh3d',
-            x: [p0[0], p1[0], p2[0], p3[0]],
-            y: [p0[1], p1[1], p2[1], p3[1]],
-            z: [p0[2], p1[2], p2[2], p3[2]],
-            i: [0, 0], j: [1, 2], k: [2, 3],
-            color: paneColors[op.type],
-            opacity: paneOpacities[op.type],
-            hoverinfo: 'text',
-            text: `${op.type.toUpperCase()} (${op.wall} Wall - ${op.area} m²)`
+            type: 'mesh3d', x: [p0[0], p1[0], p2[0], p3[0]], y: [p0[1], p1[1], p2[1], p3[1]], z: [p0[2], p1[2], p2[2], p3[2]],
+            i: [0, 0], j: [1, 2], k: [2, 3], color: paneColors[op.type], opacity: 0.65,
+            hoverinfo: 'text', text: `${op.type.toUpperCase()} (${op.wall} Wall - ${op.area} m²)`
           });
 
-          // B. Architectural Mullions, Door Frame Details & Louver Slats + CFD Streamlines
           const detailX = [], detailY = [], detailZ = [];
           const flowX = [], flowY = [], flowZ = [];
-
-          // Outer Beveled Frame
           op.corners.forEach(c => { detailX.push(c[0]); detailY.push(c[1]); detailZ.push(c[2]); });
           detailX.push(null); detailY.push(null); detailZ.push(null);
 
           if (op.type === 'window') {
-            // Window Cross-Mullions (+ divider creating 4 panes)
             const vBot = op.to3D(0, -hh, 0.045), vTop = op.to3D(0, hh, 0.045);
             const hLeft = op.to3D(-hw, 0, 0.045), hRight = op.to3D(hw, 0, 0.045);
-            detailX.push(vBot[0], vTop[0], null, hLeft[0], hRight[0], null);
-            detailY.push(vBot[1], vTop[1], null, hLeft[1], hRight[1], null);
-            detailZ.push(vBot[2], vTop[2], null, hLeft[2], hRight[2], null);
-
-            // CFD Solar Gain / Conductive Loss Streamlines across window face
-            [-0.45, 0.45].forEach(uFrac => {
-              [-0.45, 0.45].forEach(zFrac => {
-                const start = op.to3D(hw * uFrac, hh * zFrac, 0.06);
-                const end = op.to3D(hw * uFrac, hh * zFrac, 0.65);
-                flowX.push(start[0], end[0], null);
-                flowY.push(start[1], end[1], null);
-                flowZ.push(start[2], end[2], null);
-              });
-            });
+            detailX.push(vBot[0], vTop[0], null, hLeft[0], hRight[0], null); detailY.push(vBot[1], vTop[1], null, hLeft[1], hRight[1], null); detailZ.push(vBot[2], vTop[2], null, hLeft[2], hRight[2], null);
+            [-0.45, 0.45].forEach(uFrac => { [-0.45, 0.45].forEach(zFrac => {
+                const start = op.to3D(hw * uFrac, hh * zFrac, 0.06), end = op.to3D(hw * uFrac, hh * zFrac, 0.65);
+                flowX.push(start[0], end[0], null); flowY.push(start[1], end[1], null); flowZ.push(start[2], end[2], null);
+            });});
           } else if (op.type === 'door') {
-            // Inner Recessed Door Panel & Lever Handle
             const iw = hw * 0.72, ih = hh * 0.82;
-            const dp0 = op.to3D(-iw, -ih, 0.048), dp1 = op.to3D(iw, -ih, 0.048);
-            const dp2 = op.to3D(iw, ih, 0.048), dp3 = op.to3D(-iw, ih, 0.048);
+            const dp0 = op.to3D(-iw, -ih, 0.048), dp1 = op.to3D(iw, -ih, 0.048), dp2 = op.to3D(iw, ih, 0.048), dp3 = op.to3D(-iw, ih, 0.048);
             const hnd1 = op.to3D(hw * 0.55, 0, 0.06), hnd2 = op.to3D(hw * 0.35, 0, 0.06);
             detailX.push(dp0[0], dp1[0], dp2[0], dp3[0], dp0[0], null, hnd1[0], hnd2[0], null);
             detailY.push(dp0[1], dp1[1], dp2[1], dp3[1], dp0[1], null, hnd1[1], hnd2[1], null);
             detailZ.push(dp0[2], dp1[2], dp2[2], dp3[2], dp0[2], null, hnd1[2], hnd2[2], null);
-
-            // Threshold Cold Draft Infiltration Streamlines
             [-0.6, 0, 0.6].forEach(uFrac => {
-              const s = op.to3D(hw * uFrac, -hh + 0.08, 0.05);
-              const e = op.to3D(hw * uFrac, -hh + 0.02, 0.55);
-              flowX.push(s[0], e[0], null);
-              flowY.push(s[1], e[1], null);
-              flowZ.push(s[2], e[2], null);
+              const s = op.to3D(hw * uFrac, -hh + 0.08, 0.05), e = op.to3D(hw * uFrac, -hh + 0.02, 0.55);
+              flowX.push(s[0], e[0], null); flowY.push(s[1], e[1], null); flowZ.push(s[2], e[2], null);
             });
           } else if (op.type === 'vent') {
-            // 4 Horizontal Louver Slats across Vent Aperture
             [-0.5, -0.17, 0.17, 0.5].forEach(zFrac => {
-              const sL = op.to3D(-hw * 0.9, hh * zFrac, 0.048);
-              const sR = op.to3D(hw * 0.9, hh * zFrac, 0.048);
-              detailX.push(sL[0], sR[0], null);
-              detailY.push(sL[1], sR[1], null);
-              detailZ.push(sL[2], sR[2], null);
-
-              // Exhaust Plume Streamlines jetting upward/outward from louver blades
-              const jetStart = op.to3D(0, hh * zFrac, 0.06);
-              const jetEnd = op.to3D(0, hh * zFrac + 0.22, 0.62);
-              flowX.push(jetStart[0], jetEnd[0], null);
-              flowY.push(jetStart[1], jetEnd[1], null);
-              flowZ.push(jetStart[2], jetEnd[2], null);
+              const sL = op.to3D(-hw * 0.9, hh * zFrac, 0.048), sR = op.to3D(hw * 0.9, hh * zFrac, 0.048);
+              detailX.push(sL[0], sR[0], null); detailY.push(sL[1], sR[1], null); detailZ.push(sL[2], sR[2], null);
+              const jetStart = op.to3D(0, hh * zFrac, 0.06), jetEnd = op.to3D(0, hh * zFrac + 0.22, 0.62);
+              flowX.push(jetStart[0], jetEnd[0], null); flowY.push(jetStart[1], jetEnd[1], null); flowZ.push(jetStart[2], jetEnd[2], null);
             });
           }
 
           const frameColors = { window: '#bae6fd', door: '#fde68a', vent: '#e9d5ff' };
           const labelIcons = { window: '🪟 Glazed Window', door: '🚪 Insulated Door', vent: '🌀 Exhaust Louver' };
-          const topLabelPos = op.to3D(0, hh + 0.18, 0.06);
-
-          // Structural Frame & Mullions Trace
-          cadTraces.push({
-            type: 'scatter3d',
-            mode: 'lines',
-            x: detailX, y: detailY, z: detailZ,
-            line: { color: frameColors[op.type], width: 5 },
-            hoverinfo: 'none'
-          });
-
-          // Floating 3D Component Callout Badge
-          cadTraces.push({
-            type: 'scatter3d',
-            mode: 'text',
-            x: [topLabelPos[0]], y: [topLabelPos[1]], z: [topLabelPos[2]],
-            text: [`${labelIcons[op.type]} (${op.area}m²)`],
-            textfont: { color: frameColors[op.type], size: 10, family: 'Inter, sans-serif' },
-            hoverinfo: 'none'
-          });
-
-          // CFD Airflow / Heat-Flux Streamline Trace
-          const flowColor = (op.type === 'window' && op.wall === 'South') ? '#facc15' : '#38bdf8';
-          cadTraces.push({
-            type: 'scatter3d',
-            mode: 'lines',
-            x: flowX, y: flowY, z: flowZ,
-            line: { color: flowColor, width: 3, dash: 'dot' },
-            hoverinfo: 'none'
-          });
+          
+          cadTraces.push({ type: 'scatter3d', mode: 'lines', x: detailX, y: detailY, z: detailZ, line: { color: frameColors[op.type], width: 5 }, hoverinfo: 'none' });
+          cadTraces.push({ type: 'scatter3d', mode: 'text', x: [op.to3D(0, hh + 0.18, 0.06)[0]], y: [op.to3D(0, hh + 0.18, 0.06)[1]], z: [op.to3D(0, hh + 0.18, 0.06)[2]], text: [`${labelIcons[op.type]} (${op.area}m²)`], textfont: { color: frameColors[op.type], size: 10, family: 'Inter, sans-serif' }, hoverinfo: 'none' });
+          cadTraces.push({ type: 'scatter3d', mode: 'lines', x: flowX, y: flowY, z: flowZ, line: { color: (op.type === 'window' && op.wall === 'South') ? '#facc15' : '#38bdf8', width: 3, dash: 'dot' }, hoverinfo: 'none' });
         });
 
         const sunVectorTrace = {
-          type: 'scatter3d',
-          mode: 'lines+text',
-          x: [-l * 0.28, 0],
-          y: [-w * 0.38, 0],
-          z: [h + roofH + 1.5, h * 0.75],
-          line: { color: '#f59e0b', width: 4 },
-          text: ['☀️ Direct Solar Vector', ''],
-          textposition: 'top center',
-          textfont: { color: '#fbbf24', size: 10, family: 'monospace' },
-          hoverinfo: 'none'
+          type: 'scatter3d', mode: 'lines+text', x: [-l * 0.28, 0], y: [-w * 0.38, 0], z: [wallH + roofH + 1.5, (wallH + roofH) * 0.75],
+          line: { color: '#f59e0b', width: 4 }, text: ['☀️ Direct Solar Vector', ''], textposition: 'top center', textfont: { color: '#fbbf24', size: 10, family: 'monospace' }, hoverinfo: 'none'
         };
 
-        // Use Plotly.react + uirevision so rotating the 3D model is preserved when sliders move
-        Plotly.react('meshContainer', [meshTrace, wireframeTrace, compassTrace, sunVectorTrace, ...cadTraces], {
-          paper_bgcolor: 'rgba(0,0,0,0)',
-          uirevision: 'keep-shelter-camera',
+        Plotly.react('meshContainer', [groundTrace, meshTrace, wireframeTrace, compassTrace, sunVectorTrace, ...cadTraces], {
+          paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', uirevision: 'keep-camera',
           scene: {
-            uirevision: 'keep-shelter-camera',
-            aspectmode: 'data',
-            camera: { eye: { x: -1.35, y: -1.65, z: 1.15 } },
-            xaxis: { title: 'Length (m)', color: '#64748b', gridcolor: '#334155' },
-            yaxis: { title: 'Width (m)', color: '#64748b', gridcolor: '#334155' },
-            zaxis: { title: 'Height (m)', color: '#64748b', gridcolor: '#334155' }
+            aspectmode: 'data', camera: { eye: { x: -1.35, y: -1.65, z: 1.15 } },
+            xaxis: { title: 'Length (m)', color: '#94a3b8', gridcolor: '#1e293b', backgroundcolor: '#0f172a', showbackground: true },
+            yaxis: { title: 'Width (m)', color: '#94a3b8', gridcolor: '#1e293b', backgroundcolor: '#0f172a', showbackground: true },
+            zaxis: { title: 'Height (m)', color: '#94a3b8', gridcolor: '#1e293b', backgroundcolor: '#0f172a', showbackground: true }
           },
-          margin: { l: 0, r: 0, b: 10, t: 10 },
-          showlegend: false
+          margin: { l: 0, r: 0, b: 10, t: 10 }, showlegend: false
         }, { responsive: true });
-      }  
+      }
 
       // ── 3D SATELLITE GLOBE & LIVE WEATHER TELEMETRY ───────────────────────────
       let globeMap;
@@ -1213,7 +1170,6 @@
           const temp = wxData.current.temperature_2m;
           const humidity = wxData.current.relative_humidity_2m;
           const windSpeed = wxData.current.wind_speed_10m;
-          const snowfall = wxData.current.snowfall;
           const elevation = wxData.elevation || 0;
 
           currentAmbientTemp = temp;
@@ -1233,7 +1189,6 @@
           windSlider.value = clampedWind;
           document.getElementById('windValue').textContent = clampedWind.toFixed(1);
 
-          snowCheck.checked = (snowfall > 0 || temp < 0 || elevation > 3000);
           updateAllPhysicsAndVisuals();
 
           badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live`;
@@ -1309,36 +1264,50 @@
       });
       closeLocationPickerBtn.addEventListener('click', () => locationPickerWindow.classList.add('hidden'));
 
-      // Bind Live Listeners for Geometry, Material, and Openings Controls
+      // ── BIND LIVE LISTENERS FOR ALL SLIDERS, DROPDOWNS & CHECKBOXES ────────
       thicknessSlider.addEventListener('input', (e) => {
         thicknessValLabel.textContent = e.target.value;
         thicknessMetersLabel.textContent = (e.target.value / 100).toFixed(2);
         updateAllPhysicsAndVisuals();
       });
+      
       windSlider.addEventListener('input', (e) => {
         document.getElementById('windValue').textContent = e.target.value;
         updateAllPhysicsAndVisuals();
       });
+
+      document.getElementById('occupants').addEventListener('input', updateAllPhysicsAndVisuals);
+      document.getElementById('shelterShape').addEventListener('change', updateAllPhysicsAndVisuals);
+
       [
-        materialSelect, lengthInput, widthInput, heightInput, snowCheck,
+        materialSelect, lengthInput, widthInput, heightInput,
         winWallSelect, winAreaSlider, doorWallSelect, doorAreaSlider, ventWallSelect, ventAreaSlider
       ].forEach(el => {
-        el.addEventListener('input', updateAllPhysicsAndVisuals);
-        el.addEventListener('change', updateAllPhysicsAndVisuals);
+        if (el) {
+          el.addEventListener('input', updateAllPhysicsAndVisuals);
+          el.addEventListener('change', updateAllPhysicsAndVisuals);
+        }
       });
 
-     // One-Click AI Auto-Optimizer (Selects DRDO Siachen Spec + Optimal Passive Solar Openings)
+      // One-Click AI Auto-Optimizer (Selects Siachen Spec + Barrel Vault Igloo)
       autoOptimizeBtn.addEventListener('click', () => {
-        materialSelect.value = 'DRDO FRP-PUF Sandwich Panel';
+        materialSelect.value = 'FRP-PUF Sandwich Panel';
+        document.getElementById('shelterShape').value = 'barrel';
+        
+        document.getElementById('occupants').value = 6;
+        document.getElementById('occupantsVal').textContent = '6';
+        
         thicknessSlider.value = 35;
         thicknessValLabel.textContent = '35';
         thicknessMetersLabel.textContent = '0.35';
+        
         winWallSelect.value = 'South';
         winAreaSlider.value = 2.6;
         doorWallSelect.value = 'East';
         doorAreaSlider.value = 1.6;
         ventWallSelect.value = 'East';
         ventAreaSlider.value = 0.15;
+        
         updateAllPhysicsAndVisuals();
       });
 
@@ -1360,9 +1329,14 @@
         let lonVal = parseFloat(longitudeInput.value) || 77.5771; if (lonDirSelect.value === 'W') lonVal = -Math.abs(lonVal);
         const mat = materialPresets[materialSelect.value] || {k: 0.024, rho: 35, cp: 1400};
         return {
-          geometry: { length: parseFloat(lengthInput.value), width: parseFloat(widthInput.value), height: parseFloat(heightInput.value), wallThickness: parseFloat(thicknessSlider.value)/100 },
+          geometry: { 
+            length: parseFloat(lengthInput.value), width: parseFloat(widthInput.value), 
+            height: parseFloat(heightInput.value), wallThickness: parseFloat(thicknessSlider.value)/100,
+            shape: document.getElementById('shelterShape').value 
+          },
           materials: { name: materialSelect.value, k: mat.k, rho: mat.rho, cp: mat.cp },
-          environment: { windSpeed: parseFloat(windSlider.value), highSnow: snowCheck.checked },
+          environment: { windSpeed: parseFloat(windSlider.value) },
+          occupants: parseInt(document.getElementById('occupants').value),
           openings: {
             window: { wall: winWallSelect.value, area: parseFloat(winAreaSlider.value) },
             door: { wall: doorWallSelect.value, area: parseFloat(doorAreaSlider.value) },
@@ -1411,7 +1385,8 @@
           } else {
             data.forEach((sim, idx) => {
               const date = new Date(sim.createdAt || Date.now()).toLocaleString();
-              const mat = sim.materials?.name || sim.material || sim.name || 'Aerogel / PUF Panel';
+              const rawMat = sim.materials?.name || sim.material || sim.name;
+              const mat = materialPresets[rawMat] ? rawMat : 'FRP-PUF Sandwich Panel';
               const l = sim.geometry?.length || sim.length || '6.0';
               const w = sim.geometry?.width || sim.width || '4.0';
               const h = sim.geometry?.height || sim.height || '2.8';
@@ -1545,12 +1520,13 @@
           const w = document.getElementById('width').value;
           const h = document.getElementById('height').value;
           const th = document.getElementById('thicknessValue').innerText;
+          const shape = document.getElementById('shelterShape').options[document.getElementById('shelterShape').selectedIndex].text;
+          const occupants = document.getElementById('occupants').value;
           
           const locName = document.getElementById('locationName').innerText;
           const lat = document.getElementById('latitude').value + "° " + document.getElementById('latDir').value;
           const lon = document.getElementById('longitude').value + "° " + document.getElementById('lonDir').value;
           const wind = document.getElementById('windSpeed').value + " m/s";
-          const snow = document.getElementById('snowLoad').checked ? "High Snow Load (Pitched Roof)" : "Normal / Flat";
 
           const winInfo = `${document.getElementById('winAreaVal').innerText} m² (${document.getElementById('winWall').value} Wall)`;
           const doorInfo = `${document.getElementById('doorAreaVal').innerText} m² (${document.getElementById('doorWall').value} Wall)`;
@@ -1582,15 +1558,16 @@
           addText(`Site Location:  ${locName} (${lat}, ${lon})`, 20, y, 10, [0, 0, 0], "helvetica", "bold"); y += 7;
           addText(`Dimensions (L x W x H):  ${l}m x ${w}m x ${h}m`, 20, y, 10);
           addText(`Wall Thickness:  ${th} cm`, 115, y, 10); y += 7;
-          addText(`Wind Speed:  ${wind}`, 20, y, 10);
-          addText(`Roof Profile:  ${snow}`, 115, y, 10); y += 14;
+          addText(`Roof Profile:  ${shape}`, 20, y, 10);
+          addText(`Wind Speed:  ${wind}`, 115, y, 10); y += 14;
 
-          addText("2. Fenestration & Openings Schedule", 15, y, 13, [0, 0, 0], "helvetica", "bold");
+          addText("2. Fenestration & Occupancy Data", 15, y, 13, [0, 0, 0], "helvetica", "bold");
           doc.line(15, y+3, 195, y+3); y += 10;
           addText(`Glazed Window:  ${winInfo}`, 20, y, 10);
           addText(`Access Door:  ${doorInfo}`, 115, y, 10); y += 7;
           addText(`Ventilation Louver:  ${ventInfo}`, 20, y, 10);
-          addText(`${opLoss}`, 115, y, 10, [225, 29, 72], "helvetica", "bold"); y += 14;
+          addText(`${opLoss}`, 115, y, 10, [225, 29, 72], "helvetica", "bold"); y += 7;
+          addText(`Human Occupancy:  ${occupants} Personnel (${occupants * 120}W Metabolic Heat)`, 20, y, 10, [16, 185, 129], "helvetica", "bold"); y += 14;
 
           addText("3. Material & Thermal Performance Analysis", 15, y, 13, [0, 0, 0], "helvetica", "bold");
           doc.line(15, y+3, 195, y+3); y += 10;
@@ -1598,7 +1575,7 @@
           addText(`Efficiency Rank:  ${rank}`, 20, y, 10, [16, 185, 129], "helvetica", "bold");
           addText(`Winter Fuel Saved:  ${fuelSaved}`, 115, y, 10, [16, 185, 129], "helvetica", "bold"); y += 7;
           addText(`Peak Indoor:  ${peakTemp}  |  Min Outdoor:  ${minTemp}  |  Retention:  ${retention}`, 20, y, 10); y += 7;
-          addText(`Daily Solar Gain:  ${solar}  |  Total Heat Loss:  ${heatLoss}`, 20, y, 10); y += 14;
+          addText(`Daily Heat Gain:  ${solar}  |  Total Heat Loss:  ${heatLoss}`, 20, y, 10); y += 14;
 
           addText("4. Logistics & Bill of Materials (BOM)", 15, y, 13, [0, 0, 0], "helvetica", "bold");
           doc.line(15, y+3, 195, y+3); y += 10;
