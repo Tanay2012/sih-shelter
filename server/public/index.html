@@ -43,15 +43,15 @@
   <style>
     body { font-family: 'Inter', sans-serif; }
     input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%;
-      background: #f97316; cursor: pointer; box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+      -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
+      background: #f97316; cursor: pointer; box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
     }
     input[type=range]::-moz-range-thumb {
-      height: 16px; width: 16px; border-radius: 50%;
-      background: #f97316; cursor: pointer; border: none; box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+      height: 14px; width: 14px; border-radius: 50%;
+      background: #f97316; cursor: pointer; border: none; box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
     }
     #locationMap {
-      height: 430px; width: 100%;
+      height: 410px; width: 100%;
       background: radial-gradient(circle at center, #1e293b 0%, #090d16 75%);
     }
     .gps-reticle {
@@ -64,45 +64,49 @@
     }
     .maplibregl-ctrl-group { background: #111827 !important; border: 1px solid #374151 !important; border-radius: 10px !important; overflow: hidden; }
     .maplibregl-ctrl-group button { filter: invert(1) brightness(0.9); }
-    .custom-scroll::-webkit-scrollbar { width: 6px; }
-    .custom-scroll::-webkit-scrollbar-track { background: #1f2937; border-radius: 4px; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar { width: 5px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #111827; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    details[open] summary .chevron-icon { transform: rotate(180deg); }
   </style>
 </head>
 
-<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col antialiased selection:bg-orange-500 selection:text-white">
+<body class="bg-gray-900 text-gray-100 min-h-screen md:h-screen md:overflow-hidden flex flex-col antialiased selection:bg-orange-500 selection:text-white">
 
-  <!-- Header Banner -->
-  <header class="bg-gray-800/80 border-b border-gray-700/60 backdrop-blur-md px-6 py-4 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+  <!-- Compact Header Banner -->
+  <header class="bg-gray-800/90 border-b border-gray-700/60 backdrop-blur-md px-5 py-2.5 shrink-0 z-50">
+    <div class="max-w-[1650px] mx-auto flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
-          <i class="fa-solid fa-fire-flame-curved text-xl"></i>
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+          <i class="fa-solid fa-fire-flame-curved text-lg"></i>
         </div>
         <div>
-          <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+          <h1 class="text-lg font-extrabold tracking-tight text-white flex items-center gap-2 leading-none">
             ThermoSim
-            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">v4.0</span>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">v4.0</span>
           </h1>
-          <p class="text-xs text-gray-400">Passive solar shelter engineering, Three.js 3D CFD wind/snow dynamics & FEA thermal model</p>
+          <p class="text-[11px] text-gray-400 mt-0.5">Full-Viewport 3D CFD Wind/Snow Simulator & Floating Telemetry Dock</p>
         </div>
       </div>
       
       <!-- HEADER CONTROLS -->
-      <div class="flex flex-wrap items-center gap-3 text-xs text-gray-400">
-        <button id="autoOptimizeBtn" type="button" class="flex items-center gap-2 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 px-3 py-1.5 rounded-lg transition-colors shadow-inner font-semibold cursor-pointer">
+      <div class="flex flex-wrap items-center gap-2.5 text-xs text-gray-400">
+        <button id="autoOptimizeBtn" type="button" class="flex items-center gap-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 px-3 py-1.5 rounded-lg transition-colors shadow-inner font-semibold cursor-pointer">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           <span>AI Auto-Optimize</span>
         </button>
-        <button id="openHistoryBtn" class="flex items-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 px-3 py-1.5 rounded-lg transition-colors shadow-inner font-semibold">
+        <button id="openHistoryBtn" class="flex items-center gap-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 px-3 py-1.5 rounded-lg transition-colors shadow-inner font-semibold cursor-pointer">
           <i class="fa-solid fa-database"></i>
-          <span>View Database History</span>
+          <span>Database History</span>
         </button>
         <div class="flex items-center gap-2 bg-gray-900/60 px-3 py-1.5 rounded-lg border border-gray-700/50">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Engine Status: <strong id="engineStatusText" class="text-emerald-400">Online</strong></span>
+          <span>Engine: <strong id="engineStatusText" class="text-emerald-400">Online</strong></span>
         </div>
-        <a href="/api/logout" id="logoutBtn" class="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 px-3 py-1.5 rounded-lg transition-colors shadow-inner font-semibold">
+        <a href="/api/logout" id="logoutBtn" class="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 px-3 py-1.5 rounded-lg transition-colors shadow-inner font-semibold">
           <i class="fa-solid fa-right-from-bracket"></i>
           <span>Sign Out</span>
         </a>
@@ -110,10 +114,11 @@
     </div>
   </header>
 
-  <div id="error-toast" class="hidden max-w-7xl mx-auto px-6 mt-4 w-full">
-    <div class="bg-rose-900/50 border border-rose-500/50 text-rose-200 px-4 py-3 rounded-xl flex items-center justify-between gap-3 shadow-lg">
-      <div class="flex items-center gap-3">
-        <i class="fa-solid fa-triangle-exclamation text-rose-400 text-lg"></i>
+  <!-- Error Toast -->
+  <div id="error-toast" class="hidden max-w-[1650px] mx-auto px-4 mt-2 w-full shrink-0">
+    <div class="bg-rose-900/60 border border-rose-500/50 text-rose-200 px-4 py-2 rounded-xl flex items-center justify-between gap-3 shadow-lg text-xs">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
         <span id="error-message">Simulation API request failed. Using client-side CFD & thermal calculation fallback.</span>
       </div>
       <button onclick="document.getElementById('error-toast').classList.add('hidden')" class="text-rose-400 hover:text-white">
@@ -122,446 +127,466 @@
     </div>
   </div>
 
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col md:flex-row gap-6">
+  <!-- Main Workstation Split-Screen Container (Locked to Viewport Height) -->
+  <main class="flex-1 max-w-[1650px] w-full mx-auto p-3 md:p-4 flex flex-col md:flex-row gap-4 md:overflow-hidden min-h-0">
 
-    <!-- Left Sidebar: Controls & Metrics -->
-    <aside class="w-full md:w-[36%] flex flex-col gap-5 bg-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-gray-700/60 shadow-2xl h-fit">
+    <!-- Left Sidebar: Tabbed & Collapsible Controls + Pinned Action Footer -->
+    <aside class="w-full md:w-[33%] lg:w-[30%] flex flex-col bg-gray-800/50 backdrop-blur-md rounded-2xl border border-gray-700/60 shadow-2xl md:h-full md:overflow-hidden shrink-0">
 
-      <div>
-        <h2 class="text-lg font-bold text-white flex items-center gap-2 mb-1">
-          <i class="fa-solid fa-sliders text-orange-400"></i> Simulation Parameters
-        </h2>
-        <p class="text-xs text-gray-400">Specify geometry, materials, CFD wind/snow, openings, and occupancy</p>
+      <!-- Sidebar Top Tab Bar (Parameters vs. Logistics & BOM) -->
+      <div class="p-3 border-b border-gray-700/60 bg-gray-900/50 shrink-0 flex flex-col gap-2">
+        <div class="grid grid-cols-2 gap-1.5 bg-gray-950 p-1 rounded-xl border border-gray-800">
+          <button type="button" id="tabParamsBtn" class="py-1.5 px-3 rounded-lg text-xs font-bold bg-orange-500 text-white shadow flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+            <i class="fa-solid fa-sliders"></i>
+            <span>Parameters</span>
+          </button>
+          <button type="button" id="tabBomBtn" class="py-1.5 px-3 rounded-lg text-xs font-bold text-gray-400 hover:text-white flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Cost & Logistics</span>
+          </button>
+        </div>
       </div>
 
-      <form id="simForm" class="flex flex-col gap-4">
-        <!-- 1. Geometry Section -->
-        <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
-          <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-cubes text-orange-400"></i> 1. Shelter Geometry (Dimensions)
+      <!-- Scrollable Interior Area of Left Sidebar -->
+      <div class="flex-1 overflow-y-auto custom-scroll p-3.5">
+        <form id="simForm" class="flex flex-col gap-2.5">
+
+          <!-- TAB 1: SIMULATION PARAMETERS (ACCORDION CARDS) -->
+          <div id="panelParams" class="flex flex-col gap-2.5">
+
+            <!-- 1. Geometry Section -->
+            <details open class="bg-gray-900/70 rounded-xl border border-gray-700/50 overflow-hidden group">
+              <summary class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between select-none hover:bg-gray-800/50 transition-colors">
+                <span class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
+                  <i class="fa-solid fa-cubes text-orange-400"></i> 1. Shelter Geometry & Roof
+                </span>
+                <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-200 chevron-icon"></i>
+              </summary>
+              <div class="px-3.5 pb-3.5 pt-1 flex flex-col gap-2.5 border-t border-gray-800/80">
+                <div class="grid grid-cols-3 gap-2">
+                  <div>
+                    <label for="length" class="text-[10px] text-gray-400 font-medium">Length (m)</label>
+                    <input type="number" id="length" value="6.0" min="2" max="30" step="0.5" class="w-full bg-gray-950 border border-gray-700 text-gray-200 text-xs rounded-lg p-1.5 font-mono outline-none focus:border-orange-500">
+                  </div>
+                  <div>
+                    <label for="width" class="text-[10px] text-gray-400 font-medium">Width (m)</label>
+                    <input type="number" id="width" value="4.0" min="2" max="30" step="0.5" class="w-full bg-gray-950 border border-gray-700 text-gray-200 text-xs rounded-lg p-1.5 font-mono outline-none focus:border-orange-500">
+                  </div>
+                  <div>
+                    <label for="height" class="text-[10px] text-gray-400 font-medium">Height (m)</label>
+                    <input type="number" id="height" value="2.8" min="2" max="10" step="0.1" class="w-full bg-gray-950 border border-gray-700 text-gray-200 text-xs rounded-lg p-1.5 font-mono outline-none focus:border-orange-500">
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                  <label class="text-[10px] font-semibold text-gray-300 uppercase tracking-wider">Shelter Roof Profile</label>
+                  <select id="shelterShape" class="w-full bg-gray-950 border border-gray-700 text-sky-400 font-semibold text-xs rounded-lg p-2 outline-none focus:border-orange-500 cursor-pointer">
+                    <option value="barrel" selected>Barrel Vault (Igloo / Low Wind Drag & Sheds Snow)</option>
+                    <option value="pitched">Gabled / Pitched Roof (Moderate Wind Drag)</option>
+                    <option value="flat">Flat Roof (Standard Modular Bunker / Traps Snow)</option>
+                  </select>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                  <div class="flex justify-between items-center text-xs">
+                    <label for="thickness" class="text-[10px] font-semibold text-gray-300 uppercase tracking-wider">Wall Thickness</label>
+                    <span class="bg-gray-950 px-2 py-0.5 rounded text-orange-400 font-mono font-bold text-[11px] border border-gray-700/80">
+                      <span id="thicknessValue">30</span> cm (<span id="thicknessMeters">0.30</span> m)
+                    </span>
+                  </div>
+                  <input type="range" id="thickness" min="10" max="80" value="30" step="1" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500">
+                </div>
+              </div>
+            </details>
+
+            <!-- 2. Material Selector -->
+            <details open class="bg-gray-900/70 rounded-xl border border-gray-700/50 overflow-hidden group">
+              <summary class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between select-none hover:bg-gray-800/50 transition-colors">
+                <span class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
+                  <i class="fa-solid fa-layer-group text-orange-400"></i> 2. Shelter Material
+                </span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30 font-mono">MIL-SPEC</span>
+                  <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-200 chevron-icon"></i>
+                </div>
+              </summary>
+              <div class="px-3.5 pb-3.5 pt-1 flex flex-col gap-2.5 border-t border-gray-800/80">
+                <select id="material" class="w-full bg-gray-950 border border-gray-700 text-gray-200 text-xs rounded-xl p-2 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none">
+                  <option value="FRP-PUF Sandwich Panel" selected>FRP-PUF Sandwich Panel (Siachen Spec)</option>
+                  <option value="Silica Aerogel Thermal Blanket">Silica Aerogel Thermal Blanket (Ultra-Light)</option>
+                  <option value="PPGI-PIR Composite Panel">PPGI-PIR Composite Panel (Modular Bunker)</option>
+                  <option value="Encapsulated Paraffin PCM Wall">Encapsulated Paraffin PCM (Latent Storage)</option>
+                  <option value="XPS-Insulated CSEB Earth Block">XPS-Insulated CSEB Block (DIHAR Leh Spec)</option>
+                  <option value="Multi-Wall Polycarbonate Panel">Multi-Wall Polycarbonate (Solar Trombe)</option>
+                </select>
+
+                <div class="bg-gray-950/90 p-2 rounded-lg border border-gray-800 grid grid-cols-3 gap-1.5 text-center text-[10px] font-mono">
+                  <div><span class="text-gray-500 block text-[9px]">Cond (k)</span><span id="prop-k" class="text-amber-400 font-bold">0.022 W/mK</span></div>
+                  <div><span class="text-gray-500 block text-[9px]">Density (&rho;)</span><span id="prop-rho" class="text-sky-400 font-bold">45 kg/m³</span></div>
+                  <div><span class="text-gray-500 block text-[9px]">Heat (c<sub>p</sub>)</span><span id="prop-cp" class="text-emerald-400 font-bold">1450 J/kgK</span></div>
+                </div>
+              </div>
+            </details>
+
+            <!-- 3. Location, Wind & Snow CFD -->
+            <details open class="bg-gray-900/70 rounded-xl border border-gray-700/50 overflow-hidden group">
+              <summary class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between select-none hover:bg-gray-800/50 transition-colors">
+                <span class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
+                  <i class="fa-solid fa-earth-asia text-orange-400"></i> 3. Location, Wind & Snow CFD
+                </span>
+                <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-200 chevron-icon"></i>
+              </summary>
+              <div class="px-3.5 pb-3.5 pt-1 flex flex-col gap-2.5 border-t border-gray-800/80">
+                <div class="bg-gray-950/80 p-2.5 rounded-lg border border-gray-800 flex flex-col gap-1.5">
+                  <div class="flex items-center justify-between border-b border-gray-800 pb-1">
+                    <div class="text-[11px] font-semibold text-gray-200 flex items-center gap-1.5 truncate">
+                      <i class="fa-solid fa-crosshairs text-orange-400"></i>
+                      <span id="locationName" class="truncate">Leh, Ladakh (Default)</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      <span id="syncBadge" class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shrink-0">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live
+                      </span>
+                      <button type="button" id="openLocationPickerBtn" class="px-2 py-0.5 rounded bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/40 text-orange-300 text-[10px] font-bold flex items-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-globe"></i> Globe
+                      </button>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-4 gap-1 text-center text-[10px] font-mono">
+                    <div class="bg-gray-900/90 p-1 rounded border border-gray-800"><span class="text-gray-500 block text-[8px]">Temp</span><span id="wx-temp" class="text-orange-400 font-bold">--°C</span></div>
+                    <div class="bg-gray-900/90 p-1 rounded border border-gray-800"><span class="text-gray-500 block text-[8px]">Humid</span><span id="wx-humidity" class="text-sky-400 font-bold">--%</span></div>
+                    <div class="bg-gray-900/90 p-1 rounded border border-gray-800"><span class="text-gray-500 block text-[8px]">Wind</span><span id="wx-wind" class="text-emerald-400 font-bold">--m/s</span></div>
+                    <div class="bg-gray-900/90 p-1 rounded border border-gray-800"><span class="text-gray-500 block text-[8px]">Elev</span><span id="wx-elev" class="text-purple-400 font-bold">--m</span></div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label for="latitude" class="text-[10px] text-gray-400 font-medium">Latitude</label>
+                    <div class="flex">
+                      <input type="number" id="latitude" value="34.1526" step="0.0001" min="0" max="90" class="w-full bg-gray-950 border border-gray-700 text-gray-200 text-xs rounded-l-lg p-1.5 font-mono outline-none border-r-0">
+                      <select id="latDir" class="bg-gray-800 border border-gray-700 text-orange-400 text-xs rounded-r-lg px-1.5 outline-none font-bold">
+                        <option value="N" selected>N</option><option value="S">S</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="longitude" class="text-[10px] text-gray-400 font-medium">Longitude</label>
+                    <div class="flex">
+                      <input type="number" id="longitude" value="77.5771" step="0.0001" min="0" max="180" class="w-full bg-gray-950 border border-gray-700 text-gray-200 text-xs rounded-l-lg p-1.5 font-mono outline-none border-r-0">
+                      <select id="lonDir" class="bg-gray-800 border border-gray-700 text-orange-400 text-xs rounded-r-lg px-1.5 outline-none font-bold">
+                        <option value="E" selected>E</option><option value="W">W</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Wind Speed Slider -->
+                <div class="flex flex-col gap-1">
+                  <div class="flex justify-between items-center text-xs">
+                    <label class="text-[10px] font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-1">
+                      <i class="fa-solid fa-wind text-emerald-400"></i> Wind Speed (CFD Flow)
+                    </label>
+                    <span class="bg-gray-950 px-2 py-0.5 rounded text-emerald-400 font-mono font-bold text-[11px] border border-gray-700/80">
+                      <span id="windValue">15.0</span> m/s
+                    </span>
+                  </div>
+                  <input type="range" id="windSpeed" min="0" max="40" value="15" step="0.5" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+                </div>
+
+                <!-- Snowfall Intensity Slider -->
+                <div class="flex flex-col gap-1">
+                  <div class="flex justify-between items-center text-xs">
+                    <label class="text-[10px] font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-1">
+                      <i class="fa-regular fa-snowflake text-sky-300"></i> Snowfall Intensity
+                    </label>
+                    <span class="bg-gray-950 px-2 py-0.5 rounded text-sky-300 font-mono font-bold text-[11px] border border-gray-700/80">
+                      <span id="snowRateValue">4.0</span> cm/hr
+                    </span>
+                  </div>
+                  <input type="range" id="snowRate" min="0" max="15" value="4.0" step="0.5" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
+                  <div class="flex justify-between text-[9px] text-gray-400 font-mono pt-0.5">
+                    <span>Wind-Chill: <strong id="windChillReadout" class="text-sky-400">-4.2°C</strong></span>
+                    <span>Convective (h<sub>ext</sub>): <strong id="hConvReadout" class="text-amber-400">62 W/m²K</strong></span>
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <!-- 4. Openings & Fenestration -->
+            <details class="bg-gray-900/70 rounded-xl border border-gray-700/50 overflow-hidden group">
+              <summary class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between select-none hover:bg-gray-800/50 transition-colors">
+                <span class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
+                  <i class="fa-solid fa-door-open text-orange-400"></i> 4. Openings & Fenestration
+                </span>
+                <div class="flex items-center gap-2">
+                  <span id="openingsLossBadge" class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30">Leakage: 1.85 kW</span>
+                  <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-200 chevron-icon"></i>
+                </div>
+              </summary>
+              <div class="px-3.5 pb-3.5 pt-1 flex flex-col gap-2 border-t border-gray-800/80">
+                <div class="bg-gray-950/70 p-2.5 rounded-lg border border-gray-800 flex flex-col gap-1.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-semibold text-sky-400"><i class="fa-solid fa-border-all mr-1"></i>Window (<span id="winAreaVal" class="font-mono">2.0</span>m²)</span>
+                    <select id="winWall" class="bg-gray-900 border border-gray-700 text-gray-200 text-[10px] rounded px-1.5 py-0.5 outline-none font-semibold">
+                      <option value="South" selected>South Wall</option><option value="East">East Wall</option><option value="West">West Wall</option><option value="North">North Wall</option>
+                    </select>
+                  </div>
+                  <input type="range" id="winArea" min="0" max="6.0" value="2.0" step="0.2" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
+                </div>
+
+                <div class="bg-gray-950/70 p-2.5 rounded-lg border border-gray-800 flex flex-col gap-1.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-semibold text-amber-400"><i class="fa-solid fa-door-closed mr-1"></i>Door (<span id="doorAreaVal" class="font-mono">1.8</span>m²)</span>
+                    <select id="doorWall" class="bg-gray-900 border border-gray-700 text-gray-200 text-[10px] rounded px-1.5 py-0.5 outline-none font-semibold">
+                      <option value="East" selected>East Wall</option><option value="South">South Wall</option><option value="West">West Wall</option><option value="North">North Wall</option>
+                    </select>
+                  </div>
+                  <input type="range" id="doorArea" min="1.2" max="3.5" value="1.8" step="0.1" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-400">
+                </div>
+
+                <div class="bg-gray-950/70 p-2.5 rounded-lg border border-gray-800 flex flex-col gap-1.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-semibold text-purple-400"><i class="fa-solid fa-fan mr-1"></i>Vent (<span id="ventAreaVal" class="font-mono">0.30</span>m²)</span>
+                    <select id="ventWall" class="bg-gray-900 border border-gray-700 text-gray-200 text-[10px] rounded px-1.5 py-0.5 outline-none font-semibold">
+                      <option value="North" selected>North Wall</option><option value="West">West Wall</option><option value="East">East Wall</option><option value="South">South Wall</option>
+                    </select>
+                  </div>
+                  <input type="range" id="ventArea" min="0.05" max="1.20" value="0.30" step="0.05" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-400">
+                </div>
+              </div>
+            </details>
+
+            <!-- 5. Human Occupancy -->
+            <details open class="bg-gray-900/70 rounded-xl border border-gray-700/50 overflow-hidden group">
+              <summary class="px-3.5 py-2.5 cursor-pointer flex items-center justify-between select-none hover:bg-gray-800/50 transition-colors">
+                <span class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
+                  <i class="fa-solid fa-users text-orange-400"></i> 5. Human Occupancy
+                </span>
+                <div class="flex items-center gap-2">
+                  <span id="metabolicBadge" class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Gain: +600 W</span>
+                  <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-200 chevron-icon"></i>
+                </div>
+              </summary>
+              <div class="px-3.5 pb-3.5 pt-1 flex flex-col gap-1.5 border-t border-gray-800/80">
+                <div class="flex justify-between items-center text-xs">
+                  <label class="text-[10px] font-semibold text-gray-400">Soldiers / Occupants (3D Figures in X-Ray)</label>
+                  <span class="font-mono text-emerald-400 font-bold text-xs"><span id="occupantsVal">5</span> Personnel</span>
+                </div>
+                <input type="range" id="occupants" min="0" max="12" value="5" step="1" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+              </div>
+            </details>
           </div>
 
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label for="length" class="text-[11px] text-gray-400 font-medium">Length (m)</label>
-              <input type="number" id="length" value="6.0" min="2" max="30" step="0.5" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg p-2 font-mono outline-none focus:border-orange-500">
+          <!-- TAB 2: PERFORMANCE, COST & LOGISTICS (BOM) -->
+          <div id="panelBom" class="hidden flex-col gap-2.5">
+            <div class="bg-gray-900/90 rounded-xl p-4 border border-gray-700/70 shadow-inner flex flex-col gap-3">
+              <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-amber-400"></i> Performance & Logistics Breakdown
+              </h3>
+
+              <div class="grid grid-cols-1 gap-2.5">
+                <div class="bg-gray-800/80 p-3 rounded-lg border border-gray-700/40 flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center"><i class="fa-solid fa-truck-fast text-sm"></i></div>
+                    <span class="text-xs text-gray-300 font-medium">Payload Weight</span>
+                  </div>
+                  <div class="text-right">
+                    <div id="stat-weight" class="text-sm font-mono font-bold text-orange-400">0 kg</div>
+                    <div id="stat-airlift" class="text-[9px] px-1.5 py-0.5 rounded font-bold mt-1 inline-block bg-gray-800">CALCULATING</div>
+                  </div>
+                </div>
+
+                <div class="bg-gray-800/80 p-3 rounded-lg border border-gray-700/40 flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-sun text-sm"></i></div>
+                    <span class="text-xs text-gray-300 font-medium">Daily Heat Gain (Solar + Metabolic)</span>
+                  </div>
+                  <span id="stat-solar" class="text-sm font-mono font-bold text-amber-400">14.20 kWh</span>
+                </div>
+
+                <div class="bg-gray-800/80 p-3 rounded-lg border border-gray-700/40 flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center"><i class="fa-solid fa-arrow-trend-down text-sm"></i></div>
+                    <span class="text-xs text-gray-300 font-medium">Net Heat Loss (CFD Wind + Snow)</span>
+                  </div>
+                  <span id="stat-loss" class="text-sm font-mono font-bold text-rose-400">5.80 kW</span>
+                </div>
+
+                <div class="bg-gray-800/80 p-3 rounded-lg border border-gray-700/40 flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-leaf text-sm"></i></div>
+                    <span class="text-xs text-gray-300 font-medium">Winter Fuel Saved</span>
+                  </div>
+                  <span id="stat-fuel" class="text-xs font-mono font-bold text-emerald-400">420 L Diesel</span>
+                </div>
+
+                <div class="bg-gray-800/80 p-3 rounded-lg border border-gray-700/40 flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-award text-sm"></i></div>
+                    <span class="text-xs text-gray-300 font-medium">Efficiency Rank</span>
+                  </div>
+                  <span id="stat-rank" class="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Grade A</span>
+                </div>
+
+                <div class="bg-gray-800/80 p-3 rounded-lg border border-gray-700/40 flex flex-col gap-2">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center"><i class="fa-solid fa-coins text-sm"></i></div>
+                      <span class="text-xs text-gray-300 font-medium">Est. Total Material Cost</span>
+                    </div>
+                    <span id="stat-cost" class="text-sm font-mono font-bold text-cyan-400">₹1,46,640</span>
+                  </div>
+                  <div class="text-[10px] text-gray-400 border-t border-gray-700/40 pt-2 grid grid-cols-2 gap-1 font-mono">
+                    <div>Unit Cost: <span id="cost-unit" class="text-gray-200">₹3,500/m³</span></div>
+                    <div>Labor/Install: <span id="cost-install" class="text-gray-200">₹1,200/m³</span></div>
+                    <div class="col-span-2">Net Wall Volume: <span id="cost-vol" class="text-gray-200">31.20 m³</span></div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <label for="width" class="text-[11px] text-gray-400 font-medium">Width (m)</label>
-              <input type="number" id="width" value="4.0" min="2" max="30" step="0.5" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg p-2 font-mono outline-none focus:border-orange-500">
-            </div>
-            <div>
-              <label for="height" class="text-[11px] text-gray-400 font-medium">Height (m)</label>
-              <input type="number" id="height" value="2.8" min="2" max="10" step="0.1" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg p-2 font-mono outline-none focus:border-orange-500">
-            </div>
-          </div>
-          
-          <div class="flex flex-col gap-1.5 mt-1 mb-2">
-            <label class="text-[11px] font-semibold text-gray-300 uppercase tracking-wider">Shelter Roof Profile</label>
-            <select id="shelterShape" class="w-full bg-gray-950 border border-gray-700 text-sky-400 font-semibold text-xs rounded-lg p-2.5 outline-none focus:border-orange-500 shadow-inner cursor-pointer">
-              <option value="barrel" selected>Barrel Vault (Igloo / Low Wind Drag & Snow Shedding)</option>
-              <option value="pitched">Gabled / Pitched Roof (Moderate Wind Drag)</option>
-              <option value="flat">Flat Roof (Standard Modular Bunker / Traps Snow)</option>
-            </select>
           </div>
 
-          <div class="flex flex-col gap-1.5 mt-1">
-            <div class="flex justify-between items-center text-xs">
-              <label for="thickness" class="text-[11px] font-semibold text-gray-300 uppercase tracking-wider">Wall Thickness</label>
-              <span class="bg-gray-900 px-2 py-0.5 rounded text-orange-400 font-mono font-bold text-xs border border-gray-700/80">
-                <span id="thicknessValue">30</span> cm (<span id="thicknessMeters">0.30</span> m)
-              </span>
-            </div>
-            <input type="range" id="thickness" min="10" max="80" value="30" step="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500">
-          </div>
-        </div>
-
-        <!-- 2. Material Selector Dropdown -->
-        <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
-          <label for="material" class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-orange-400"></i> 2. Shelter Material</span>
-            <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30 font-mono">MIL-SPEC</span>
-          </label>
-          <select id="material" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition duration-150 shadow-inner">
-            <option value="FRP-PUF Sandwich Panel" selected>FRP-PUF Sandwich Panel (Siachen Spec)</option>
-            <option value="Silica Aerogel Thermal Blanket">Silica Aerogel Thermal Blanket (Ultra-Light)</option>
-            <option value="PPGI-PIR Composite Panel">PPGI-PIR Composite Panel (Modular Bunker)</option>
-            <option value="Encapsulated Paraffin PCM Wall">Encapsulated Paraffin PCM (Latent Storage)</option>
-            <option value="XPS-Insulated CSEB Earth Block">XPS-Insulated CSEB Block (DIHAR Leh Spec)</option>
-            <option value="Multi-Wall Polycarbonate Panel">Multi-Wall Polycarbonate (Solar Trombe)</option>
-          </select>
-
-          <div class="bg-gray-950/70 p-2.5 rounded-lg border border-gray-800 grid grid-cols-3 gap-2 text-center text-[10px] font-mono">
-            <div><span class="text-gray-500 block">Cond (k)</span><span id="prop-k" class="text-amber-400 font-bold">0.022 W/mK</span></div>
-            <div><span class="text-gray-500 block">Density (&rho;)</span><span id="prop-rho" class="text-sky-400 font-bold">45 kg/m³</span></div>
-            <div><span class="text-gray-500 block">Heat (c<sub>p</sub>)</span><span id="prop-cp" class="text-emerald-400 font-bold">1450 J/kgK</span></div>
-          </div>
-        </div>
-
-        <!-- 3. Environmental Data + CFD Wind & Snowfall Intensity -->
-        <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
-          <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between gap-2">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-earth-asia text-orange-400"></i> 3. Location, Wind & Snow CFD</span>
-            <button type="button" id="openLocationPickerBtn" class="px-2.5 py-1 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/40 text-orange-400 hover:text-orange-300 transition-colors flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer" aria-label="Open 3D Globe" title="Open 3D Satellite Globe">
-              <i class="fa-solid fa-globe"></i>
-              <span>3D Globe</span>
+          <!-- Pinned Bottom Action Bar inside Sidebar -->
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-700/60 mt-1">
+            <button type="submit" id="submitBtn" class="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold py-2.5 px-3 rounded-xl shadow-lg shadow-orange-500/20 active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2 text-xs cursor-pointer">
+              <i class="fa-solid fa-play text-xs"></i>
+              <span>Run Simulation</span>
+            </button>
+            <button type="button" id="pdfBtn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold py-2.5 px-3 rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-2 text-xs cursor-pointer">
+              <i class="fa-solid fa-file-pdf text-rose-400"></i>
+              <span>PDF Report</span>
             </button>
           </div>
-
-          <!-- Live Telemetry Readout Box -->
-          <div class="bg-gray-950/70 p-3 rounded-lg border border-gray-800 flex flex-col gap-2">
-            <div class="flex items-center justify-between border-b border-gray-800 pb-1.5">
-              <div class="text-[11px] font-semibold text-gray-200 flex items-center gap-1.5 truncate">
-                <i class="fa-solid fa-crosshairs text-orange-400"></i>
-                <span id="locationName" class="truncate">Leh, Ladakh (Default)</span>
-              </div>
-              <span id="syncBadge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shrink-0">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live
-              </span>
-            </div>
-            <div class="grid grid-cols-4 gap-1.5 text-center text-[10px] font-mono pt-0.5">
-              <div class="bg-gray-900/80 p-1.5 rounded border border-gray-800/80">
-                <span class="text-gray-500 block text-[9px]">Temp</span>
-                <span id="wx-temp" class="text-orange-400 font-bold">--°C</span>
-              </div>
-              <div class="bg-gray-900/80 p-1.5 rounded border border-gray-800/80">
-                <span class="text-gray-500 block text-[9px]">Humidity</span>
-                <span id="wx-humidity" class="text-sky-400 font-bold">--%</span>
-              </div>
-              <div class="bg-gray-900/80 p-1.5 rounded border border-gray-800/80">
-                <span class="text-gray-500 block text-[9px]">Wind</span>
-                <span id="wx-wind" class="text-emerald-400 font-bold">--m/s</span>
-              </div>
-              <div class="bg-gray-900/80 p-1.5 rounded border border-gray-800/80">
-                <span class="text-gray-500 block text-[9px]">Elev</span>
-                <span id="wx-elev" class="text-purple-400 font-bold">--m</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2 mt-0.5">
-            <div>
-              <label for="latitude" class="text-[11px] text-gray-400 font-medium">Latitude</label>
-              <div class="flex">
-                <input type="number" id="latitude" value="34.1526" step="0.0001" min="0" max="90" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-l-lg p-2 font-mono outline-none focus:border-orange-500 border-r-0">
-                <select id="latDir" class="bg-gray-800 border border-gray-700 text-orange-400 text-xs rounded-r-lg px-2 outline-none font-bold">
-                  <option value="N" selected>N</option><option value="S">S</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label for="longitude" class="text-[11px] text-gray-400 font-medium">Longitude</label>
-              <div class="flex">
-                <input type="number" id="longitude" value="77.5771" step="0.0001" min="0" max="180" class="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-l-lg p-2 font-mono outline-none focus:border-orange-500 border-r-0">
-                <select id="lonDir" class="bg-gray-800 border border-gray-700 text-orange-400 text-xs rounded-r-lg px-2 outline-none font-bold">
-                  <option value="E" selected>E</option><option value="W">W</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Wind Speed Slider -->
-          <div class="flex flex-col gap-1.5 mt-1">
-            <div class="flex justify-between items-center text-xs">
-              <label class="text-[11px] font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-                <i class="fa-solid fa-wind text-emerald-400"></i> Wind Speed (CFD Flow)
-              </label>
-              <span class="bg-gray-900 px-2 py-0.5 rounded text-emerald-400 font-mono font-bold text-xs border border-gray-700/80">
-                <span id="windValue">15.0</span> m/s
-              </span>
-            </div>
-            <input type="range" id="windSpeed" min="0" max="40" value="15" step="0.5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-400">
-          </div>
-
-          <!-- Snowfall Intensity Slider -->
-          <div class="flex flex-col gap-1.5 mt-1">
-            <div class="flex justify-between items-center text-xs">
-              <label class="text-[11px] font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-                <i class="fa-regular fa-snowflake text-sky-300"></i> Snowfall Intensity
-              </label>
-              <span class="bg-gray-900 px-2 py-0.5 rounded text-sky-300 font-mono font-bold text-xs border border-gray-700/80">
-                <span id="snowRateValue">4.0</span> cm/hr
-              </span>
-            </div>
-            <input type="range" id="snowRate" min="0" max="15" value="4.0" step="0.5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
-            <div class="flex justify-between text-[9px] text-gray-400 font-mono">
-              <span>Wind-Chill Penalty: <strong id="windChillReadout" class="text-sky-400">-4.2°C</strong></span>
-              <span>Convective Film (h<sub>ext</sub>): <strong id="hConvReadout" class="text-amber-400">62 W/m²K</strong></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. Openings & Fenestration -->
-        <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3.5">
-          <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-door-open text-orange-400"></i> 4. Openings & Fenestration</span>
-            <span id="openingsLossBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30">Loss: 1.85 kW</span>
-          </div>
-
-          <div class="bg-gray-950/60 p-3 rounded-lg border border-gray-800 flex flex-col gap-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-sky-400 flex items-center gap-1.5">
-                <i class="fa-solid fa-border-all"></i> Glazed Window
-              </span>
-              <select id="winWall" class="bg-gray-900 border border-gray-700 text-gray-200 text-[11px] rounded-md px-2 py-1 outline-none focus:border-orange-500 font-semibold">
-                <option value="South" selected>South Wall (Solar Gain)</option>
-                <option value="East">East Wall</option>
-                <option value="West">West Wall</option>
-                <option value="North">North Wall (Cold Side)</option>
-              </select>
-            </div>
-            <div class="flex justify-between items-center text-[11px] text-gray-400">
-              <span>Opening Area</span>
-              <span class="font-mono text-sky-400 font-bold"><span id="winAreaVal">2.0</span> m²</span>
-            </div>
-            <input type="range" id="winArea" min="0" max="6.0" value="2.0" step="0.2" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
-          </div>
-
-          <div class="bg-gray-950/60 p-3 rounded-lg border border-gray-800 flex flex-col gap-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
-                <i class="fa-solid fa-door-closed"></i> Access Door
-              </span>
-              <select id="doorWall" class="bg-gray-900 border border-gray-700 text-gray-200 text-[11px] rounded-md px-2 py-1 outline-none focus:border-orange-500 font-semibold">
-                <option value="East" selected>East Wall (Leeward)</option>
-                <option value="South">South Wall</option>
-                <option value="West">West Wall</option>
-                <option value="North">North Wall (Windward)</option>
-              </select>
-            </div>
-            <div class="flex justify-between items-center text-[11px] text-gray-400">
-              <span>Door Size</span>
-              <span class="font-mono text-amber-400 font-bold"><span id="doorAreaVal">1.8</span> m²</span>
-            </div>
-            <input type="range" id="doorArea" min="1.2" max="3.5" value="1.8" step="0.1" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-400">
-          </div>
-
-          <div class="bg-gray-950/60 p-3 rounded-lg border border-gray-800 flex flex-col gap-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-purple-400 flex items-center gap-1.5">
-                <i class="fa-solid fa-fan"></i> Ventilation Louver
-              </span>
-              <select id="ventWall" class="bg-gray-900 border border-gray-700 text-gray-200 text-[11px] rounded-md px-2 py-1 outline-none focus:border-orange-500 font-semibold">
-                <option value="North" selected>North Wall (High Exhaust)</option>
-                <option value="West">West Wall</option>
-                <option value="East">East Wall</option>
-                <option value="South">South Wall</option>
-              </select>
-            </div>
-            <div class="flex justify-between items-center text-[11px] text-gray-400">
-              <span>Vent Aperture Area</span>
-              <span class="font-mono text-purple-400 font-bold"><span id="ventAreaVal">0.30</span> m²</span>
-            </div>
-            <input type="range" id="ventArea" min="0.05" max="1.20" value="0.30" step="0.05" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-400">
-          </div>
-        </div>
-
-        <!-- 5. Human Occupancy -->
-        <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
-          <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-users text-orange-400"></i> 5. Human Occupancy</span>
-            <span id="metabolicBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Gain: +600 W</span>
-          </div>
-
-          <div class="flex flex-col gap-1.5 mt-1">
-            <div class="flex justify-between items-center text-xs">
-              <label class="text-[11px] font-semibold text-gray-400">Soldiers / Occupants (3D Figures in X-Ray)</label>
-              <span class="font-mono text-emerald-400 font-bold"><span id="occupantsVal">5</span> Personnel</span>
-            </div>
-            <input type="range" id="occupants" min="0" max="12" value="5" step="1" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-400">
-            <p class="text-[9px] text-gray-500 mt-1 text-right">Check "X-Ray (Show People)" under the 3D model to view occupants</p>
-          </div>
-        </div>
-
-        <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2 group cursor-pointer">
-          <i class="fa-solid fa-play text-sm group-hover:translate-x-0.5 transition-transform"></i>
-          <span>Run Simulation</span>
-        </button>
-        
-        <button type="button" id="pdfBtn" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-2 group cursor-pointer mt-1">
-          <i class="fa-solid fa-file-pdf text-rose-400 group-hover:-translate-y-0.5 transition-transform"></i>
-          <span class="text-sm">Download Report</span>
-        </button>
-      </form>
-
-      <hr class="border-gray-700/60 my-1">
-
-      <!-- Performance & Logistics Box -->
-      <div class="bg-gray-900/90 rounded-xl p-5 border border-gray-700/70 shadow-inner flex flex-col gap-4">
-        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-          <i class="fa-solid fa-chart-pie text-amber-400"></i> Performance & Logistics
-        </h3>
-
-        <div class="grid grid-cols-1 gap-3">
-          <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center"><i class="fa-solid fa-truck-fast text-sm"></i></div>
-              <span class="text-xs text-gray-300 font-medium">Payload Weight</span>
-            </div>
-            <div class="text-right">
-              <div id="stat-weight" class="text-sm font-mono font-bold text-orange-400">0 kg</div>
-              <div id="stat-airlift" class="text-[9px] px-1.5 py-0.5 rounded font-bold mt-1 inline-block bg-gray-800">CALCULATING</div>
-            </div>
-          </div>
-
-          <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-sun text-sm"></i></div>
-              <span class="text-xs text-gray-300 font-medium">Daily Heat Gain (Solar + Metabolic)</span>
-            </div>
-            <span id="stat-solar" class="text-sm font-mono font-bold text-amber-400">14.20 kWh</span>
-          </div>
-
-          <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center"><i class="fa-solid fa-arrow-trend-down text-sm"></i></div>
-              <span class="text-xs text-gray-300 font-medium">Net Heat Loss (CFD Wind + Snow)</span>
-            </div>
-            <span id="stat-loss" class="text-sm font-mono font-bold text-rose-400">5.80 kW</span>
-          </div>
-
-          <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-leaf text-sm"></i></div>
-              <span class="text-xs text-gray-300 font-medium">Winter Fuel Saved</span>
-            </div>
-            <span id="stat-fuel" class="text-xs font-mono font-bold text-emerald-400">420 L Diesel</span>
-          </div>
-
-          <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-award text-sm"></i></div>
-              <span class="text-xs text-gray-300 font-medium">Efficiency Rank</span>
-            </div>
-            <span id="stat-rank" class="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Grade A</span>
-          </div>
-
-          <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex flex-col gap-2">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center"><i class="fa-solid fa-coins text-sm"></i></div>
-                <span class="text-xs text-gray-300 font-medium">Est. Total Material Cost</span>
-              </div>
-              <span id="stat-cost" class="text-sm font-mono font-bold text-cyan-400">₹1,46,640</span>
-            </div>
-            <div class="text-[11px] text-gray-400 border-t border-gray-700/40 pt-2 grid grid-cols-2 gap-1 font-mono">
-              <div>Unit Cost: <span id="cost-unit" class="text-gray-200">₹3,500/m³</span></div>
-              <div>Labor/Install: <span id="cost-install" class="text-gray-200">₹1,200/m³</span></div>
-              <div class="col-span-2">Net Wall Volume: <span id="cost-vol" class="text-gray-200">31.20 m³</span></div>
-            </div>
-          </div>
-        </div>
+        </form>
       </div>
     </aside>
 
-    <!-- Main Content Area: Charts & Visuals -->
-    <section class="flex-1 flex flex-col gap-6">
+    <!-- OPTION 1 RIGHT CONTENT AREA: 100% FULL-SCREEN 3D SIMULATOR + FLOATING GLASS TELEMETRY DOCK -->
+    <section class="flex-1 flex flex-col md:h-full md:overflow-hidden min-h-[540px] relative">
 
-      <!-- Chart Display Card -->
-      <div class="bg-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-gray-700/60 shadow-2xl flex flex-col flex-1 basis-0 min-h-[360px]">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 shrink-0">
-          <div>
-            <h2 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-orange-400"></i> 24-Hour Temperature Profile (Wind & Snow Coupled)</h2>
-            <p class="text-xs text-gray-400">Dynamic indoor thermal response vs. effective wind-chilled outdoor temperature</p>
-          </div>
-          <div class="flex items-center gap-3 text-xs">
-            <div class="flex items-center gap-1.5 bg-gray-900/60 px-2.5 py-1 rounded-lg border border-gray-700/50">
-              <span class="w-3 h-1 bg-orange-500 rounded-full"></span><span class="text-gray-300 font-medium">Internal Temp</span>
-            </div>
-            <div class="flex items-center gap-1.5 bg-gray-900/60 px-2.5 py-1 rounded-lg border border-gray-700/50">
-              <span class="w-3 h-1 bg-sky-400 border-b border-dashed border-sky-400"></span><span class="text-gray-300 font-medium">Effective Outdoor Temp</span>
-            </div>
-          </div>
-        </div>
-        <div class="relative flex-1 w-full bg-gray-900/60 rounded-xl p-4 border border-gray-700/50 flex items-center justify-center min-h-[240px]">
-          <canvas id="tempChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Quick Metrics Breakdown Bar -->
-      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 shrink-0">
-        <div class="bg-gray-800/50 border border-gray-700/60 p-4 rounded-xl flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center text-lg"><i class="fa-solid fa-temperature-arrow-up"></i></div>
-          <div><div class="text-[11px] text-gray-400 uppercase font-semibold">Peak Indoor Temp</div><div id="metric-peak-in" class="text-base font-mono font-bold text-white">18.4°C</div></div>
-        </div>
-        <div class="bg-gray-800/50 border border-gray-700/60 p-4 rounded-xl flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center text-lg"><i class="fa-solid fa-temperature-arrow-down"></i></div>
-          <div><div class="text-[11px] text-gray-400 uppercase font-semibold">Effective Outdoor</div><div id="metric-min-out" class="text-base font-mono font-bold text-sky-400">-15.0°C</div></div>
-        </div>
-        <div class="bg-gray-800/50 border border-gray-700/60 p-4 rounded-xl flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg"><i class="fa-solid fa-shield-halved"></i></div>
-          <div><div class="text-[11px] text-gray-400 uppercase font-semibold">Thermal Retention</div><div id="metric-delta" class="text-base font-mono font-bold text-emerald-400">+28.5°C</div></div>
-        </div>
-        <div class="bg-gray-800/50 border border-gray-700/60 p-4 rounded-xl flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-lg"><i class="fa-solid fa-calculator"></i></div>
-          <div><div class="text-[11px] text-gray-400 uppercase font-semibold">Air Volume</div><div id="metric-air-vol" class="text-base font-mono font-bold text-cyan-400">67.2 m³</div></div>
-        </div>
-      </div>
-
-      <!-- 3D THREE.JS CONTAINER WITH SEPARATE WIND, SNOW & X-RAY CONTROLS -->
-      <div class="bg-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-gray-700/60 shadow-2xl flex flex-col flex-1 basis-0 min-h-[460px] relative">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2 shrink-0">
-          <div>
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+      <!-- Full-Height Three.js Simulator Card -->
+      <div class="bg-gray-800/50 backdrop-blur-md p-3.5 rounded-2xl border border-gray-700/60 shadow-2xl flex flex-col flex-1 min-h-0 relative">
+        
+        <!-- Top Header Bar of the 3D Workstation -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2 shrink-0">
+          <div class="flex items-center gap-2.5">
+            <h2 class="text-sm font-bold text-white flex items-center gap-2">
               <i class="fa-solid fa-cube text-orange-400"></i> Three.js 3D Thermal FEA & CFD Wind/Snow Simulator
             </h2>
-            <p class="text-xs text-gray-400">Interactive 60-FPS 3D shelter model with separate Wind Flow, Snowfall, and Occupant X-Ray</p>
+            <span class="hidden sm:inline-block text-[10px] text-gray-400 font-mono border-l border-gray-700 pl-2.5">
+              🖱️ Left-Drag: Rotate &bull; Scroll: Zoom &bull; Right-Drag: Pan
+            </span>
           </div>
           <div class="flex flex-wrap gap-1.5">
-            <span class="text-[10px] bg-sky-500/15 border border-sky-500/40 text-sky-300 px-2 py-1 rounded flex items-center gap-1 font-semibold">🪟 Window</span>
-            <span class="text-[10px] bg-amber-500/15 border border-amber-500/40 text-amber-300 px-2 py-1 rounded flex items-center gap-1 font-semibold">🚪 Door</span>
-            <span class="text-[10px] bg-purple-500/15 border border-purple-500/40 text-purple-300 px-2 py-1 rounded flex items-center gap-1 font-semibold">🌀 Vent</span>
+            <span class="text-[10px] bg-sky-500/15 border border-sky-500/40 text-sky-300 px-2 py-0.5 rounded flex items-center gap-1 font-semibold">🪟 Window</span>
+            <span class="text-[10px] bg-amber-500/15 border border-amber-500/40 text-amber-300 px-2 py-0.5 rounded flex items-center gap-1 font-semibold">🚪 Door</span>
+            <span class="text-[10px] bg-purple-500/15 border border-purple-500/40 text-purple-300 px-2 py-0.5 rounded flex items-center gap-1 font-semibold">🌀 Vent</span>
           </div>
         </div>
-        
-        <!-- Three.js WebGL Viewport + HTML HUD Overlays -->
-        <div class="relative w-full flex-1 bg-slate-950 rounded-xl border border-gray-700/60 mt-2 overflow-hidden min-h-[320px]">
+
+        <!-- MASSIVE 100% HEIGHT THREE.JS VIEWPORT + FLOATING GLASS OVERLAYS -->
+        <div class="relative w-full flex-1 bg-slate-950 rounded-xl border border-gray-700/60 overflow-hidden min-h-0">
+          <!-- Three.js WebGL Canvas Mount -->
           <div id="meshContainer" class="absolute inset-0 w-full h-full"></div>
 
-          <!-- Top-Left Navigation & Status HUD -->
-          <div class="absolute top-3 left-3 pointer-events-none flex flex-col gap-1 bg-gray-900/85 backdrop-blur-md px-3 py-2 rounded-lg border border-gray-700/60 text-[10px] font-mono z-10">
-            <div class="text-amber-400 font-bold">☀️ SOUTH (Solar Front) &bull; ❄️ NORTH (Cold Wind Inlet)</div>
-            <div class="text-gray-300">🖱️ Left-Click: Rotate &bull; Scroll: Zoom &bull; Right-Click: Pan</div>
+          <!-- 1. TOP FLOATING HUD RIBBON: 4 QUICK METRICS + CARDINAL ORIENTATION -->
+          <div class="absolute top-3 left-3 right-14 pointer-events-none flex flex-wrap items-center justify-between gap-2 z-10">
+            <!-- Quick Metrics Pills -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pointer-events-auto">
+              <div class="bg-gray-900/80 backdrop-blur-md border border-gray-700/70 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg">
+                <i class="fa-solid fa-temperature-arrow-up text-orange-400 text-xs"></i>
+                <div>
+                  <div class="text-[9px] text-gray-400 uppercase font-bold leading-none">Peak Indoor</div>
+                  <div id="metric-peak-in" class="text-xs font-mono font-bold text-white mt-0.5">18.4°C</div>
+                </div>
+              </div>
+              <div class="bg-gray-900/80 backdrop-blur-md border border-gray-700/70 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg">
+                <i class="fa-solid fa-temperature-arrow-down text-sky-400 text-xs"></i>
+                <div>
+                  <div class="text-[9px] text-gray-400 uppercase font-bold leading-none">Effective Out</div>
+                  <div id="metric-min-out" class="text-xs font-mono font-bold text-sky-400 mt-0.5">-15.0°C</div>
+                </div>
+              </div>
+              <div class="bg-gray-900/80 backdrop-blur-md border border-gray-700/70 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg">
+                <i class="fa-solid fa-shield-halved text-emerald-400 text-xs"></i>
+                <div>
+                  <div class="text-[9px] text-gray-400 uppercase font-bold leading-none">Retention</div>
+                  <div id="metric-delta" class="text-xs font-mono font-bold text-emerald-400 mt-0.5">+28.5°C</div>
+                </div>
+              </div>
+              <div class="bg-gray-900/80 backdrop-blur-md border border-gray-700/70 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg">
+                <i class="fa-solid fa-calculator text-cyan-400 text-xs"></i>
+                <div>
+                  <div class="text-[9px] text-gray-400 uppercase font-bold leading-none">Air Volume</div>
+                  <div id="metric-air-vol" class="text-xs font-mono font-bold text-cyan-400 mt-0.5">67.2 m³</div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Right-Side Surface Temperature Colorbar Legend -->
-          <div class="absolute top-3 bottom-3 right-3 pointer-events-none bg-gray-900/85 backdrop-blur-md px-2.5 py-2 rounded-xl border border-gray-700/60 flex flex-col items-center justify-between text-[10px] font-mono z-10">
-            <span class="text-[9px] text-gray-300 font-sans font-bold uppercase">Temp</span>
+          <!-- 2. RIGHT-SIDE SURFACE TEMPERATURE COLORBAR LEGEND -->
+          <div class="absolute top-3 bottom-3 right-3 pointer-events-none bg-gray-900/85 backdrop-blur-md px-2 py-2 rounded-xl border border-gray-700/60 flex flex-col items-center justify-between text-[9px] font-mono z-10 shadow-xl">
+            <span class="text-[8px] text-gray-300 font-sans font-bold uppercase">Temp</span>
             <span id="legendMaxTemp" class="text-rose-400 font-bold">+18°C</span>
-            <div class="w-3 flex-1 my-1 rounded-full border border-gray-600" style="background: linear-gradient(to bottom, #ef4444, #f97316, #eab308, #22c55e, #06b6d4, #3b82f6);"></div>
+            <div class="w-2.5 flex-1 my-1.5 rounded-full border border-gray-600" style="background: linear-gradient(to bottom, #ef4444, #f97316, #eab308, #22c55e, #06b6d4, #3b82f6);"></div>
             <span id="legendMinTemp" class="text-sky-400 font-bold">-18°C</span>
+          </div>
+
+          <!-- 3. FLOATING GLASS TELEMETRY DOCK (24-HOUR TEMPERATURE CHART OVERLAY) -->
+          <div id="floatingChartDock" class="absolute bottom-3 left-3 z-20 w-[min(92%,430px)] h-[225px] bg-gray-900/80 backdrop-blur-xl border border-gray-700/80 rounded-2xl p-3 shadow-2xl flex flex-col transition-all duration-300">
+            <!-- Dock Header with Legend & Expand/Minimize Buttons -->
+            <div class="flex items-center justify-between gap-2 mb-1.5 shrink-0">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-orange-400 text-xs"></i>
+                <span class="text-xs font-bold text-white tracking-tight">24h Thermal Profile</span>
+                <div class="hidden sm:flex items-center gap-2 text-[9px] ml-1 bg-gray-950/70 px-2 py-0.5 rounded border border-gray-800">
+                  <span class="flex items-center gap-1 text-orange-300"><span class="w-2 h-0.5 bg-orange-500"></span>In</span>
+                  <span class="flex items-center gap-1 text-sky-300"><span class="w-2 h-0.5 bg-sky-400"></span>Out</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-1">
+                <button type="button" id="expandChartDockBtn" class="w-6 h-6 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 hover:text-white flex items-center justify-center text-[10px] border border-gray-700 cursor-pointer transition-colors" title="Expand / Restore Chart Size">
+                  <i id="expandChartIcon" class="fa-solid fa-expand"></i>
+                </button>
+                <button type="button" id="minimizeChartDockBtn" class="w-6 h-6 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 hover:text-white flex items-center justify-center text-[10px] border border-gray-700 cursor-pointer transition-colors" title="Minimize / Show Chart">
+                  <i id="minimizeChartIcon" class="fa-solid fa-minus"></i>
+                </button>
+              </div>
+            </div>
+            <!-- Chart Canvas Wrapper -->
+            <div id="chartCanvasWrap" class="relative flex-1 w-full min-h-0">
+              <canvas id="tempChart"></canvas>
+            </div>
           </div>
         </div>
         
-        <!-- 4D Time-Lapse + Separate Wind, Snow & X-Ray Buttons -->
-        <div class="mt-4 bg-gray-900/80 rounded-xl p-3 border border-gray-700/50 flex flex-col gap-3 relative z-10">
+        <!-- Bottom Control Bar: 4D Time-Lapse + Separate Wind, Snow & X-Ray Toggles -->
+        <div class="mt-2.5 bg-gray-900/85 rounded-xl p-2.5 border border-gray-700/50 flex flex-col gap-2 shrink-0 relative z-10">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-3">
-              <button id="playTimeLapseBtn" type="button" class="w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-400 text-white flex items-center justify-center transition-colors shadow-lg shadow-orange-500/30 focus:outline-none cursor-pointer" title="Play 24-Hour Thermal Cycle">
+            <div class="flex items-center gap-2.5">
+              <button id="playTimeLapseBtn" type="button" class="w-7 h-7 rounded-full bg-orange-500 hover:bg-orange-400 text-white flex items-center justify-center transition-colors shadow-lg shadow-orange-500/30 focus:outline-none cursor-pointer text-xs" title="Play 24-Hour Thermal Cycle">
                 <i class="fa-solid fa-play"></i>
               </button>
-              <div class="flex flex-col">
-                <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Time of Day</span>
-                <span id="timeLabel" class="text-sm font-mono font-bold text-orange-400">14:00</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Time:</span>
+                <span id="timeLabel" class="text-xs font-mono font-bold text-orange-400">14:00</span>
               </div>
             </div>
 
             <!-- SEPARATE WIND, SNOW & X-RAY TOGGLE BUTTONS -->
-            <div class="flex flex-wrap items-center gap-2">
-              <!-- 1. Separate Wind Flow Toggle Button -->
-              <button id="toggleWindBtn" type="button" class="px-3 py-1.5 rounded-lg border border-emerald-500/60 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all shadow-inner">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button id="toggleWindBtn" type="button" class="px-2.5 py-1 rounded-lg border border-emerald-500/60 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all shadow-inner">
                 <i class="fa-solid fa-wind"></i>
                 <span id="windBtnText">Wind Flow: ON</span>
               </button>
 
-              <!-- 2. Separate Snowfall Toggle Button -->
-              <button id="toggleSnowBtn" type="button" class="px-3 py-1.5 rounded-lg border border-sky-500/60 bg-sky-500/20 text-sky-300 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all shadow-inner">
+              <button id="toggleSnowBtn" type="button" class="px-2.5 py-1 rounded-lg border border-sky-500/60 bg-sky-500/20 text-sky-300 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all shadow-inner">
                 <i class="fa-regular fa-snowflake"></i>
                 <span id="snowBtnText">Snowfall: ON</span>
               </button>
 
-              <!-- 3. X-Ray Slice View Toggle -->
-              <div class="flex items-center gap-2 bg-gray-950/70 px-3 py-1.5 rounded-lg border border-gray-700/60">
+              <div class="flex items-center gap-1.5 bg-gray-950/70 px-2.5 py-1 rounded-lg border border-gray-700/60">
                 <input type="checkbox" id="xrayToggle" class="w-3.5 h-3.5 text-rose-500 bg-gray-900 border-gray-700 rounded focus:ring-rose-500 focus:ring-2 cursor-pointer">
                 <label for="xrayToggle" class="text-[10px] text-gray-200 font-bold uppercase cursor-pointer">
                   <i class="fa-solid fa-person-rays text-rose-400 mr-1"></i> X-Ray (Show People)
@@ -575,8 +600,8 @@
     </section>
 
     <!-- Floating AI Chat Widget -->
-    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-      <div id="chatWindow" class="hidden bg-gray-900 border border-gray-700 rounded-2xl w-80 sm:w-96 shadow-2xl mb-4 overflow-hidden flex flex-col">
+    <div class="fixed bottom-5 right-5 z-50 flex flex-col items-end">
+      <div id="chatWindow" class="hidden bg-gray-900 border border-gray-700 rounded-2xl w-80 sm:w-96 shadow-2xl mb-3 overflow-hidden flex flex-col">
         <div class="bg-gray-800 p-3 border-b border-gray-700 flex justify-between items-center">
           <span class="text-sm font-bold text-white"><i class="fa-solid fa-robot text-orange-400 mr-2"></i>ThermoSim AI</span>
           <button id="closeChatBtn" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
@@ -594,14 +619,14 @@
         </div>
       </div>
       
-      <button id="chatToggleBtn" class="w-14 h-14 bg-gradient-to-r from-orange-500 to-amber-600 rounded-full shadow-lg shadow-orange-500/30 flex items-center justify-center text-white text-xl hover:scale-105 transition-transform border border-orange-400/50 cursor-pointer">
+      <button id="chatToggleBtn" class="w-12 h-12 bg-gradient-to-r from-orange-500 to-amber-600 rounded-full shadow-lg shadow-orange-500/30 flex items-center justify-center text-white text-lg hover:scale-105 transition-transform border border-orange-400/50 cursor-pointer">
         <i class="fa-solid fa-comment-dots"></i>
       </button>
     </div>
   </main>
 
   <!-- 3D Satellite Globe & Live Telemetry Popup -->
-  <div id="locationPickerWindow" class="hidden fixed bottom-6 right-6 sm:right-[6.5rem] z-[60] w-[min(94vw,540px)] bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
+  <div id="locationPickerWindow" class="hidden fixed bottom-6 right-6 sm:right-[5.5rem] z-[60] w-[min(94vw,540px)] bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
     <div class="bg-gray-800 p-3.5 border-b border-gray-700 flex justify-between items-center">
       <div class="flex items-center gap-2">
         <i class="fa-solid fa-earth-asia text-orange-400"></i>
@@ -647,10 +672,6 @@
       </div>
     </div>
   </div>
-
-  <footer class="bg-gray-800/40 border-t border-gray-800 text-center py-4 text-xs text-gray-500 mt-6">
-    <p>Shelter Thermal Engine &bull; Three.js 3D CFD Wind, Snowfall & Fenestration Suite</p>
-  </footer>
 
   <!-- Database History Modal -->
   <div id="historyModal" class="fixed inset-0 bg-gray-950/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 transition-opacity duration-300">
@@ -747,7 +768,40 @@
       const toggleSnowBtn = document.getElementById('toggleSnowBtn');
       const snowBtnText = document.getElementById('snowBtnText');
 
-      // Simulation & Three.js State Variables (Initialized upfront to prevent ReferenceErrors)
+      // Floating Glass Telemetry Dock Controls
+      const floatingChartDock = document.getElementById('floatingChartDock');
+      const chartCanvasWrap = document.getElementById('chartCanvasWrap');
+      const expandChartDockBtn = document.getElementById('expandChartDockBtn');
+      const expandChartIcon = document.getElementById('expandChartIcon');
+      const minimizeChartDockBtn = document.getElementById('minimizeChartDockBtn');
+      const minimizeChartIcon = document.getElementById('minimizeChartIcon');
+      let chartDockState = 'compact'; // 'compact' | 'expanded' | 'minimized'
+
+      // Sidebar Tab Switcher (Parameters vs. Cost & Logistics)
+      const tabParamsBtn = document.getElementById('tabParamsBtn');
+      const tabBomBtn = document.getElementById('tabBomBtn');
+      const panelParams = document.getElementById('panelParams');
+      const panelBom = document.getElementById('panelBom');
+
+      tabParamsBtn.addEventListener('click', () => {
+        panelParams.classList.remove('hidden');
+        panelParams.classList.add('flex');
+        panelBom.classList.add('hidden');
+        panelBom.classList.remove('flex');
+        tabParamsBtn.className = 'py-1.5 px-3 rounded-lg text-xs font-bold bg-orange-500 text-white shadow flex items-center justify-center gap-1.5 transition-all cursor-pointer';
+        tabBomBtn.className = 'py-1.5 px-3 rounded-lg text-xs font-bold text-gray-400 hover:text-white flex items-center justify-center gap-1.5 transition-all cursor-pointer';
+      });
+
+      tabBomBtn.addEventListener('click', () => {
+        panelBom.classList.remove('hidden');
+        panelBom.classList.add('flex');
+        panelParams.classList.add('hidden');
+        panelParams.classList.remove('flex');
+        tabBomBtn.className = 'py-1.5 px-3 rounded-lg text-xs font-bold bg-orange-500 text-white shadow flex items-center justify-center gap-1.5 transition-all cursor-pointer';
+        tabParamsBtn.className = 'py-1.5 px-3 rounded-lg text-xs font-bold text-gray-400 hover:text-white flex items-center justify-center gap-1.5 transition-all cursor-pointer';
+      });
+
+      // Simulation & Three.js State Variables
       const baseDiurnalShape = [-3.0, -4.5, -5.5, -6.0, -5.0, -3.5, -0.5, 3.0, 6.0, 8.5, 10.5, 11.5, 12.0, 11.5, 10.0, 7.5, 4.5, 2.0, 0.5, -1.0, -1.5, -2.0, -2.5, -2.8];
       let baseSiteTemp = -10.0;
       let globalAmbient24 = baseDiurnalShape.map(d => +(baseSiteTemp + d).toFixed(1));
@@ -785,7 +839,7 @@
         "Multi-Wall Polycarbonate Panel": { k: 0.190, rho: 120, cp: 1200, costPerUnit: 16000, currency: "INR (₹)", installationCost: 3000 }
       };
 
-      // ── 2. CHART.JS 24-HOUR TEMPERATURE GRAPH SETUP ───────────────────────────
+      // ── 2. CHART.JS 24-HOUR TEMPERATURE GRAPH SETUP (FLOATING DOCK) ───────────
       const timeLabels = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
       const ctx = document.getElementById('tempChart').getContext('2d');
       const tempChart = new Chart(ctx, {
@@ -793,21 +847,52 @@
         data: {
           labels: timeLabels,
           datasets: [
-            { label: 'Internal Temp', data: [], borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.12)', fill: true, borderWidth: 3, tension: 0.4, pointRadius: 3 },
-            { label: 'Effective Outdoor Temp', data: [], borderColor: '#38bdf8', borderDash: [5, 5], fill: false, borderWidth: 2, tension: 0.4, pointRadius: 2 }
+            { label: 'Internal Temp', data: [], borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.16)', fill: true, borderWidth: 2.5, tension: 0.4, pointRadius: 2 },
+            { label: 'Effective Outdoor Temp', data: [], borderColor: '#38bdf8', borderDash: [4, 4], fill: false, borderWidth: 2, tension: 0.4, pointRadius: 1.5 }
           ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          animation: { duration: 250 },
+          animation: { duration: 200 },
           interaction: { mode: 'index', intersect: false },
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { color: 'rgba(55, 65, 81, 0.4)' }, ticks: { color: '#9ca3af' } },
-            y: { grid: { color: 'rgba(55, 65, 81, 0.4)' }, ticks: { color: '#9ca3af', callback: val => val + '°C' } }
+            x: { grid: { color: 'rgba(55, 65, 81, 0.3)' }, ticks: { color: '#9ca3af', font: { size: 9 }, maxTicksLimit: 8 } },
+            y: { grid: { color: 'rgba(55, 65, 81, 0.3)' }, ticks: { color: '#9ca3af', font: { size: 9 }, callback: val => val + '°C' } }
           }
         }
+      });
+
+      // Floating Glass Telemetry Dock Expand / Minimize Logic
+      function applyChartDockState() {
+        if (chartDockState === 'compact') {
+          floatingChartDock.className = 'absolute bottom-3 left-3 z-20 w-[min(92%,430px)] h-[225px] bg-gray-900/80 backdrop-blur-xl border border-gray-700/80 rounded-2xl p-3 shadow-2xl flex flex-col transition-all duration-300';
+          chartCanvasWrap.classList.remove('hidden');
+          expandChartIcon.className = 'fa-solid fa-expand';
+          minimizeChartIcon.className = 'fa-solid fa-minus';
+        } else if (chartDockState === 'expanded') {
+          floatingChartDock.className = 'absolute bottom-3 left-3 right-14 z-20 h-[62%] bg-gray-900/92 backdrop-blur-xl border border-orange-500/50 rounded-2xl p-4 shadow-2xl flex flex-col transition-all duration-300';
+          chartCanvasWrap.classList.remove('hidden');
+          expandChartIcon.className = 'fa-solid fa-compress';
+          minimizeChartIcon.className = 'fa-solid fa-minus';
+        } else if (chartDockState === 'minimized') {
+          floatingChartDock.className = 'absolute bottom-3 left-3 z-20 w-[240px] h-[42px] bg-gray-900/85 backdrop-blur-xl border border-gray-700/80 rounded-xl px-3 py-2 shadow-2xl flex flex-col justify-center transition-all duration-300';
+          chartCanvasWrap.classList.add('hidden');
+          expandChartIcon.className = 'fa-solid fa-expand';
+          minimizeChartIcon.className = 'fa-solid fa-chevron-up';
+        }
+        setTimeout(() => tempChart.resize(), 310);
+      }
+
+      expandChartDockBtn.addEventListener('click', () => {
+        chartDockState = chartDockState === 'expanded' ? 'compact' : 'expanded';
+        applyChartDockState();
+      });
+
+      minimizeChartDockBtn.addEventListener('click', () => {
+        chartDockState = chartDockState === 'minimized' ? 'compact' : 'minimized';
+        applyChartDockState();
       });
 
       // ── 3. GEOMETRY & SOLAR HELPER FUNCTIONS ──────────────────────────────────
@@ -910,7 +995,6 @@
         return color;
       }
 
-      // Creates crisp 3D floating text labels so the 3D scene is easy to understand
       function makeTextSprite(text, borderColor = '#38bdf8', textColor = '#f8fafc', scaleSize = 1.6) {
         const canvas = document.createElement('canvas');
         canvas.width = 512;
@@ -952,15 +1036,16 @@
         const container = document.getElementById('meshContainer');
         if (!container || threeRenderer) return;
 
-        const width = container.clientWidth || 640;
-        const height = container.clientHeight || 360;
+        const width = container.clientWidth || 800;
+        const height = container.clientHeight || 550;
 
         threeScene = new THREE.Scene();
         threeScene.background = new THREE.Color(0x090d16);
         threeScene.fog = new THREE.FogExp2(0x090d16, 0.022);
 
-        threeCamera = new THREE.PerspectiveCamera(42, width / height, 0.1, 200);
-        threeCamera.position.set(-7.5, 5.2, 8.8);
+        threeCamera = new THREE.PerspectiveCamera(40, width / height, 0.1, 200);
+        // Slightly offset camera so shelter sits centered-right, leaving room for the bottom-left chart dock
+        threeCamera.position.set(-7.2, 5.0, 8.6);
 
         threeRenderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
         threeRenderer.setSize(width, height);
@@ -971,7 +1056,7 @@
         threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
         threeControls.enableDamping = true;
         threeControls.dampingFactor = 0.06;
-        threeControls.target.set(0, 1.3, 0);
+        threeControls.target.set(-0.4, 1.2, 0);
         threeControls.maxPolarAngle = Math.PI / 2 - 0.02;
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.78);
@@ -981,7 +1066,7 @@
         dirLight.position.set(-8, 14, 10);
         threeScene.add(dirLight);
 
-        const gridHelper = new THREE.GridHelper(22, 22, 0x334155, 0x1e293b);
+        const gridHelper = new THREE.GridHelper(24, 24, 0x334155, 0x1e293b);
         gridHelper.position.y = -0.02;
         threeScene.add(gridHelper);
 
@@ -994,14 +1079,15 @@
 
         threeScene.add(shelterGroup, windGroup, snowGroup, humanGroup, sunGroup, compassGroup);
 
-        window.addEventListener('resize', () => {
+        const resizeObs = new ResizeObserver(() => {
           if (!container || !threeRenderer) return;
-          const w = container.clientWidth || 640;
-          const h = container.clientHeight || 360;
+          const w = container.clientWidth || 800;
+          const h = container.clientHeight || 550;
           threeCamera.aspect = w / h;
           threeCamera.updateProjectionMatrix();
           threeRenderer.setSize(w, h);
         });
+        resizeObs.observe(container);
 
         const clock = new THREE.Clock();
         function animateThree() {
@@ -1026,7 +1112,6 @@
           if (isSnowVisible && snowRate > 0 && snowParticleSystem) {
             const positions = snowParticleSystem.geometry.attributes.position.array;
             const fallSpeed = 0.04 + (snowRate * 0.004);
-            // If Wind Flow is also ON, snow slants with the wind; otherwise falls straight down
             const windDriftZ = isWindVisible ? (wind / 15.0) * 0.045 : 0;
             const maxH = wallH + roofH + 4.0;
 
@@ -1262,7 +1347,6 @@
         const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.08 });
         shelterGroup.add(new THREE.Mesh(feaGeom, wireMat));
 
-        // Interior Floor Pad
         const floorGeom = new THREE.PlaneGeometry(l, w);
         const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8, side: THREE.DoubleSide });
         const floorMesh = new THREE.Mesh(floorGeom, floorMat);
@@ -1304,7 +1388,6 @@
           const frameGeom = new THREE.BufferGeometry().setFromPoints([p0, p1, p2, p3, p0]);
           shelterGroup.add(new THREE.Line(frameGeom, new THREE.LineBasicMaterial({ color: 0xffffff })));
 
-          // Floating 3D Label above Opening
           const labelPos = toThreeVec(...op.to3D(0, hh + 0.25, 0.12), l, w);
           const opSprite = makeTextSprite(`${opNames[op.type]} (${op.area}m²)`, opHex[op.type], '#ffffff', 1.45);
           opSprite.position.copy(labelPos);
@@ -1357,7 +1440,6 @@
             const lineMat = new THREE.LineBasicMaterial({ color: 0x34d399, transparent: true, opacity: 0.75 });
             windGroup.add(new THREE.Line(lineGeom, lineMat));
 
-            // 3D Arrow Cones that point along the wind direction
             for (let p = 0; p < 3; p++) {
               const coneGeom = new THREE.ConeGeometry(0.11, 0.32, 10);
               const coneMat = new THREE.MeshBasicMaterial({ color: 0x6ee7b7 });
@@ -1387,7 +1469,6 @@
           snowParticleSystem = new THREE.Points(flakeGeom, flakeMat);
           snowGroup.add(snowParticleSystem);
 
-          // Snow Ground Blanket
           const snowGroundGeom = new THREE.PlaneGeometry(l + 8, w + 8);
           const snowGroundMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.38, roughness: 0.9 });
           const snowGround = new THREE.Mesh(snowGroundGeom, snowGroundMat);
@@ -1395,7 +1476,6 @@
           snowGround.position.y = 0.005;
           snowGroup.add(snowGround);
 
-          // Flat Roof Snow Accumulation Slab (Barrel Vault sheds snow)
           const snowThick = Math.min(0.28, 0.04 + snowRate * 0.015);
           if (shape === 'flat' && !isXRay) {
             const capGeom = new THREE.BoxGeometry(l + 0.08, snowThick, w + 0.08);
@@ -1441,7 +1521,6 @@
             rightArm.rotation.z = -0.18;
             person.add(leftArm, rightArm);
 
-            // Rising 120W Buoyant Thermal Plume Spiral
             const plumePts = [];
             for (let s = 0; s <= 14; s++) {
               const frac = s / 14;
@@ -1456,7 +1535,6 @@
             person.add(plumeLine);
             humanPlumeLines.push(plumeLine);
 
-            // Floating Label above each Soldier
             const occLabel = makeTextSprite(`🧍 #${occ.id} (120W)`, '#ef4444', '#fef08a', 1.25);
             occLabel.position.set(0, 2.0, 0);
             person.add(occLabel);
@@ -1569,7 +1647,6 @@
           statAirlift.className = "text-[9px] px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 mt-1 inline-block border border-emerald-500/30 tracking-widest";
         }
 
-        // Aero-Thermal Wind-Chill & Snowfall Cooling Physics
         const aeroDragFactor = shape === 'barrel' ? 0.72 : (shape === 'pitched' ? 0.92 : 1.18);
         const activeWind = isWindVisible ? wind : 0;
         const activeSnow = isSnowVisible ? snowRate : 0;
@@ -1668,29 +1745,27 @@
         triggerMeshUpdate();
       });
 
-      // Separate Wind Flow Button: Toggles Wind Streamlines & Wind-Chill Physics
       toggleWindBtn.addEventListener('click', () => {
         isWindVisible = !isWindVisible;
         if (isWindVisible) {
           windBtnText.textContent = 'Wind Flow: ON';
-          toggleWindBtn.className = 'px-3 py-1.5 rounded-lg border border-emerald-500/60 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all shadow-inner';
+          toggleWindBtn.className = 'px-2.5 py-1 rounded-lg border border-emerald-500/60 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all shadow-inner';
         } else {
           windBtnText.textContent = 'Wind Flow: OFF';
-          toggleWindBtn.className = 'px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800 text-gray-400 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all';
+          toggleWindBtn.className = 'px-2.5 py-1 rounded-lg border border-gray-700 bg-gray-800 text-gray-400 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all';
         }
         if (windGroup) windGroup.visible = isWindVisible;
         updateAllPhysicsAndVisuals();
       });
 
-      // Separate Snowfall Button: Toggles Falling Snow & Snow Cooling Physics
       toggleSnowBtn.addEventListener('click', () => {
         isSnowVisible = !isSnowVisible;
         if (isSnowVisible) {
           snowBtnText.textContent = 'Snowfall: ON';
-          toggleSnowBtn.className = 'px-3 py-1.5 rounded-lg border border-sky-500/60 bg-sky-500/20 text-sky-300 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all shadow-inner';
+          toggleSnowBtn.className = 'px-2.5 py-1 rounded-lg border border-sky-500/60 bg-sky-500/20 text-sky-300 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all shadow-inner';
         } else {
           snowBtnText.textContent = 'Snowfall: OFF';
-          toggleSnowBtn.className = 'px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800 text-gray-400 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all';
+          toggleSnowBtn.className = 'px-2.5 py-1 rounded-lg border border-gray-700 bg-gray-800 text-gray-400 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all';
         }
         if (snowGroup) snowGroup.visible = isSnowVisible;
         updateAllPhysicsAndVisuals();
@@ -1885,7 +1960,7 @@
         errorToast.classList.add('hidden');
         const ogBtn = submitBtn.innerHTML;
         submitBtn.disabled = true;
-        submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-sm"></i><span>Computing CFD & FEA...</span>`;
+        submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-xs"></i><span>Computing...</span>`;
         try {
           const response = await fetch('/api/simulate', {
             method: 'POST',
@@ -2003,7 +2078,7 @@
       if (pdfBtn) {
         pdfBtn.addEventListener('click', () => {
           const originalText = pdfBtn.innerHTML;
-          pdfBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-rose-400"></i><span class="text-sm">Compiling Data...</span>`;
+          pdfBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-rose-400"></i><span>Compiling...</span>`;
           try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
