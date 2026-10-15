@@ -102,10 +102,6 @@
           <i class="fa-solid fa-database"></i>
           <span>Database History</span>
         </button>
-        <div class="flex items-center gap-2 bg-gray-900/60 px-3 py-1.5 rounded-lg border border-gray-700/50">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Engine: <strong id="engineStatusText" class="text-emerald-400">Online</strong></span>
-        </div>
         <a href="/api/logout" id="logoutBtn" class="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 px-3 py-1.5 rounded-lg transition-colors shadow-inner font-semibold">
           <i class="fa-solid fa-right-from-bracket"></i>
           <span>Sign Out</span>
@@ -534,18 +530,18 @@
           </div>
 
           <!-- 3. FLOATING GLASS TELEMETRY DOCK (24-HOUR TEMPERATURE CHART OVERLAY) -->
-          <div id="floatingChartDock" class="absolute bottom-3 left-3 z-20 w-[min(92%,430px)] h-[225px] bg-gray-900/80 backdrop-blur-xl border border-gray-700/80 rounded-2xl p-3 shadow-2xl flex flex-col transition-all duration-300">
+          <div id="floatingChartDock" class="absolute bottom-3 left-3 z-20 w-[min(90%,410px)] h-[215px] bg-gray-900/90 backdrop-blur-xl border border-gray-700/80 rounded-2xl p-3 shadow-2xl flex flex-col overflow-hidden box-border transition-all duration-300">
             <!-- Dock Header with Legend & Expand/Minimize Buttons -->
             <div class="flex items-center justify-between gap-2 mb-1.5 shrink-0">
-              <div class="flex items-center gap-2">
-                <i class="fa-solid fa-chart-line text-orange-400 text-xs"></i>
-                <span class="text-xs font-bold text-white tracking-tight">24h Thermal Profile</span>
-                <div class="hidden sm:flex items-center gap-2 text-[9px] ml-1 bg-gray-950/70 px-2 py-0.5 rounded border border-gray-800">
+              <div class="flex items-center gap-2 min-w-0">
+                <i class="fa-solid fa-chart-line text-orange-400 text-xs shrink-0"></i>
+                <span class="text-xs font-bold text-white tracking-tight truncate">24h Thermal Profile</span>
+                <div class="hidden sm:flex items-center gap-2 text-[9px] ml-1 bg-gray-950/80 px-2 py-0.5 rounded border border-gray-800 shrink-0">
                   <span class="flex items-center gap-1 text-orange-300"><span class="w-2 h-0.5 bg-orange-500"></span>In</span>
                   <span class="flex items-center gap-1 text-sky-300"><span class="w-2 h-0.5 bg-sky-400"></span>Out</span>
                 </div>
               </div>
-              <div class="flex items-center gap-1">
+              <div class="flex items-center gap-1 shrink-0">
                 <button type="button" id="expandChartDockBtn" class="w-6 h-6 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 hover:text-white flex items-center justify-center text-[10px] border border-gray-700 cursor-pointer transition-colors" title="Expand / Restore Chart Size">
                   <i id="expandChartIcon" class="fa-solid fa-expand"></i>
                 </button>
@@ -554,11 +550,14 @@
                 </button>
               </div>
             </div>
-            <!-- Chart Canvas Wrapper -->
-            <div id="chartCanvasWrap" class="relative flex-1 w-full min-h-0">
-              <canvas id="tempChart"></canvas>
+            <!-- Strict Contained Chart Canvas Wrapper -->
+            <div id="chartCanvasWrap" class="relative flex-1 w-full min-h-0 overflow-hidden bg-gray-950/50 rounded-xl border border-gray-800/80">
+              <div class="absolute inset-2">
+                <canvas id="tempChart"></canvas>
+              </div>
             </div>
           </div>
+            
         </div>
         
         <!-- Bottom Control Bar: 4D Time-Lapse + Separate Wind, Snow & X-Ray Toggles -->
@@ -867,17 +866,17 @@
       // Floating Glass Telemetry Dock Expand / Minimize Logic
       function applyChartDockState() {
         if (chartDockState === 'compact') {
-          floatingChartDock.className = 'absolute bottom-3 left-3 z-20 w-[min(92%,430px)] h-[225px] bg-gray-900/80 backdrop-blur-xl border border-gray-700/80 rounded-2xl p-3 shadow-2xl flex flex-col transition-all duration-300';
+          floatingChartDock.className = 'absolute bottom-3 left-3 z-20 w-[min(90%,410px)] h-[215px] bg-gray-900/90 backdrop-blur-xl border border-gray-700/80 rounded-2xl p-3 shadow-2xl flex flex-col overflow-hidden box-border transition-all duration-300';
           chartCanvasWrap.classList.remove('hidden');
           expandChartIcon.className = 'fa-solid fa-expand';
           minimizeChartIcon.className = 'fa-solid fa-minus';
         } else if (chartDockState === 'expanded') {
-          floatingChartDock.className = 'absolute bottom-3 left-3 right-14 z-20 h-[62%] bg-gray-900/92 backdrop-blur-xl border border-orange-500/50 rounded-2xl p-4 shadow-2xl flex flex-col transition-all duration-300';
+          floatingChartDock.className = 'absolute bottom-3 left-3 right-14 z-20 h-[62%] bg-gray-900/95 backdrop-blur-xl border border-orange-500/50 rounded-2xl p-4 shadow-2xl flex flex-col overflow-hidden box-border transition-all duration-300';
           chartCanvasWrap.classList.remove('hidden');
           expandChartIcon.className = 'fa-solid fa-compress';
           minimizeChartIcon.className = 'fa-solid fa-minus';
         } else if (chartDockState === 'minimized') {
-          floatingChartDock.className = 'absolute bottom-3 left-3 z-20 w-[240px] h-[42px] bg-gray-900/85 backdrop-blur-xl border border-gray-700/80 rounded-xl px-3 py-2 shadow-2xl flex flex-col justify-center transition-all duration-300';
+          floatingChartDock.className = 'absolute bottom-3 left-3 z-20 w-[235px] h-[42px] bg-gray-900/90 backdrop-blur-xl border border-gray-700/80 rounded-xl px-3 py-2 shadow-2xl flex flex-col justify-center overflow-hidden box-border transition-all duration-300';
           chartCanvasWrap.classList.add('hidden');
           expandChartIcon.className = 'fa-solid fa-expand';
           minimizeChartIcon.className = 'fa-solid fa-chevron-up';
