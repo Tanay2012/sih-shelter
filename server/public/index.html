@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ThermoSim | Climate Modeling</title>
-  <meta name="description" content="Engineering thermal simulation & material cost estimation tool for passive climate modeling of sustainable shelters.">
+  <title>ThermoSim | Climate & CFD Modeling</title>
+  <meta name="description" content="Engineering thermal simulation, 3D Three.js CFD wind/snowfall modeling & material cost estimation tool for sustainable shelters.">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -24,8 +24,9 @@
 
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Plotly.js CDN for 3D Heat Mesh -->
-  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <!-- Three.js & OrbitControls CDN for 60-FPS 3D WebGL FEA & CFD Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <!-- MapLibre GL v5 -->
   <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
@@ -83,7 +84,7 @@
             ThermoSim
             <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">v4.0</span>
           </h1>
-          <p class="text-xs text-gray-400">Passive solar shelter engineering, fenestration & 4D FEA thermal model</p>
+          <p class="text-xs text-gray-400">Passive solar shelter engineering, Three.js 3D CFD wind/snow dynamics & FEA thermal model</p>
         </div>
       </div>
       
@@ -99,7 +100,7 @@
         </button>
         <div class="flex items-center gap-2 bg-gray-900/60 px-3 py-1.5 rounded-lg border border-gray-700/50">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Engine Status: <strong class="text-emerald-400">Online</strong></span>
+          <span>Engine Status: <strong id="engineStatusText" class="text-emerald-400">Online</strong></span>
         </div>
         <a href="/api/logout" id="logoutBtn" class="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 px-3 py-1.5 rounded-lg transition-colors shadow-inner font-semibold">
           <i class="fa-solid fa-right-from-bracket"></i>
@@ -113,7 +114,7 @@
     <div class="bg-rose-900/50 border border-rose-500/50 text-rose-200 px-4 py-3 rounded-xl flex items-center justify-between gap-3 shadow-lg">
       <div class="flex items-center gap-3">
         <i class="fa-solid fa-triangle-exclamation text-rose-400 text-lg"></i>
-        <span id="error-message">Simulation API request failed. Using client-side thermal calculation fallback.</span>
+        <span id="error-message">Simulation API request failed. Using client-side CFD & thermal calculation fallback.</span>
       </div>
       <button onclick="document.getElementById('error-toast').classList.add('hidden')" class="text-rose-400 hover:text-white">
         <i class="fa-solid fa-xmark"></i>
@@ -130,7 +131,7 @@
         <h2 class="text-lg font-bold text-white flex items-center gap-2 mb-1">
           <i class="fa-solid fa-sliders text-orange-400"></i> Simulation Parameters
         </h2>
-        <p class="text-xs text-gray-400">Specify geometry, materials, climate, and openings</p>
+        <p class="text-xs text-gray-400">Specify geometry, materials, CFD wind/snow, openings, and occupancy</p>
       </div>
 
       <form id="simForm" class="flex flex-col gap-4">
@@ -158,9 +159,9 @@
           <div class="flex flex-col gap-1.5 mt-1 mb-2">
             <label class="text-[11px] font-semibold text-gray-300 uppercase tracking-wider">Shelter Roof Profile</label>
             <select id="shelterShape" class="w-full bg-gray-950 border border-gray-700 text-sky-400 font-semibold text-xs rounded-lg p-2.5 outline-none focus:border-orange-500 shadow-inner cursor-pointer">
-              <option value="barrel" selected>Barrel Vault (Igloo / High Wind)</option>
-              <option value="pitched">Gabled / Pitched Roof (High Snowfall)</option>
-              <option value="flat">Flat Roof (Standard Modular Bunker)</option>
+              <option value="barrel" selected>Barrel Vault (Igloo / Low Wind Drag & Snow Shedding)</option>
+              <option value="pitched">Gabled / Pitched Roof (Moderate Wind Drag)</option>
+              <option value="flat">Flat Roof (Standard Modular Bunker / Traps Snow)</option>
             </select>
           </div>
 
@@ -175,7 +176,7 @@
           </div>
         </div>
 
-       <!-- 2. Material Selector Dropdown -->
+        <!-- 2. Material Selector Dropdown -->
         <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
           <label for="material" class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
             <span class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-orange-400"></i> 2. Shelter Material</span>
@@ -197,10 +198,10 @@
           </div>
         </div>
 
-        <!-- 3. Environmental Data + 3D Globe & Live Weather Telemetry -->
+        <!-- 3. Environmental Data + CFD Wind & Snowfall Intensity -->
         <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
           <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between gap-2">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-earth-asia text-orange-400"></i> 3. Location & Environment</span>
+            <span class="flex items-center gap-2"><i class="fa-solid fa-earth-asia text-orange-400"></i> 3. Location, Wind & Snow CFD</span>
             <button type="button" id="openLocationPickerBtn" class="px-2.5 py-1 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/40 text-orange-400 hover:text-orange-300 transition-colors flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer" aria-label="Open 3D Globe" title="Open 3D Satellite Globe">
               <i class="fa-solid fa-globe"></i>
               <span>3D Globe</span>
@@ -259,14 +260,34 @@
             </div>
           </div>
 
+          <!-- Wind Speed Slider -->
           <div class="flex flex-col gap-1.5 mt-1">
             <div class="flex justify-between items-center text-xs">
-              <label class="text-[11px] font-semibold text-gray-300 uppercase tracking-wider">Wind Speed</label>
-              <span class="bg-gray-900 px-2 py-0.5 rounded text-orange-400 font-mono font-bold text-xs border border-gray-700/80">
-                <span id="windValue">15</span> m/s
+              <label class="text-[11px] font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-wind text-emerald-400"></i> Wind Speed (CFD Flow)
+              </label>
+              <span class="bg-gray-900 px-2 py-0.5 rounded text-emerald-400 font-mono font-bold text-xs border border-gray-700/80">
+                <span id="windValue">15.0</span> m/s
               </span>
             </div>
-            <input type="range" id="windSpeed" min="0" max="40" value="15" step="0.5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500">
+            <input type="range" id="windSpeed" min="0" max="40" value="15" step="0.5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+          </div>
+
+          <!-- Snowfall Intensity Slider -->
+          <div class="flex flex-col gap-1.5 mt-1">
+            <div class="flex justify-between items-center text-xs">
+              <label class="text-[11px] font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-regular fa-snowflake text-sky-300"></i> Snowfall Intensity
+              </label>
+              <span class="bg-gray-900 px-2 py-0.5 rounded text-sky-300 font-mono font-bold text-xs border border-gray-700/80">
+                <span id="snowRateValue">4.0</span> cm/hr
+              </span>
+            </div>
+            <input type="range" id="snowRate" min="0" max="15" value="4.0" step="0.5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
+            <div class="flex justify-between text-[9px] text-gray-400 font-mono">
+              <span>Wind-Chill Penalty: <strong id="windChillReadout" class="text-sky-400">-4.2°C</strong></span>
+              <span>Convective Film (h<sub>ext</sub>): <strong id="hConvReadout" class="text-amber-400">62 W/m²K</strong></span>
+            </div>
           </div>
         </div>
 
@@ -339,16 +360,16 @@
         <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50 flex flex-col gap-3">
           <div class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
             <span class="flex items-center gap-2"><i class="fa-solid fa-users text-orange-400"></i> 5. Human Occupancy</span>
-            <span id="metabolicBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Gain: 480 W</span>
+            <span id="metabolicBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Gain: +600 W</span>
           </div>
 
           <div class="flex flex-col gap-1.5 mt-1">
             <div class="flex justify-between items-center text-xs">
-              <label class="text-[11px] font-semibold text-gray-400">Soldiers / Occupants</label>
-              <span class="font-mono text-emerald-400 font-bold"><span id="occupantsVal">4</span> Personnel</span>
+              <label class="text-[11px] font-semibold text-gray-400">Soldiers / Occupants (3D Figures in X-Ray)</label>
+              <span class="font-mono text-emerald-400 font-bold"><span id="occupantsVal">5</span> Personnel</span>
             </div>
-            <input type="range" id="occupants" min="0" max="12" value="4" step="1" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-400">
-            <p class="text-[9px] text-gray-500 mt-1 text-right">Standard metabolic output: ~120W per person</p>
+            <input type="range" id="occupants" min="0" max="12" value="5" step="1" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+            <p class="text-[9px] text-gray-500 mt-1 text-right">Check "X-Ray (Show People)" under the 3D model to view occupants</p>
           </div>
         </div>
 
@@ -394,7 +415,7 @@
           <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700/40 flex items-center justify-between">
             <div class="flex items-center gap-2.5">
               <div class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center"><i class="fa-solid fa-arrow-trend-down text-sm"></i></div>
-              <span class="text-xs text-gray-300 font-medium">Net Heat Loss (Walls+Openings)</span>
+              <span class="text-xs text-gray-300 font-medium">Net Heat Loss (CFD Wind + Snow)</span>
             </div>
             <span id="stat-loss" class="text-sm font-mono font-bold text-rose-400">5.80 kW</span>
           </div>
@@ -437,22 +458,22 @@
     <section class="flex-1 flex flex-col gap-6">
 
       <!-- Chart Display Card -->
-      <div class="bg-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-gray-700/60 shadow-2xl flex flex-col flex-1 basis-0 min-h-[380px]">
+      <div class="bg-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-gray-700/60 shadow-2xl flex flex-col flex-1 basis-0 min-h-[360px]">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 shrink-0">
           <div>
-            <h2 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-orange-400"></i> 24-Hour Temperature Profile</h2>
-            <p class="text-xs text-gray-400">Comparison between outdoor ambient temperature and simulated indoor thermal response</p>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-orange-400"></i> 24-Hour Temperature Profile (Wind & Snow Coupled)</h2>
+            <p class="text-xs text-gray-400">Dynamic indoor thermal response vs. effective wind-chilled outdoor temperature</p>
           </div>
           <div class="flex items-center gap-3 text-xs">
             <div class="flex items-center gap-1.5 bg-gray-900/60 px-2.5 py-1 rounded-lg border border-gray-700/50">
               <span class="w-3 h-1 bg-orange-500 rounded-full"></span><span class="text-gray-300 font-medium">Internal Temp</span>
             </div>
             <div class="flex items-center gap-1.5 bg-gray-900/60 px-2.5 py-1 rounded-lg border border-gray-700/50">
-              <span class="w-3 h-1 bg-sky-400 border-b border-dashed border-sky-400"></span><span class="text-gray-300 font-medium">Ambient Temp</span>
+              <span class="w-3 h-1 bg-sky-400 border-b border-dashed border-sky-400"></span><span class="text-gray-300 font-medium">Effective Outdoor Temp</span>
             </div>
           </div>
         </div>
-        <div class="relative flex-1 w-full bg-gray-900/60 rounded-xl p-4 border border-gray-700/50 flex items-center justify-center">
+        <div class="relative flex-1 w-full bg-gray-900/60 rounded-xl p-4 border border-gray-700/50 flex items-center justify-center min-h-[240px]">
           <canvas id="tempChart"></canvas>
         </div>
       </div>
@@ -465,7 +486,7 @@
         </div>
         <div class="bg-gray-800/50 border border-gray-700/60 p-4 rounded-xl flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center text-lg"><i class="fa-solid fa-temperature-arrow-down"></i></div>
-          <div><div class="text-[11px] text-gray-400 uppercase font-semibold">Min Outdoor Temp</div><div id="metric-min-out" class="text-base font-mono font-bold text-sky-400">-15.0°C</div></div>
+          <div><div class="text-[11px] text-gray-400 uppercase font-semibold">Effective Outdoor</div><div id="metric-min-out" class="text-base font-mono font-bold text-sky-400">-15.0°C</div></div>
         </div>
         <div class="bg-gray-800/50 border border-gray-700/60 p-4 rounded-xl flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg"><i class="fa-solid fa-shield-halved"></i></div>
@@ -477,27 +498,46 @@
         </div>
       </div>
 
-      <!-- 3D MESH CONTAINER WITH 4D TIME-LAPSE CONTROLS -->
-      <div class="bg-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-gray-700/60 shadow-2xl flex flex-col flex-1 basis-0 min-h-[380px] relative">
+      <!-- 3D THREE.JS CONTAINER WITH SEPARATE WIND, SNOW & X-RAY CONTROLS -->
+      <div class="bg-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-gray-700/60 shadow-2xl flex flex-col flex-1 basis-0 min-h-[460px] relative">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2 shrink-0">
           <div>
-            <h2 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-cube text-orange-400"></i> 4D Thermal Mesh & X-Ray Analysis</h2>
-            <p class="text-xs text-gray-400">Live FEA surface temp, solar azimuth tracking, and internal stack effect</p>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-cube text-orange-400"></i> Three.js 3D Thermal FEA & CFD Wind/Snow Simulator
+            </h2>
+            <p class="text-xs text-gray-400">Interactive 60-FPS 3D shelter model with separate Wind Flow, Snowfall, and Occupant X-Ray</p>
           </div>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex flex-wrap gap-1.5">
             <span class="text-[10px] bg-sky-500/15 border border-sky-500/40 text-sky-300 px-2 py-1 rounded flex items-center gap-1 font-semibold">🪟 Window</span>
             <span class="text-[10px] bg-amber-500/15 border border-amber-500/40 text-amber-300 px-2 py-1 rounded flex items-center gap-1 font-semibold">🚪 Door</span>
             <span class="text-[10px] bg-purple-500/15 border border-purple-500/40 text-purple-300 px-2 py-1 rounded flex items-center gap-1 font-semibold">🌀 Vent</span>
           </div>
         </div>
         
-        <div id="meshContainer" class="w-full flex-1 bg-gray-900/60 rounded-xl border border-gray-700/50 mt-2"></div>
+        <!-- Three.js WebGL Viewport + HTML HUD Overlays -->
+        <div class="relative w-full flex-1 bg-slate-950 rounded-xl border border-gray-700/60 mt-2 overflow-hidden min-h-[320px]">
+          <div id="meshContainer" class="absolute inset-0 w-full h-full"></div>
+
+          <!-- Top-Left Navigation & Status HUD -->
+          <div class="absolute top-3 left-3 pointer-events-none flex flex-col gap-1 bg-gray-900/85 backdrop-blur-md px-3 py-2 rounded-lg border border-gray-700/60 text-[10px] font-mono z-10">
+            <div class="text-amber-400 font-bold">☀️ SOUTH (Solar Front) &bull; ❄️ NORTH (Cold Wind Inlet)</div>
+            <div class="text-gray-300">🖱️ Left-Click: Rotate &bull; Scroll: Zoom &bull; Right-Click: Pan</div>
+          </div>
+
+          <!-- Right-Side Surface Temperature Colorbar Legend -->
+          <div class="absolute top-3 bottom-3 right-3 pointer-events-none bg-gray-900/85 backdrop-blur-md px-2.5 py-2 rounded-xl border border-gray-700/60 flex flex-col items-center justify-between text-[10px] font-mono z-10">
+            <span class="text-[9px] text-gray-300 font-sans font-bold uppercase">Temp</span>
+            <span id="legendMaxTemp" class="text-rose-400 font-bold">+18°C</span>
+            <div class="w-3 flex-1 my-1 rounded-full border border-gray-600" style="background: linear-gradient(to bottom, #ef4444, #f97316, #eab308, #22c55e, #06b6d4, #3b82f6);"></div>
+            <span id="legendMinTemp" class="text-sky-400 font-bold">-18°C</span>
+          </div>
+        </div>
         
-        <!-- NEW: 4D Time-Lapse & X-Ray Controls -->
+        <!-- 4D Time-Lapse + Separate Wind, Snow & X-Ray Buttons -->
         <div class="mt-4 bg-gray-900/80 rounded-xl p-3 border border-gray-700/50 flex flex-col gap-3 relative z-10">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-3">
-              <button id="playTimeLapseBtn" type="button" class="w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-400 text-white flex items-center justify-center transition-colors shadow-lg shadow-orange-500/30 focus:outline-none">
+              <button id="playTimeLapseBtn" type="button" class="w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-400 text-white flex items-center justify-center transition-colors shadow-lg shadow-orange-500/30 focus:outline-none cursor-pointer" title="Play 24-Hour Thermal Cycle">
                 <i class="fa-solid fa-play"></i>
               </button>
               <div class="flex flex-col">
@@ -505,9 +545,28 @@
                 <span id="timeLabel" class="text-sm font-mono font-bold text-orange-400">14:00</span>
               </div>
             </div>
-            <div class="flex items-center gap-2 bg-gray-950/50 px-3 py-1.5 rounded-lg border border-gray-700/50">
-              <input type="checkbox" id="xrayToggle" class="w-3.5 h-3.5 text-sky-500 bg-gray-900 border-gray-700 rounded focus:ring-sky-500 focus:ring-2 cursor-pointer">
-              <label for="xrayToggle" class="text-[10px] text-gray-300 font-bold uppercase cursor-pointer"><i class="fa-solid fa-layer-group text-sky-400 mr-1"></i> X-Ray Slice View</label>
+
+            <!-- SEPARATE WIND, SNOW & X-RAY TOGGLE BUTTONS -->
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- 1. Separate Wind Flow Toggle Button -->
+              <button id="toggleWindBtn" type="button" class="px-3 py-1.5 rounded-lg border border-emerald-500/60 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all shadow-inner">
+                <i class="fa-solid fa-wind"></i>
+                <span id="windBtnText">Wind Flow: ON</span>
+              </button>
+
+              <!-- 2. Separate Snowfall Toggle Button -->
+              <button id="toggleSnowBtn" type="button" class="px-3 py-1.5 rounded-lg border border-sky-500/60 bg-sky-500/20 text-sky-300 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all shadow-inner">
+                <i class="fa-regular fa-snowflake"></i>
+                <span id="snowBtnText">Snowfall: ON</span>
+              </button>
+
+              <!-- 3. X-Ray Slice View Toggle -->
+              <div class="flex items-center gap-2 bg-gray-950/70 px-3 py-1.5 rounded-lg border border-gray-700/60">
+                <input type="checkbox" id="xrayToggle" class="w-3.5 h-3.5 text-rose-500 bg-gray-900 border-gray-700 rounded focus:ring-rose-500 focus:ring-2 cursor-pointer">
+                <label for="xrayToggle" class="text-[10px] text-gray-200 font-bold uppercase cursor-pointer">
+                  <i class="fa-solid fa-person-rays text-rose-400 mr-1"></i> X-Ray (Show People)
+                </label>
+              </div>
             </div>
           </div>
           <input type="range" id="timeSlider" min="0" max="23" value="14" step="1" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500">
@@ -517,7 +576,6 @@
 
     <!-- Floating AI Chat Widget -->
     <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-      <!-- Chat Window -->
       <div id="chatWindow" class="hidden bg-gray-900 border border-gray-700 rounded-2xl w-80 sm:w-96 shadow-2xl mb-4 overflow-hidden flex flex-col">
         <div class="bg-gray-800 p-3 border-b border-gray-700 flex justify-between items-center">
           <span class="text-sm font-bold text-white"><i class="fa-solid fa-robot text-orange-400 mr-2"></i>ThermoSim AI</span>
@@ -525,19 +583,18 @@
         </div>
         <div id="chatLog" class="p-4 h-72 overflow-y-auto flex flex-col gap-3 text-xs custom-scroll">
           <div class="bg-gray-800 text-gray-300 p-2.5 rounded-r-xl rounded-bl-xl self-start max-w-[85%] border border-gray-700">
-            Hello! I'm your thermal engineering assistant. Ask me about window placement, door heat loss, insulation materials, or Ladakh building techniques.
+            Hello! I'm your thermal & CFD engineering assistant. Ask me about wind-chill heat loss, snowfall accumulation, occupant body heat, or insulation materials.
           </div>
         </div>
         <div class="p-3 bg-gray-800 border-t border-gray-700 flex gap-2">
-          <input type="text" id="chatInput" class="flex-1 bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-orange-500" placeholder="Ask about openings or materials...">
+          <input type="text" id="chatInput" class="flex-1 bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-orange-500" placeholder="Ask about wind, snow, or materials...">
           <button id="sendChatBtn" class="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-transform active:scale-95">
             <i class="fa-solid fa-paper-plane"></i>
           </button>
         </div>
       </div>
       
-      <!-- Toggle Button -->
-      <button id="chatToggleBtn" class="w-14 h-14 bg-gradient-to-r from-orange-500 to-amber-600 rounded-full shadow-lg shadow-orange-500/30 flex items-center justify-center text-white text-xl hover:scale-105 transition-transform border border-orange-400/50">
+      <button id="chatToggleBtn" class="w-14 h-14 bg-gradient-to-r from-orange-500 to-amber-600 rounded-full shadow-lg shadow-orange-500/30 flex items-center justify-center text-white text-xl hover:scale-105 transition-transform border border-orange-400/50 cursor-pointer">
         <i class="fa-solid fa-comment-dots"></i>
       </button>
     </div>
@@ -592,9 +649,10 @@
   </div>
 
   <footer class="bg-gray-800/40 border-t border-gray-800 text-center py-4 text-xs text-gray-500 mt-6">
-    <p>Shelter Thermal Engine &bull; Climate Modeling & Fenestration Suite</p>
+    <p>Shelter Thermal Engine &bull; Three.js 3D CFD Wind, Snowfall & Fenestration Suite</p>
   </footer>
 
+  <!-- Database History Modal -->
   <div id="historyModal" class="fixed inset-0 bg-gray-950/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 transition-opacity duration-300">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
       <div class="bg-gray-800/50 p-5 border-b border-gray-700 flex justify-between items-center">
@@ -620,7 +678,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      // DOM Elements
+      // ── 1. ALL DOM ELEMENT REFERENCES & GLOBAL STATE VARIABLES ────────────────
       const lengthInput = document.getElementById('length');
       const widthInput = document.getElementById('width');
       const heightInput = document.getElementById('height');
@@ -639,6 +697,12 @@
       const selectedCoordinates = document.getElementById('selectedCoordinates');
       
       const windSlider = document.getElementById('windSpeed');
+      const windValLabel = document.getElementById('windValue');
+      const snowRateSlider = document.getElementById('snowRate');
+      const snowRateValLabel = document.getElementById('snowRateValue');
+      const windChillReadout = document.getElementById('windChillReadout');
+      const hConvReadout = document.getElementById('hConvReadout');
+
       const simForm = document.getElementById('simForm');
       const submitBtn = document.getElementById('submitBtn');
       const autoOptimizeBtn = document.getElementById('autoOptimizeBtn');
@@ -672,17 +736,45 @@
       const metricMinOut = document.getElementById('metric-min-out');
       const metricDelta = document.getElementById('metric-delta');
       const metricAirVol = document.getElementById('metric-air-vol');
-      
       const errorToast = document.getElementById('error-toast');
 
-      // NEW: State variables for advanced 3D features
-      let globalAmbient24 = [-12, -14, -15, -15, -14, -12, -8, -3, 1, 4, 6, 7, 5, 2, -1, -4, -7, -9, -10, -11, -12, -13, -13, -14];
-      let globalIndoor24 = [11.2, 10.5, 9.8, 9.4, 9.1, 9.0, 9.4, 11.2, 13.8, 16.2, 17.9, 18.4, 17.8, 16.5, 15.1, 13.9, 13.0, 12.4, 12.0, 11.8, 11.6, 11.4, 11.3, 11.2];
+      const timeSlider = document.getElementById('timeSlider');
+      const timeLabel = document.getElementById('timeLabel');
+      const playBtn = document.getElementById('playTimeLapseBtn');
+      const xrayToggle = document.getElementById('xrayToggle');
+      const toggleWindBtn = document.getElementById('toggleWindBtn');
+      const windBtnText = document.getElementById('windBtnText');
+      const toggleSnowBtn = document.getElementById('toggleSnowBtn');
+      const snowBtnText = document.getElementById('snowBtnText');
+
+      // Simulation & Three.js State Variables (Initialized upfront to prevent ReferenceErrors)
+      const baseDiurnalShape = [-3.0, -4.5, -5.5, -6.0, -5.0, -3.5, -0.5, 3.0, 6.0, 8.5, 10.5, 11.5, 12.0, 11.5, 10.0, 7.5, 4.5, 2.0, 0.5, -1.0, -1.5, -2.0, -2.5, -2.8];
+      let baseSiteTemp = -10.0;
+      let globalAmbient24 = baseDiurnalShape.map(d => +(baseSiteTemp + d).toFixed(1));
+      let globalIndoor24 = [];
+
       let currentSimTime = 14;
       let isPlayingTimeLapse = false;
-      let timeLapseInterval;
+      let timeLapseInterval = null;
       let isXRayMode = false;
-      let globalIsSnowing = false; // from weather API
+      let isWindVisible = true;
+      let isSnowVisible = true;
+
+      // Three.js Scene Objects
+      let threeScene = null;
+      let threeCamera = null;
+      let threeRenderer = null;
+      let threeControls = null;
+      let shelterGroup = null;
+      let windGroup = null;
+      let snowGroup = null;
+      let humanGroup = null;
+      let sunGroup = null;
+      let compassGroup = null;
+      let windArrows = [];
+      let snowParticleSystem = null;
+      let humanPlumeLines = [];
+      let activeSceneParams = { l: 6, w: 4, h: 2.8, wallH: 2.1, roofH: 0.7, wind: 15, snowRate: 4, shape: 'barrel' };
 
       const materialPresets = {
         "FRP-PUF Sandwich Panel": { k: 0.022, rho: 45, cp: 1450, costPerUnit: 14500, currency: "INR (₹)", installationCost: 2800 },
@@ -693,6 +785,7 @@
         "Multi-Wall Polycarbonate Panel": { k: 0.190, rho: 120, cp: 1200, costPerUnit: 16000, currency: "INR (₹)", installationCost: 3000 }
       };
 
+      // ── 2. CHART.JS 24-HOUR TEMPERATURE GRAPH SETUP ───────────────────────────
       const timeLabels = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
       const ctx = document.getElementById('tempChart').getContext('2d');
       const tempChart = new Chart(ctx, {
@@ -700,24 +793,35 @@
         data: {
           labels: timeLabels,
           datasets: [
-            { label: 'Internal Temp', data: [...globalIndoor24], borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.12)', fill: true, borderWidth: 3, tension: 0.4, pointRadius: 3 },
-            { label: 'Ambient Temp', data: [...globalAmbient24], borderColor: '#38bdf8', borderDash: [5, 5], fill: false, borderWidth: 2, tension: 0.4, pointRadius: 2 }
+            { label: 'Internal Temp', data: [], borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.12)', fill: true, borderWidth: 3, tension: 0.4, pointRadius: 3 },
+            { label: 'Effective Outdoor Temp', data: [], borderColor: '#38bdf8', borderDash: [5, 5], fill: false, borderWidth: 2, tension: 0.4, pointRadius: 2 }
           ]
         },
-        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(55, 65, 81, 0.4)' }, ticks: { color: '#9ca3af' } }, y: { grid: { color: 'rgba(55, 65, 81, 0.4)' }, ticks: { color: '#9ca3af', callback: val => val + '°C' } } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 250 },
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(55, 65, 81, 0.4)' }, ticks: { color: '#9ca3af' } },
+            y: { grid: { color: 'rgba(55, 65, 81, 0.4)' }, ticks: { color: '#9ca3af', callback: val => val + '°C' } }
+          }
+        }
       });
 
-      // ── HELPER: SOLAR AZIMUTH CALCULATOR ──────────────────────────────────────────
+      // ── 3. GEOMETRY & SOLAR HELPER FUNCTIONS ──────────────────────────────────
       function getSolarPosition(lat, hour) {
-        // Simple Winter Solstice estimation for Hackathon (worst case solar angles)
         const declination = -23.45 * (Math.PI / 180);
         const latRad = lat * (Math.PI / 180);
         const hourAngle = (hour - 12) * 15 * (Math.PI / 180);
 
-        const elevationRad = Math.asin(Math.sin(latRad) * Math.sin(declination) + Math.cos(latRad) * Math.cos(declination) * Math.cos(hourAngle));
+        const sinElev = Math.sin(latRad) * Math.sin(declination) + Math.cos(latRad) * Math.cos(declination) * Math.cos(hourAngle);
+        const elevationRad = Math.asin(Math.max(-1, Math.min(1, sinElev)));
         const elevation = elevationRad * (180 / Math.PI);
 
-        const azimuthRad = Math.acos((Math.sin(declination) - Math.sin(elevationRad) * Math.sin(latRad)) / (Math.cos(elevationRad) * Math.cos(latRad)));
+        const cosAz = (Math.sin(declination) - Math.sin(elevationRad) * Math.sin(latRad)) / (Math.cos(elevationRad) * Math.cos(latRad) + 1e-6);
+        const azimuthRad = Math.acos(Math.max(-1, Math.min(1, cosAz)));
         let azimuth = azimuthRad * (180 / Math.PI);
         if (hour > 12) azimuth = 360 - azimuth;
 
@@ -725,42 +829,39 @@
       }
 
       function getOpening3DGeometry(wall, area, type, l, w, h, shape) {
-        let wallH = h;
-        if (shape === 'barrel') wallH = h * 0.75; 
-
+        let wallH = shape === 'barrel' ? h * 0.75 : h;
         let widthO, heightO, zCenter, alongRatio;
+
         if (type === 'door') {
           widthO = Math.min(1.4, Math.sqrt(area * 0.45));
           heightO = Math.min(h * 0.85, area / Math.max(0.6, widthO));
-          zCenter = heightO / 2; 
+          zCenter = heightO / 2;
           alongRatio = 0.28;
         } else if (type === 'window') {
           widthO = Math.sqrt(area * 1.35);
           heightO = area / Math.max(0.4, widthO);
-          zCenter = h * 0.45; 
+          zCenter = h * 0.45;
           alongRatio = 0.65;
         } else {
           widthO = Math.sqrt(area * 1.8);
           heightO = area / Math.max(0.2, widthO);
-          zCenter = h * 0.75; 
+          zCenter = h * 0.75;
           alongRatio = 0.48;
         }
 
         let maxZ = h;
         if (shape === 'barrel' && (wall === 'South' || wall === 'North')) {
-            maxZ = wallH; 
-        } else if (shape === 'pitched' && (wall === 'South' || wall === 'North')) {
-            maxZ = h; 
+          maxZ = wallH;
         } else if (shape === 'barrel' && (wall === 'East' || wall === 'West')) {
-            maxZ = wallH + (h * 0.25);
+          maxZ = wallH + (h * 0.25);
         }
 
         if (zCenter + heightO / 2 > maxZ) {
-            zCenter = Math.max(heightO / 2, maxZ - heightO / 2 - 0.02);
+          zCenter = Math.max(heightO / 2, maxZ - heightO / 2 - 0.02);
         }
 
         let cx, cy, cz = zCenter;
-        let nx = 0, ny = 0, ux = 0, uy = 0; 
+        let nx = 0, ny = 0, ux = 0, uy = 0;
 
         if (wall === 'South') {
           cx = l * alongRatio; cy = 0; nx = 0; ny = -1; ux = 1; uy = 0;
@@ -772,29 +873,664 @@
           cx = l; cy = w * alongRatio; nx = 1; ny = 0; ux = 0; uy = 1;
         }
 
-        const to3D = (du, dz, dn = 0.04) => [ cx + ux * du + nx * dn, cy + uy * du + ny * dn, cz + dz ];
+        const to3D = (du, dz, dn = 0.04) => [cx + ux * du + nx * dn, cy + uy * du + ny * dn, cz + dz];
         const hw = widthO / 2, hh = heightO / 2;
-        const corners = [ to3D(-hw, -hh), to3D(hw, -hh), to3D(hw, hh), to3D(-hw, hh), to3D(-hw, -hh) ];
+        const corners = [to3D(-hw, -hh), to3D(hw, -hh), to3D(hw, hh), to3D(-hw, hh), to3D(-hw, -hh)];
 
         return { wall, area, type, cx, cy, cz, widthO, heightO, nx, ny, ux, uy, to3D, corners };
+      }
+
+      function getOccupantPositions(occupants, l, w) {
+        const positions = [];
+        if (occupants <= 0) return positions;
+        const cols = Math.ceil(Math.sqrt(occupants * (l / w)));
+        const rows = Math.ceil(occupants / cols);
+        const marginX = Math.min(1.1, l * 0.22);
+        const marginY = Math.min(0.9, w * 0.24);
+        const usableL = Math.max(0.8, l - 2 * marginX);
+        const usableW = Math.max(0.8, w - 2 * marginY);
+
+        for (let i = 0; i < occupants; i++) {
+          const r = Math.floor(i / cols);
+          const c = i % cols;
+          const px = cols === 1 ? l / 2 : marginX + (c / (cols - 1)) * usableL;
+          const py = rows === 1 ? w / 2 : marginY + (r / (rows - 1)) * usableW;
+          positions.push({ id: i + 1, x: px, y: py });
+        }
+        return positions;
+      }
+
+      // ── 4. THREE.JS 60-FPS ENGINE & SPRITE LABEL GENERATOR ────────────────────
+      const toThreeVec = (px, py, pz, l, w) => new THREE.Vector3(px - l / 2, pz, (w / 2) - py);
+
+      function getTurboColor(tNorm) {
+        const c = Math.max(0, Math.min(1, tNorm));
+        const color = new THREE.Color();
+        color.setHSL((1.0 - c) * 0.64, 0.92, 0.48);
+        return color;
+      }
+
+      // Creates crisp 3D floating text labels so the 3D scene is easy to understand
+      function makeTextSprite(text, borderColor = '#38bdf8', textColor = '#f8fafc', scaleSize = 1.6) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 128;
+        const context = canvas.getContext('2d');
+
+        context.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        context.strokeStyle = borderColor;
+        context.lineWidth = 6;
+        const r = 24;
+        context.beginPath();
+        context.moveTo(r, 12);
+        context.lineTo(500 - r, 12);
+        context.quadraticCurveTo(500, 12, 500, 12 + r);
+        context.lineTo(500, 116 - r);
+        context.quadraticCurveTo(500, 116, 500 - r, 116);
+        context.lineTo(r, 116);
+        context.quadraticCurveTo(12, 116, 12, 116 - r);
+        context.lineTo(12, 12 + r);
+        context.quadraticCurveTo(12, 12, r, 12);
+        context.closePath();
+        context.fill();
+        context.stroke();
+
+        context.font = 'bold 38px Inter, monospace';
+        context.fillStyle = textColor;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(text, 256, 64);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.scale.set(scaleSize, scaleSize * 0.25, 1);
+        return sprite;
+      }
+
+      function initThreeScene() {
+        const container = document.getElementById('meshContainer');
+        if (!container || threeRenderer) return;
+
+        const width = container.clientWidth || 640;
+        const height = container.clientHeight || 360;
+
+        threeScene = new THREE.Scene();
+        threeScene.background = new THREE.Color(0x090d16);
+        threeScene.fog = new THREE.FogExp2(0x090d16, 0.022);
+
+        threeCamera = new THREE.PerspectiveCamera(42, width / height, 0.1, 200);
+        threeCamera.position.set(-7.5, 5.2, 8.8);
+
+        threeRenderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+        threeRenderer.setSize(width, height);
+        threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.innerHTML = '';
+        container.appendChild(threeRenderer.domElement);
+
+        threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
+        threeControls.enableDamping = true;
+        threeControls.dampingFactor = 0.06;
+        threeControls.target.set(0, 1.3, 0);
+        threeControls.maxPolarAngle = Math.PI / 2 - 0.02;
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.78);
+        threeScene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xfffbeb, 0.85);
+        dirLight.position.set(-8, 14, 10);
+        threeScene.add(dirLight);
+
+        const gridHelper = new THREE.GridHelper(22, 22, 0x334155, 0x1e293b);
+        gridHelper.position.y = -0.02;
+        threeScene.add(gridHelper);
+
+        shelterGroup = new THREE.Group();
+        windGroup = new THREE.Group();
+        snowGroup = new THREE.Group();
+        humanGroup = new THREE.Group();
+        sunGroup = new THREE.Group();
+        compassGroup = new THREE.Group();
+
+        threeScene.add(shelterGroup, windGroup, snowGroup, humanGroup, sunGroup, compassGroup);
+
+        window.addEventListener('resize', () => {
+          if (!container || !threeRenderer) return;
+          const w = container.clientWidth || 640;
+          const h = container.clientHeight || 360;
+          threeCamera.aspect = w / h;
+          threeCamera.updateProjectionMatrix();
+          threeRenderer.setSize(w, h);
+        });
+
+        const clock = new THREE.Clock();
+        function animateThree() {
+          requestAnimationFrame(animateThree);
+          const elapsed = clock.getElapsedTime();
+          const { l, w, wallH, roofH, wind, snowRate } = activeSceneParams;
+
+          // 1. Animate 3D Wind Arrows flowing along streamlines (When Wind Flow is ON)
+          if (isWindVisible && wind > 0.5 && windArrows.length > 0) {
+            const speedMult = Math.max(0.18, wind / 18.0);
+            const upAxis = new THREE.Vector3(0, 1, 0);
+            windArrows.forEach((item) => {
+              const t = (item.offset + elapsed * speedMult) % 0.98;
+              const pos = item.curve.getPointAt(t);
+              const tangent = item.curve.getTangentAt(t).normalize();
+              item.mesh.position.copy(pos);
+              item.mesh.quaternion.setFromUnitVectors(upAxis, tangent);
+            });
+          }
+
+          // 2. Animate 3D Snowflakes falling from sky (When Snowfall is ON)
+          if (isSnowVisible && snowRate > 0 && snowParticleSystem) {
+            const positions = snowParticleSystem.geometry.attributes.position.array;
+            const fallSpeed = 0.04 + (snowRate * 0.004);
+            // If Wind Flow is also ON, snow slants with the wind; otherwise falls straight down
+            const windDriftZ = isWindVisible ? (wind / 15.0) * 0.045 : 0;
+            const maxH = wallH + roofH + 4.0;
+
+            for (let i = 0; i < positions.length; i += 3) {
+              positions[i + 1] -= fallSpeed;
+              positions[i + 2] += windDriftZ;
+
+              if (positions[i + 1] < 0) {
+                positions[i + 1] = maxH;
+                positions[i + 2] = (Math.random() - 0.5) * (w + 9);
+              }
+              if (positions[i + 2] > (w / 2 + 4.5)) {
+                positions[i + 2] = -(w / 2 + 4.5);
+              }
+              if (Math.abs(positions[i]) < l / 2 && Math.abs(positions[i + 2]) < w / 2 && positions[i + 1] < wallH + roofH) {
+                positions[i + 1] = maxH;
+              }
+            }
+            snowParticleSystem.geometry.attributes.position.needsUpdate = true;
+          }
+
+          // 3. Animate Rising Heat Plumes above 3D Human Figures in X-Ray Mode
+          if (isXRayMode && humanPlumeLines.length > 0) {
+            humanPlumeLines.forEach((plume, idx) => {
+              plume.rotation.y = elapsed * 2.2 + idx;
+            });
+          }
+
+          threeControls.update();
+          threeRenderer.render(threeScene, threeCamera);
+        }
+        animateThree();
+      }
+
+      function clearGroup(group) {
+        if (!group) return;
+        while (group.children.length > 0) {
+          const obj = group.children[0];
+          group.remove(obj);
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) {
+            if (obj.material.map) obj.material.map.dispose();
+            if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+            else obj.material.dispose();
+          }
+        }
+      }
+
+      function draw3DMesh(l, w, h, tIn, tOut, shape, hour, lat, isXRay) {
+        initThreeScene();
+        if (!threeScene) return;
+
+        clearGroup(shelterGroup);
+        clearGroup(windGroup);
+        clearGroup(snowGroup);
+        clearGroup(humanGroup);
+        clearGroup(sunGroup);
+        clearGroup(compassGroup);
+        windArrows = [];
+        humanPlumeLines = [];
+        snowParticleSystem = null;
+
+        let wallH = h, roofH = 0;
+        if (shape === 'barrel') { wallH = h * 0.75; roofH = h * 0.25; }
+        else if (shape === 'pitched') { roofH = 1.2; }
+        const maxShelterZ = wallH + roofH;
+
+        const wind = parseFloat(windSlider.value) || 0;
+        const snowRate = parseFloat(snowRateSlider.value) || 0;
+        const occupants = parseInt(document.getElementById('occupants').value) || 0;
+        const occupantCoords = getOccupantPositions(occupants, l, w);
+
+        activeSceneParams = { l, w, h, wallH, roofH, wind, snowRate, shape };
+
+        const winGeom = getOpening3DGeometry(winWallSelect.value, parseFloat(winAreaSlider.value) || 0, 'window', l, w, h, shape);
+        const doorGeom = getOpening3DGeometry(doorWallSelect.value, parseFloat(doorAreaSlider.value) || 1.8, 'door', l, w, h, shape);
+        const ventGeom = getOpening3DGeometry(ventWallSelect.value, parseFloat(ventAreaSlider.value) || 0.3, 'vent', l, w, h, shape);
+        const openingsList = [winGeom, doorGeom, ventGeom];
+
+        const solar = getSolarPosition(lat, hour);
+        const isDaytime = solar.elevation > 0;
+        const solarIntensity = isDaytime ? Math.sin(solar.elevationRad) * 8.5 : 0;
+
+        function getRoofZAtY(py) {
+          if (py < 0 || py > w) return 0;
+          if (shape === 'barrel') {
+            const norm = (py - w / 2) / (w / 2);
+            return wallH + roofH * Math.sqrt(Math.max(0, 1 - norm * norm));
+          } else if (shape === 'pitched') {
+            return wallH + roofH * (1 - Math.abs(py - w / 2) / (w / 2));
+          }
+          return wallH;
+        }
+
+        function getThermalPoint(px, py, pz) {
+          const baseEnv = tOut + (tIn - tOut) * 0.42;
+          const zFactor = (pz / maxShelterZ) * 3.0;
+          let solarGain = (isDaytime && py < 0.1) ? Math.max(0, Math.cos(solar.azimuthRad - Math.PI) * solarIntensity) : 0;
+
+          const northExposure = Math.pow(py / w, 1.5);
+          const roofFactor = (pz > wallH) ? (shape === 'barrel' ? 0.65 : 1.15) : 0.4;
+          const windChillNode = -wind * 0.16 * (northExposure + roofFactor * 0.45);
+          const roofSnowChill = (pz >= wallH - 0.05 && shape !== 'barrel') ? -(snowRate * 0.35) : -(snowRate * 0.08 * northExposure);
+
+          let occupantWarmth = 0;
+          occupantCoords.forEach(occ => {
+            const dSq = Math.pow(px - occ.x, 2) + Math.pow(py - occ.y, 2);
+            occupantWarmth += 0.65 * Math.exp(-dSq / 2.2);
+          });
+
+          let temp = baseEnv + zFactor + solarGain + windChillNode + roofSnowChill + occupantWarmth;
+
+          openingsList.forEach(op => {
+            if (op.area <= 0.01) return;
+            const distSq = Math.pow(px - op.cx, 2) + Math.pow(py - op.cy, 2) + Math.pow(pz - op.cz, 2);
+            const sigma = Math.max(0.45, Math.sqrt(op.area) * 0.65);
+            const influence = Math.exp(-distSq / (2 * sigma * sigma));
+
+            if (op.type === 'window') {
+              let winTemp = (isDaytime && op.wall === 'South') ? 4.5 * (solarIntensity / 8.5) : (-7.0 - wind * 0.08);
+              temp += winTemp * Math.sqrt(op.area / 2.0) * influence;
+            } else if (op.type === 'door') {
+              temp += -(6.5 + wind * 0.18) * Math.sqrt(op.area / 1.8) * influence;
+            } else if (op.type === 'vent') {
+              temp += -(8.8 + wind * 0.25) * Math.sqrt(op.area / 0.3) * influence;
+            }
+          });
+          return temp;
+        }
+
+        // 1. BUILD FEA THERMAL SHELTER MESH
+        const divX = 22, divY = 18, divZ = 10;
+        const quads = [];
+        let minNodeT = Infinity, maxNodeT = -Infinity;
+
+        function pushQuad(p1, p2, p3, p4) {
+          if (isXRay) {
+            const midY = w / 2;
+            if (p1[1] <= midY + 0.05 && p2[1] <= midY + 0.05 && p3[1] <= midY + 0.05 && p4[1] <= midY + 0.05) return;
+          }
+          const t1 = getThermalPoint(...p1), t2 = getThermalPoint(...p2), t3 = getThermalPoint(...p3), t4 = getThermalPoint(...p4);
+          minNodeT = Math.min(minNodeT, t1, t2, t3, t4);
+          maxNodeT = Math.max(maxNodeT, t1, t2, t3, t4);
+          quads.push({ p1, p2, p3, p4, t1, t2, t3, t4 });
+        }
+
+        for (let ix = 0; ix < divX; ix++) {
+          for (let iz = 0; iz < divZ; iz++) {
+            const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+            const z0 = (iz * wallH) / divZ, z1 = ((iz + 1) * wallH) / divZ;
+            pushQuad([x0, 0, z0], [x1, 0, z0], [x1, 0, z1], [x0, 0, z1]);
+            pushQuad([x0, w, z0], [x0, w, z1], [x1, w, z1], [x1, w, z0]);
+          }
+        }
+        for (let iy = 0; iy < divY; iy++) {
+          for (let iz = 0; iz < divZ; iz++) {
+            const y0 = (iy * w) / divY, y1 = ((iy + 1) * w) / divY;
+            const z0 = (iz * wallH) / divZ, z1 = ((iz + 1) * wallH) / divZ;
+            pushQuad([0, y0, z0], [0, y1, z0], [0, y1, z1], [0, y0, z1]);
+            pushQuad([l, y0, z0], [l, y0, z1], [l, y1, z1], [l, y1, z0]);
+          }
+        }
+
+        if (shape === 'barrel') {
+          for (let ix = 0; ix < divX; ix++) {
+            for (let iy = 0; iy < divY; iy++) {
+              const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+              const ang0 = (iy / divY) * Math.PI, ang1 = ((iy + 1) / divY) * Math.PI;
+              const y0 = (w / 2) - (w / 2) * Math.cos(ang0), y1 = (w / 2) - (w / 2) * Math.cos(ang1);
+              const z0 = wallH + roofH * Math.sin(ang0), z1 = wallH + roofH * Math.sin(ang1);
+              pushQuad([x0, y0, z0], [x1, y0, z0], [x1, y1, z1], [x0, y1, z1]);
+              if (ix === 0) pushQuad([0, y0, wallH], [0, y1, wallH], [0, y1, z1], [0, y0, z0]);
+              if (ix === divX - 1) pushQuad([l, y0, wallH], [l, y0, z0], [l, y1, z1], [l, y1, wallH]);
+            }
+          }
+        } else if (shape === 'pitched') {
+          const midY = w / 2, apexZ = wallH + roofH;
+          for (let ix = 0; ix < divX; ix++) {
+            const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+            pushQuad([x0, 0, wallH], [x1, 0, wallH], [x1, midY, apexZ], [x0, midY, apexZ]);
+            pushQuad([x0, midY, apexZ], [x1, midY, apexZ], [x1, w, wallH], [x0, w, wallH]);
+            if (ix === 0) pushQuad([0, 0, wallH], [0, w, wallH], [0, midY, apexZ], [0, 0, wallH]);
+            if (ix === divX - 1) pushQuad([l, 0, wallH], [l, w, wallH], [l, midY, apexZ], [l, 0, wallH]);
+          }
+        } else {
+          for (let ix = 0; ix < divX; ix++) {
+            for (let iy = 0; iy < divY; iy++) {
+              const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
+              const y0 = (iy * w) / divY, y1 = ((iy + 1) * w) / divY;
+              pushQuad([x0, y0, wallH], [x1, y0, wallH], [x1, y1, wallH], [x0, y1, wallH]);
+            }
+          }
+        }
+
+        const legMax = document.getElementById('legendMaxTemp');
+        const legMin = document.getElementById('legendMinTemp');
+        if (legMax && isFinite(maxNodeT)) legMax.textContent = `${maxNodeT.toFixed(1)}°C`;
+        if (legMin && isFinite(minNodeT)) legMin.textContent = `${minNodeT.toFixed(1)}°C`;
+
+        const positions = [], colors = [];
+        const spanT = Math.max(2.0, maxNodeT - minNodeT);
+
+        quads.forEach(q => {
+          const v1 = toThreeVec(q.p1[0], q.p1[1], q.p1[2], l, w);
+          const v2 = toThreeVec(q.p2[0], q.p2[1], q.p2[2], l, w);
+          const v3 = toThreeVec(q.p3[0], q.p3[1], q.p3[2], l, w);
+          const v4 = toThreeVec(q.p4[0], q.p4[1], q.p4[2], l, w);
+
+          const c1 = getTurboColor((q.t1 - minNodeT) / spanT);
+          const c2 = getTurboColor((q.t2 - minNodeT) / spanT);
+          const c3 = getTurboColor((q.t3 - minNodeT) / spanT);
+          const c4 = getTurboColor((q.t4 - minNodeT) / spanT);
+
+          [[v1, c1], [v2, c2], [v3, c3], [v1, c1], [v3, c3], [v4, c4]].forEach(([v, c]) => {
+            positions.push(v.x, v.y, v.z);
+            colors.push(c.r, c.g, c.b);
+          });
+        });
+
+        const feaGeom = new THREE.BufferGeometry();
+        feaGeom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        feaGeom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        feaGeom.computeVertexNormals();
+
+        const feaMat = new THREE.MeshStandardMaterial({
+          vertexColors: true,
+          side: THREE.DoubleSide,
+          roughness: 0.35,
+          metalness: 0.1
+        });
+        shelterGroup.add(new THREE.Mesh(feaGeom, feaMat));
+
+        const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.08 });
+        shelterGroup.add(new THREE.Mesh(feaGeom, wireMat));
+
+        // Interior Floor Pad
+        const floorGeom = new THREE.PlaneGeometry(l, w);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8, side: THREE.DoubleSide });
+        const floorMesh = new THREE.Mesh(floorGeom, floorMat);
+        floorMesh.rotation.x = -Math.PI / 2;
+        floorMesh.position.y = 0.01;
+        shelterGroup.add(floorMesh);
+
+        // 2. 3D CAD OPENINGS + FLOATING LABELS
+        const opColors = { window: 0x38bdf8, door: 0xd97706, vent: 0xa855f7 };
+        const opHex = { window: '#38bdf8', door: '#fbbf24', vent: '#c084fc' };
+        const opNames = { window: '🪟 Window', door: '🚪 Door', vent: '🌀 Vent' };
+
+        openingsList.forEach(op => {
+          if (op.area <= 0.01) return;
+          if (isXRay && op.wall === 'South') return;
+
+          const hw = op.widthO / 2, hh = op.heightO / 2;
+          const p0 = toThreeVec(...op.to3D(-hw, -hh, 0.045), l, w);
+          const p1 = toThreeVec(...op.to3D(hw, -hh, 0.045), l, w);
+          const p2 = toThreeVec(...op.to3D(hw, hh, 0.045), l, w);
+          const p3 = toThreeVec(...op.to3D(-hw, hh, 0.045), l, w);
+
+          const paneGeom = new THREE.BufferGeometry();
+          const paneVerts = new Float32Array([
+            p0.x, p0.y, p0.z, p1.x, p1.y, p1.z, p2.x, p2.y, p2.z,
+            p0.x, p0.y, p0.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z
+          ]);
+          paneGeom.setAttribute('position', new THREE.BufferAttribute(paneVerts, 3));
+          paneGeom.computeVertexNormals();
+
+          const paneMat = new THREE.MeshBasicMaterial({
+            color: opColors[op.type],
+            transparent: true,
+            opacity: op.type === 'window' ? 0.55 : 0.8,
+            side: THREE.DoubleSide
+          });
+          shelterGroup.add(new THREE.Mesh(paneGeom, paneMat));
+
+          const frameGeom = new THREE.BufferGeometry().setFromPoints([p0, p1, p2, p3, p0]);
+          shelterGroup.add(new THREE.Line(frameGeom, new THREE.LineBasicMaterial({ color: 0xffffff })));
+
+          // Floating 3D Label above Opening
+          const labelPos = toThreeVec(...op.to3D(0, hh + 0.25, 0.12), l, w);
+          const opSprite = makeTextSprite(`${opNames[op.type]} (${op.area}m²)`, opHex[op.type], '#ffffff', 1.45);
+          opSprite.position.copy(labelPos);
+          shelterGroup.add(opSprite);
+        });
+
+        // 3. CARDINAL COMPASS 3D LABELS ON GROUND
+        const southSprite = makeTextSprite('☀️ SOUTH (Solar Front)', '#fbbf24', '#fde047', 1.9);
+        southSprite.position.copy(toThreeVec(l / 2, -1.35, 0.25, l, w));
+        const northSprite = makeTextSprite('❄️ NORTH (Wind Inlet)', '#38bdf8', '#bae6fd', 1.9);
+        northSprite.position.copy(toThreeVec(l / 2, w + 1.35, 0.25, l, w));
+        const eastSprite = makeTextSprite('EAST', '#64748b', '#cbd5e1', 1.2);
+        eastSprite.position.copy(toThreeVec(l + 1.2, w / 2, 0.25, l, w));
+        const westSprite = makeTextSprite('WEST', '#64748b', '#cbd5e1', 1.2);
+        westSprite.position.copy(toThreeVec(-1.2, w / 2, 0.25, l, w));
+        compassGroup.add(southSprite, northSprite, eastSprite, westSprite);
+
+        // 4. SEPARATE WIND GROUP: 3D STREAMLINES & ANIMATED DIRECTIONAL ARROWS
+        if (wind > 0.5) {
+          const numRibbons = 7;
+          const steps = 28;
+          const yStart = w + 3.8;
+          const yEnd = -3.8;
+
+          for (let r = 0; r < numRibbons; r++) {
+            const rx = (l * (r + 0.5)) / numRibbons;
+            const curvePts = [];
+
+            for (let s = 0; s <= steps; s++) {
+              const frac = s / steps;
+              const py = yStart + frac * (yEnd - yStart);
+              let pz = 0.65 + (r % 2) * 0.25;
+
+              if (py >= -0.4 && py <= w + 0.4) {
+                const roofZ = getRoofZAtY(Math.min(w, Math.max(0, py)));
+                const lift = Math.exp(-Math.pow((py - w / 2) / (w * 0.72), 2));
+                const sep = shape === 'barrel' ? 0.35 : (shape === 'pitched' ? 0.68 : 0.92);
+                pz = Math.max(pz, roofZ * lift + sep);
+              } else if (py < -0.4) {
+                const wakeDist = Math.abs(py + 0.4);
+                const wakeDecay = Math.exp(-wakeDist * 0.65);
+                const wave = Math.sin(wakeDist * 3.0 + r) * 0.35 * (shape === 'barrel' ? 0.4 : 1.0);
+                pz = Math.max(0.25, (wallH * 0.5) * wakeDecay + 0.5 + wave);
+              }
+              curvePts.push(toThreeVec(rx, py, pz, l, w));
+            }
+
+            const curve = new THREE.CatmullRomCurve3(curvePts);
+            const lineGeom = new THREE.BufferGeometry().setFromPoints(curve.getPoints(55));
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x34d399, transparent: true, opacity: 0.75 });
+            windGroup.add(new THREE.Line(lineGeom, lineMat));
+
+            // 3D Arrow Cones that point along the wind direction
+            for (let p = 0; p < 3; p++) {
+              const coneGeom = new THREE.ConeGeometry(0.11, 0.32, 10);
+              const coneMat = new THREE.MeshBasicMaterial({ color: 0x6ee7b7 });
+              const coneMesh = new THREE.Mesh(coneGeom, coneMat);
+              windGroup.add(coneMesh);
+              windArrows.push({ mesh: coneMesh, curve: curve, offset: (p / 3) + (r * 0.08) });
+            }
+          }
+        }
+        windGroup.visible = isWindVisible;
+
+        // 5. SEPARATE SNOW GROUP: 3D FALLING SNOWFLAKES & SNOWPACK
+        if (snowRate > 0) {
+          const flakeCount = Math.min(700, Math.max(140, Math.round(snowRate * 48)));
+          const flakePositions = new Float32Array(flakeCount * 3);
+          const maxH = maxShelterZ + 4.0;
+
+          for (let i = 0; i < flakeCount; i++) {
+            flakePositions[i * 3] = (Math.random() - 0.5) * (l + 9);
+            flakePositions[i * 3 + 1] = Math.random() * maxH;
+            flakePositions[i * 3 + 2] = (Math.random() - 0.5) * (w + 9);
+          }
+
+          const flakeGeom = new THREE.BufferGeometry();
+          flakeGeom.setAttribute('position', new THREE.BufferAttribute(flakePositions, 3));
+          const flakeMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.14, transparent: true, opacity: 0.92 });
+          snowParticleSystem = new THREE.Points(flakeGeom, flakeMat);
+          snowGroup.add(snowParticleSystem);
+
+          // Snow Ground Blanket
+          const snowGroundGeom = new THREE.PlaneGeometry(l + 8, w + 8);
+          const snowGroundMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.38, roughness: 0.9 });
+          const snowGround = new THREE.Mesh(snowGroundGeom, snowGroundMat);
+          snowGround.rotation.x = -Math.PI / 2;
+          snowGround.position.y = 0.005;
+          snowGroup.add(snowGround);
+
+          // Flat Roof Snow Accumulation Slab (Barrel Vault sheds snow)
+          const snowThick = Math.min(0.28, 0.04 + snowRate * 0.015);
+          if (shape === 'flat' && !isXRay) {
+            const capGeom = new THREE.BoxGeometry(l + 0.08, snowThick, w + 0.08);
+            const capMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.85 });
+            const capMesh = new THREE.Mesh(capGeom, capMat);
+            capMesh.position.set(0, wallH + snowThick / 2, 0);
+            snowGroup.add(capMesh);
+          }
+        }
+        snowGroup.visible = isSnowVisible;
+
+        // 6. X-RAY MODE: SOLID 3D HUMAN FIGURES INSIDE THE SHELTER
+        if (isXRay && occupants > 0) {
+          occupantCoords.forEach((occ) => {
+            const person = new THREE.Group();
+            const basePos = toThreeVec(occ.x, occ.y, 0, l, w);
+            person.position.copy(basePos);
+
+            const skinMat = new THREE.MeshStandardMaterial({ color: 0xfde047, emissive: 0xd97706, emissiveIntensity: 0.35 });
+            const suitMat = new THREE.MeshStandardMaterial({ color: 0xf97316, emissive: 0xef4444, emissiveIntensity: 0.3, roughness: 0.4 });
+
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 14), skinMat);
+            head.position.y = 1.62;
+            person.add(head);
+
+            const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.13, 0.62, 12), suitMat);
+            torso.position.y = 1.16;
+            person.add(torso);
+
+            const legGeom = new THREE.CylinderGeometry(0.06, 0.05, 0.82, 10);
+            const leftLeg = new THREE.Mesh(legGeom, suitMat);
+            leftLeg.position.set(-0.08, 0.42, 0);
+            const rightLeg = new THREE.Mesh(legGeom, suitMat);
+            rightLeg.position.set(0.08, 0.42, 0);
+            person.add(leftLeg, rightLeg);
+
+            const armGeom = new THREE.CylinderGeometry(0.045, 0.04, 0.55, 10);
+            const leftArm = new THREE.Mesh(armGeom, suitMat);
+            leftArm.position.set(-0.22, 1.15, 0);
+            leftArm.rotation.z = 0.18;
+            const rightArm = new THREE.Mesh(armGeom, suitMat);
+            rightArm.position.set(0.22, 1.15, 0);
+            rightArm.rotation.z = -0.18;
+            person.add(leftArm, rightArm);
+
+            // Rising 120W Buoyant Thermal Plume Spiral
+            const plumePts = [];
+            for (let s = 0; s <= 14; s++) {
+              const frac = s / 14;
+              plumePts.push(new THREE.Vector3(
+                Math.sin(frac * Math.PI * 3) * 0.12,
+                1.8 + frac * 0.7,
+                Math.cos(frac * Math.PI * 3) * 0.12
+              ));
+            }
+            const plumeGeom = new THREE.BufferGeometry().setFromPoints(plumePts);
+            const plumeLine = new THREE.Line(plumeGeom, new THREE.LineBasicMaterial({ color: 0xef4444 }));
+            person.add(plumeLine);
+            humanPlumeLines.push(plumeLine);
+
+            // Floating Label above each Soldier
+            const occLabel = makeTextSprite(`🧍 #${occ.id} (120W)`, '#ef4444', '#fef08a', 1.25);
+            occLabel.position.set(0, 2.0, 0);
+            person.add(occLabel);
+
+            humanGroup.add(person);
+          });
+        }
+
+        // 7. 3D SOLAR AZIMUTH VECTOR & GLOWING SUN ORB
+        if (isDaytime && !isXRay) {
+          const sunRadius = Math.max(l, w) + 2.8;
+          const sunDirX = Math.sin(solar.azimuthRad);
+          const sunDirY = Math.cos(solar.azimuthRad);
+          const sunDirZ = Math.tan(solar.elevationRad);
+
+          const startVec = toThreeVec(l / 2, w / 2, wallH * 0.6, l, w);
+          const endVec = toThreeVec(
+            l / 2 + sunDirX * sunRadius,
+            w / 2 + sunDirY * sunRadius,
+            wallH * 0.6 + sunDirZ * sunRadius,
+            l, w
+          );
+
+          const sunLineGeom = new THREE.BufferGeometry().setFromPoints([startVec, endVec]);
+          sunGroup.add(new THREE.Line(sunLineGeom, new THREE.LineBasicMaterial({ color: 0xfbbf24 })));
+
+          const sunOrb = new THREE.Mesh(
+            new THREE.SphereGeometry(0.28, 16, 16),
+            new THREE.MeshBasicMaterial({ color: 0xfde047 })
+          );
+          sunOrb.position.copy(endVec);
+          sunGroup.add(sunOrb);
+
+          const sunLabel = makeTextSprite(`☀️ Sun (${hour}:00)`, '#f59e0b', '#fef08a', 1.4);
+          sunLabel.position.copy(endVec).add(new THREE.Vector3(0, 0.5, 0));
+          sunGroup.add(sunLabel);
+        }
+      }
+
+      // ── 5. COUPLED PHYSICS ENGINE (WIND, SNOW, SOLAR & OCCUPANTS) ─────────────
+      function triggerMeshUpdate() {
+        const l = parseFloat(lengthInput.value) || 6.0;
+        const w = parseFloat(widthInput.value) || 4.0;
+        const h = parseFloat(heightInput.value) || 2.8;
+        const shape = document.getElementById('shelterShape').value;
+        const tIn = globalIndoor24[currentSimTime] ?? 15.0;
+        const tOut = globalAmbient24[currentSimTime] ?? -15.0;
+        let latVal = parseFloat(latitudeInput.value) || 34.1526;
+        if (latDirSelect.value === 'S') latVal = -Math.abs(latVal);
+
+        draw3DMesh(l, w, h, tIn, tOut, shape, currentSimTime, latVal, isXRayMode);
       }
 
       function updateAllPhysicsAndVisuals() {
         const matName = materialSelect.value;
         const mat = materialPresets[matName] || { k: 0.5, rho: 1200, cp: 900, costPerUnit: 3000, installationCost: 1000 };
-        propK.textContent = `${mat.k} W/mK`; propRho.textContent = `${mat.rho} kg/m³`; propCp.textContent = `${mat.cp} J/kgK`;
+        propK.textContent = `${mat.k} W/mK`;
+        propRho.textContent = `${mat.rho} kg/m³`;
+        propCp.textContent = `${mat.cp} J/kgK`;
 
         const l = parseFloat(lengthInput.value) || 6.0;
         const w = parseFloat(widthInput.value) || 4.0;
         const h = parseFloat(heightInput.value) || 2.8;
         const t = (parseFloat(thicknessSlider.value) || 30) / 100;
-        const wind = parseFloat(windSlider.value) || 15;
+        const wind = parseFloat(windSlider.value) || 0;
+        const snowRate = parseFloat(snowRateSlider.value) || 0;
         const shape = document.getElementById('shelterShape').value;
+
+        windValLabel.textContent = wind.toFixed(1);
+        snowRateValLabel.textContent = snowRate.toFixed(1);
 
         const winArea = parseFloat(winAreaSlider.value) || 0;
         const doorArea = parseFloat(doorAreaSlider.value) || 1.8;
         const ventArea = parseFloat(ventAreaSlider.value) || 0.3;
-        
         const occupants = parseInt(document.getElementById('occupants').value) || 0;
         document.getElementById('occupantsVal').textContent = occupants;
 
@@ -824,8 +1560,7 @@
 
         const totalWeight = wallVol * mat.rho + (totalOpeningArea * 22);
         statWeight.textContent = `${Math.round(totalWeight).toLocaleString('en-IN')} kg`;
-        
-        const statAirlift = document.getElementById('stat-airlift');
+
         if (totalWeight > 1500) {
           statAirlift.textContent = "HEAVY LIFT TRUCK REQ";
           statAirlift.className = "text-[9px] px-2 py-1 rounded bg-rose-500/20 text-rose-400 mt-1 inline-block border border-rose-500/30 tracking-widest";
@@ -834,56 +1569,75 @@
           statAirlift.className = "text-[9px] px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 mt-1 inline-block border border-emerald-500/30 tracking-widest";
         }
 
-        const deltaT = 30; 
-        const uWall = mat.k / t;
-        const totalLossKW = ((uWall * netSurfaceArea * deltaT) + (2.4 * winArea * deltaT) + ((3.2 + wind * 0.08) * doorArea * deltaT) + ((12.0 + wind * 0.45) * ventArea * deltaT)) / 1000;
+        // Aero-Thermal Wind-Chill & Snowfall Cooling Physics
+        const aeroDragFactor = shape === 'barrel' ? 0.72 : (shape === 'pitched' ? 0.92 : 1.18);
+        const activeWind = isWindVisible ? wind : 0;
+        const activeSnow = isSnowVisible ? snowRate : 0;
 
-        openingsLossBadge.textContent = `Leakage: ${(((2.4 * winArea * deltaT) + ((3.2 + wind * 0.08) * doorArea * deltaT) + ((12.0 + wind * 0.45) * ventArea * deltaT)) / 1000).toFixed(2)} kW`;
+        const windChillDelta = +(Math.pow(activeWind, 0.72) * 0.42 * aeroDragFactor).toFixed(1);
+        const snowSublimationCooling = +(activeSnow * 0.32).toFixed(1);
+        const totalEnvDepression = windChillDelta + snowSublimationCooling;
+
+        const roofSnowRetention = shape === 'barrel' ? 0.12 : (shape === 'pitched' ? 0.55 : 1.0);
+        const roofSnowCoolingPenalty = activeSnow * 0.25 * roofSnowRetention;
+
+        const hExt = 5.7 + 3.8 * (activeWind * aeroDragFactor) + (activeSnow * 0.8);
+        const hInt = 8.0;
+        windChillReadout.textContent = `-${(totalEnvDepression).toFixed(1)}°C`;
+        hConvReadout.textContent = `${Math.round(hExt)} W/m²K`;
+
+        globalAmbient24 = baseDiurnalShape.map(d => +(baseSiteTemp + d - totalEnvDepression).toFixed(1));
+
+        const rTotalWall = (1 / hInt) + (t / mat.k) + (1 / hExt);
+        const uWall = 1 / rTotalWall;
+        const nominalDeltaT = Math.max(15, 22 - Math.min(...globalAmbient24));
+
+        const wallLossW = uWall * netSurfaceArea * nominalDeltaT + (roofSnowCoolingPenalty * l * w * 12);
+        const winLossW = (2.2 + activeWind * 0.06) * winArea * nominalDeltaT;
+        const doorLossW = (3.0 + activeWind * 0.14) * doorArea * nominalDeltaT;
+        const ventLossW = (10.5 + activeWind * 0.52) * ventArea * nominalDeltaT;
+
+        const openingsLossKW = (winLossW + doorLossW + ventLossW) / 1000;
+        const totalLossKW = (wallLossW / 1000) + openingsLossKW;
+
+        openingsLossBadge.textContent = `Leakage: ${openingsLossKW.toFixed(2)} kW`;
         statLoss.textContent = `${totalLossKW.toFixed(2)} kW`;
 
+        const snowCloudAttenuation = Math.max(0.35, 1 - (activeSnow * 0.045));
         const orientationMultiplier = winWallSelect.value === 'South' ? 1.0 : (winWallSelect.value === 'East' || winWallSelect.value === 'West' ? 0.55 : 0.22);
-        const solarGainKWh = 6.5 + (winArea * 3.85 * orientationMultiplier);
+        const solarGainKWh = (6.5 + (winArea * 3.85 * orientationMultiplier)) * snowCloudAttenuation;
         const totalGainKWh = solarGainKWh + (metabolicGainKW * 24);
         statSolar.textContent = `${totalGainKWh.toFixed(2)} kWh`;
 
-        const netSavedKW = Math.max(0.8, (12.5 - totalLossKW) + (totalGainKWh / 8));
+        const netSavedKW = Math.max(0.8, (13.0 - totalLossKW) + (totalGainKWh / 8));
         statFuel.textContent = `${Math.round(netSavedKW * 38)} L Diesel`;
 
-        const thermalShift = ((totalGainKWh - 12.0) * 0.35) - ((totalLossKW - 4.5) * 0.85);
-        globalIndoor24 = [11.2, 10.5, 9.8, 9.4, 9.1, 9.0, 9.4, 11.2, 13.8, 16.2, 17.9, 18.4, 17.8, 16.5, 15.1, 13.9, 13.0, 12.4, 12.0, 11.8, 11.6, 11.4, 11.3, 11.2].map(val => +(val + thermalShift).toFixed(1));
-        
+        const baseIndoorCurve = [11.2, 10.5, 9.8, 9.4, 9.1, 9.0, 9.4, 11.2, 13.8, 16.2, 17.9, 18.4, 17.8, 16.5, 15.1, 13.9, 13.0, 12.4, 12.0, 11.8, 11.6, 11.4, 11.3, 11.2];
+        const insulationFactor = (0.04 / Math.max(0.015, mat.k)) * (t / 0.30);
+        const thermalShift = ((totalGainKWh - 11.5) * 0.38) - ((totalLossKW - 4.2) * 0.92) + Math.min(4.0, (insulationFactor - 1) * 1.6) - roofSnowCoolingPenalty;
+
+        globalIndoor24 = baseIndoorCurve.map((val, hr) => {
+          const outdoorInfluence = (globalAmbient24[hr] - (-15)) * 0.18;
+          return +(val + thermalShift + outdoorInfluence).toFixed(1);
+        });
+
         tempChart.data.datasets[0].data = globalIndoor24;
         tempChart.data.datasets[1].data = globalAmbient24;
         tempChart.update();
 
+        const maxIn = Math.max(...globalIndoor24);
+        const minOut = Math.min(...globalAmbient24);
         const avgIn = globalIndoor24.reduce((a, b) => a + b, 0) / globalIndoor24.length;
-        metricPeakIn.textContent = `${Math.max(...globalIndoor24).toFixed(1)}°C`;
-        metricDelta.textContent = `+${(avgIn - Math.min(...globalAmbient24)).toFixed(1)}°C`;
+
+        metricPeakIn.textContent = `${maxIn.toFixed(1)}°C`;
+        metricMinOut.textContent = `${minOut.toFixed(1)}°C`;
+        metricDelta.textContent = `+${(avgIn - minOut).toFixed(1)}°C`;
         statRank.textContent = avgIn > 14 ? 'Grade A+' : (avgIn > 10.5 ? 'Grade A' : (avgIn > 7 ? 'Grade B' : 'Grade C'));
 
-        // Redraw 3D mesh with current simulated time and X-Ray mode
         triggerMeshUpdate();
       }
 
-      function triggerMeshUpdate() {
-        const l = parseFloat(lengthInput.value) || 6.0;
-        const w = parseFloat(widthInput.value) || 4.0;
-        const h = parseFloat(heightInput.value) || 2.8;
-        const shape = document.getElementById('shelterShape').value;
-        const tIn = globalIndoor24[currentSimTime];
-        const tOut = globalAmbient24[currentSimTime];
-        let latVal = parseFloat(latitudeInput.value) || 34.1526; 
-        if (latDirSelect.value === 'S') latVal = -Math.abs(latVal);
-
-        draw3DMesh(l, w, h, tIn, tOut, shape, currentSimTime, latVal, isXRayMode);
-      }
-      
-      // ── 4D TIME-LAPSE CONTROLS ────────────────────────────────────────────────
-      const timeSlider = document.getElementById('timeSlider');
-      const timeLabel = document.getElementById('timeLabel');
-      const playBtn = document.getElementById('playTimeLapseBtn');
-      const xrayToggle = document.getElementById('xrayToggle');
-
+      // ── 6. SEPARATE WIND, SNOW, X-RAY & TIME-LAPSE EVENT LISTENERS ────────────
       timeSlider.addEventListener('input', (e) => {
         currentSimTime = parseInt(e.target.value);
         timeLabel.textContent = `${String(currentSimTime).padStart(2, '0')}:00`;
@@ -905,7 +1659,7 @@
             timeSlider.value = currentSimTime;
             timeLabel.textContent = `${String(currentSimTime).padStart(2, '0')}:00`;
             triggerMeshUpdate();
-          }, 800); // 800ms per simulated hour
+          }, 800);
         }
       });
 
@@ -914,263 +1668,37 @@
         triggerMeshUpdate();
       });
 
-      // ── 3D FEA THERMAL MESH (4D DYNAMIC, X-RAY & SNOW PHYSICS) ────────────────
-      function draw3DMesh(l, w, h, tIn, tOut, shape, hour, lat, isXRay) {
-        const divX = 20; 
-        const divY = 18;
-        const divZ = 8;
-        
-        let wallH = h; let roofH = 0;
-        if (shape === 'barrel') { wallH = h * 0.75; roofH = h * 0.25; } 
-        else if (shape === 'pitched') { roofH = 1.2; }
-
-        const wind = parseFloat(windSlider.value) || 15;
-        const occupants = parseInt(document.getElementById('occupants').value) || 0;
-        const winGeom = getOpening3DGeometry(winWallSelect.value, parseFloat(winAreaSlider.value) || 0, 'window', l, w, h, shape);
-        const doorGeom = getOpening3DGeometry(doorWallSelect.value, parseFloat(doorAreaSlider.value) || 1.8, 'door', l, w, h, shape);
-        const ventGeom = getOpening3DGeometry(ventWallSelect.value, parseFloat(ventAreaSlider.value) || 0.3, 'vent', l, w, h, shape);
-        const openingsList = [winGeom, doorGeom, ventGeom];
-
-        const x = [], y = [], z = [], intensity = [], hoverLabels = [];
-        const i_idx = [], j_idx = [], k_idx = [];
-        const edgeX = [], edgeY = [], edgeZ = [];
-
-        // Solar math for current hour
-        const solar = getSolarPosition(lat, hour);
-        const isDaytime = solar.elevation > 0;
-        // Strongest sun around noon, drops off towards sunrise/sunset
-        const solarIntensity = isDaytime ? Math.sin(solar.elevationRad) * 8.5 : 0;
-
-        function getThermalPoint(px, py, pz) {
-          const baseEnv = tOut + (tIn - tOut) * 0.38;
-          const zFactor = (pz / (wallH + roofH)) * 3.2; 
-          
-          // Solar gain is dynamic based on hour. Maximize on South (y=0) when azimuth is near 180 (South)
-          let solarGain = 0;
-          if (isDaytime) {
-             // Basic projection: if sun is South, South wall gets hot.
-             if (py < 0.1) solarGain = Math.cos(solar.azimuthRad - Math.PI) * solarIntensity; 
-          }
-          if (solarGain < 0) solarGain = 0;
-
-          let temp = baseEnv + zFactor + solarGain;
-          let activeZone = pz > wallH ? "Roof Structure" : "Insulated Wall";
-
-          openingsList.forEach(op => {
-            if (op.area <= 0.01) return;
-            const distSq = Math.pow(px - op.cx, 2) + Math.pow(py - op.cy, 2) + Math.pow(pz - op.cz, 2);
-            const sigma = Math.max(0.45, Math.sqrt(op.area) * 0.65);
-            const influence = Math.exp(-distSq / (2 * sigma * sigma));
-
-            if (op.type === 'window') {
-              let winTemp = -7.0; // default conductive loss
-              if (isDaytime && op.wall === 'South') winTemp = 4.5 * (solarIntensity/8.5); // Warm if sun is up
-              temp += winTemp * Math.sqrt(op.area / 2.0) * influence;
-              if (influence > 0.35) activeZone = `${op.wall} Glazed Window`;
-            } else if (op.type === 'door') {
-              temp += -(6.5 + wind * 0.15) * Math.sqrt(op.area / 1.8) * influence;
-              if (influence > 0.35) activeZone = `${op.wall} Door Draft`;
-            } else if (op.type === 'vent') {
-              temp += -(8.8 + wind * 0.24) * Math.sqrt(op.area / 0.3) * influence;
-              if (influence > 0.35) activeZone = `${op.wall} Vent Plume`;
-            }
-          });
-          return { temp, activeZone };
-        }
-
-        function addQuad(p1, p2, p3, p4) {
-          // X-RAY VIEW: Slice the model in half (Hide South/Front half: y < w/2)
-          if (isXRay) {
-            const midY = w / 2;
-            if (p1[1] <= midY + 0.05 && p2[1] <= midY + 0.05 && p3[1] <= midY + 0.05 && p4[1] <= midY + 0.05) return;
-          }
-
-          const base = x.length;
-          const r1 = getThermalPoint(...p1), r2 = getThermalPoint(...p2), r3 = getThermalPoint(...p3), r4 = getThermalPoint(...p4);
-
-          x.push(p1[0], p2[0], p3[0], p4[0]);
-          y.push(p1[1], p2[1], p3[1], p4[1]);
-          z.push(p1[2], p2[2], p3[2], p4[2]);
-          intensity.push(r1.temp, r2.temp, r3.temp, r4.temp);
-          hoverLabels.push(
-            `Nodal Temp: ${r1.temp.toFixed(1)}°C<br>${r1.activeZone}`,
-            `Nodal Temp: ${r2.temp.toFixed(1)}°C<br>${r2.activeZone}`,
-            `Nodal Temp: ${r3.temp.toFixed(1)}°C<br>${r3.activeZone}`,
-            `Nodal Temp: ${r4.temp.toFixed(1)}°C<br>${r4.activeZone}`
-          );
-
-          i_idx.push(base, base); j_idx.push(base + 1, base + 2); k_idx.push(base + 2, base + 3);
-          edgeX.push(p1[0], p2[0], p3[0], p4[0], p1[0], null);
-          edgeY.push(p1[1], p2[1], p3[1], p4[1], p1[1], null);
-          edgeZ.push(p1[2], p2[2], p3[2], p4[2], p1[2], null);
-        }
-
-        // 1. Generate Walls
-        for (let ix = 0; ix < divX; ix++) {
-          for (let iz = 0; iz < divZ; iz++) {
-            const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
-            const z0 = (iz * wallH) / divZ, z1 = ((iz + 1) * wallH) / divZ;
-            addQuad([x0, 0, z0], [x1, 0, z0], [x1, 0, z1], [x0, 0, z1]); 
-            addQuad([x0, w, z0], [x0, w, z1], [x1, w, z1], [x1, w, z0]); 
-          }
-        }
-        for (let iy = 0; iy < divY; iy++) {
-          for (let iz = 0; iz < divZ; iz++) {
-            const y0 = (iy * w) / divY, y1 = ((iy + 1) * w) / divY;
-            const z0 = (iz * wallH) / divZ, z1 = ((iz + 1) * wallH) / divZ;
-            addQuad([0, y0, z0], [0, y1, z0], [0, y1, z1], [0, y0, z1]); 
-            addQuad([l, y0, z0], [l, y0, z1], [l, y1, z1], [l, y1, z0]); 
-          }
-        }
-
-        // 2. Generate Roofs
-        if (shape === 'barrel') {
-          for (let ix = 0; ix < divX; ix++) {
-            for (let iy = 0; iy < divY; iy++) {
-              const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
-              const ang0 = (iy / divY) * Math.PI, ang1 = ((iy + 1) / divY) * Math.PI;
-              const y0 = (w / 2) - (w / 2) * Math.cos(ang0), y1 = (w / 2) - (w / 2) * Math.cos(ang1);
-              const z0 = wallH + roofH * Math.sin(ang0), z1 = wallH + roofH * Math.sin(ang1);
-
-              addQuad([x0, y0, z0], [x1, y0, z0], [x1, y1, z1], [x0, y1, z1]);
-              if (ix === 0) addQuad([0, y0, wallH], [0, y1, wallH], [0, y1, z1], [0, y0, z0]); 
-              if (ix === divX - 1) addQuad([l, y0, wallH], [l, y0, z0], [l, y1, z1], [l, y1, wallH]); 
-            }
-          }
-        } else if (shape === 'pitched') {
-          const midY = w / 2; const apexZ = wallH + roofH;
-          for (let ix = 0; ix < divX; ix++) {
-            const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
-            addQuad([x0, 0, wallH], [x1, 0, wallH], [x1, midY, apexZ], [x0, midY, apexZ]); 
-            addQuad([x0, midY, apexZ], [x1, midY, apexZ], [x1, w, wallH], [x0, w, wallH]); 
-            if (ix === 0) addQuad([0, 0, wallH], [0, w, wallH], [0, midY, apexZ], [0, 0, wallH]);
-            if (ix === divX - 1) addQuad([l, 0, wallH], [l, w, wallH], [l, midY, apexZ], [l, 0, wallH]);
-          }
+      // Separate Wind Flow Button: Toggles Wind Streamlines & Wind-Chill Physics
+      toggleWindBtn.addEventListener('click', () => {
+        isWindVisible = !isWindVisible;
+        if (isWindVisible) {
+          windBtnText.textContent = 'Wind Flow: ON';
+          toggleWindBtn.className = 'px-3 py-1.5 rounded-lg border border-emerald-500/60 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all shadow-inner';
         } else {
-          for (let ix = 0; ix < divX; ix++) {
-            for (let iy = 0; iy < divY; iy++) {
-              const x0 = (ix * l) / divX, x1 = ((ix + 1) * l) / divX;
-              const y0 = (iy * w) / divY, y1 = ((iy + 1) * w) / divY;
-              addQuad([x0, y0, wallH], [x1, y0, wallH], [x1, y1, wallH], [x0, y1, wallH]);
-            }
-          }
+          windBtnText.textContent = 'Wind Flow: OFF';
+          toggleWindBtn.className = 'px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800 text-gray-400 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all';
         }
+        if (windGroup) windGroup.visible = isWindVisible;
+        updateAllPhysicsAndVisuals();
+      });
 
-        const meshTrace = {
-          type: 'mesh3d', x: x, y: y, z: z, i: i_idx, j: j_idx, k: k_idx, intensity: intensity,
-          colorscale: 'Turbo', showscale: true,
-          colorbar: { title: { text: 'Temp (°C)', font: { color: '#f8fafc' } }, tickfont: { color: '#94a3b8' }, len: 0.85, x: 0.95 },
-          lighting: { ambient: 0.85, diffuse: 0.65, specular: 0.35, roughness: 0.3 },
-          hoverinfo: 'text', text: hoverLabels
-        };
-
-        const wireframeTrace = {
-          type: 'scatter3d', mode: 'lines', x: edgeX, y: edgeY, z: edgeZ,
-          line: { color: 'rgba(255, 255, 255, 0.15)', width: 1.0 }, hoverinfo: 'none'
-        };
-
-        // 3. Terrain Baseplate
-        const padMargin = 4.0;
-        const groundTrace = {
-          type: 'mesh3d', x: [-padMargin, l + padMargin, l + padMargin, -padMargin], y: [-padMargin, -padMargin, w + padMargin, w + padMargin], z: [-0.05, -0.05, -0.05, -0.05],
-          i: [0, 0], j: [1, 2], k: [2, 3], color: globalIsSnowing ? '#e2e8f0' : '#475569', opacity: 0.35, hoverinfo: 'none'
-        };
-
-        // Dynamic Snow Accumulation on Roof (If snowing, and NOT a barrel vault)
-        const traces = [groundTrace, meshTrace, wireframeTrace];
-        if (globalIsSnowing && shape !== 'barrel') {
-          let sX = [-0.1, l+0.1, l+0.1, -0.1], sY = [-0.1, -0.1, w+0.1, w+0.1];
-          if (shape === 'flat') {
-            let sZ = [wallH+0.05, wallH+0.05, wallH+0.05, wallH+0.05];
-            traces.push({ type: 'mesh3d', x: sX, y: sY, z: sZ, i: [0,0], j: [1,2], k: [2,3], color: '#ffffff', opacity: 0.9, hoverinfo: 'none' });
-          } else if (shape === 'pitched') {
-            // Draw two snowy slopes
-            const midY = w/2; const apZ = wallH+roofH+0.05;
-            traces.push({ type: 'mesh3d', x: [-0.1, l+0.1, l+0.1, -0.1], y: [-0.1, -0.1, midY, midY], z: [wallH+0.05, wallH+0.05, apZ, apZ], i: [0,0], j: [1,2], k: [2,3], color: '#ffffff', opacity: 0.9, hoverinfo: 'none' });
-            traces.push({ type: 'mesh3d', x: [-0.1, l+0.1, l+0.1, -0.1], y: [midY, midY, w+0.1, w+0.1], z: [apZ, apZ, wallH+0.05, wallH+0.05], i: [0,0], j: [1,2], k: [2,3], color: '#ffffff', opacity: 0.9, hoverinfo: 'none' });
-          }
+      // Separate Snowfall Button: Toggles Falling Snow & Snow Cooling Physics
+      toggleSnowBtn.addEventListener('click', () => {
+        isSnowVisible = !isSnowVisible;
+        if (isSnowVisible) {
+          snowBtnText.textContent = 'Snowfall: ON';
+          toggleSnowBtn.className = 'px-3 py-1.5 rounded-lg border border-sky-500/60 bg-sky-500/20 text-sky-300 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all shadow-inner';
+        } else {
+          snowBtnText.textContent = 'Snowfall: OFF';
+          toggleSnowBtn.className = 'px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800 text-gray-400 text-[10px] font-bold uppercase flex items-center gap-1.5 cursor-pointer transition-all';
         }
+        if (snowGroup) snowGroup.visible = isSnowVisible;
+        updateAllPhysicsAndVisuals();
+      });
 
-        const compassTrace = {
-          type: 'scatter3d', mode: 'text',
-          x: [l / 2, l / 2, l + 1.2, -1.2], y: [-1.2, w + 1.2, w / 2, w / 2], z: [0, 0, 0, 0],
-          text: ['☀️ SOUTH', '❄️ NORTH', 'EAST', 'WEST'],
-          textfont: { color: ['#fbbf24', '#38bdf8', '#cbd5e1', '#cbd5e1'], size: [11, 11, 10, 10], family: 'Inter, monospace' }, hoverinfo: 'none'
-        };
-        traces.push(compassTrace);
-
-        // 4. Openings CAD Traces
-        openingsList.forEach(op => {
-          if (op.area <= 0.01) return;
-          // If XRay is ON and opening is on the South wall, hide it
-          if (isXRay && op.wall === 'South') return;
-
-          const hw = op.widthO / 2; const hh = op.heightO / 2;
-          const p0 = op.to3D(-hw, -hh, 0.035), p1 = op.to3D(hw, -hh, 0.035), p2 = op.to3D(hw, hh, 0.035), p3 = op.to3D(-hw, hh, 0.035);
-
-          const paneColors = { window: '#38bdf8', door: '#d97706', vent: '#9333ea' };
-          traces.push({
-            type: 'mesh3d', x: [p0[0], p1[0], p2[0], p3[0]], y: [p0[1], p1[1], p2[1], p3[1]], z: [p0[2], p1[2], p2[2], p3[2]],
-            i: [0, 0], j: [1, 2], k: [2, 3], color: paneColors[op.type], opacity: 0.65,
-            hoverinfo: 'text', text: `${op.type.toUpperCase()} (${op.wall} Wall)`
-          });
-
-          const detailX = [], detailY = [], detailZ = [];
-          op.corners.forEach(c => { detailX.push(c[0]); detailY.push(c[1]); detailZ.push(c[2]); });
-          detailX.push(null); detailY.push(null); detailZ.push(null);
-          
-          traces.push({ type: 'scatter3d', mode: 'lines', x: detailX, y: detailY, z: detailZ, line: { color: paneColors[op.type], width: 4 }, hoverinfo: 'none' });
-        });
-
-        // 5. Live GPS Solar Azimuth Vector (Dynamic Sun Position)
-        if (isDaytime && !isXRay) {
-          const sunRadius = Math.max(l, w) + 3;
-          // Plotly coords: x is East, y is North, z is Up.
-          // Azimuth 0 = North (+y). 90 = East (+x). 180 = South (-y). 270 = West (-x).
-          const sunDirX = Math.sin(solar.azimuthRad);
-          const sunDirY = Math.cos(solar.azimuthRad);
-          const sunDirZ = Math.tan(solar.elevationRad);
-
-          // Vector pointing from shelter center TO the sun
-          const startX = l/2, startY = w/2, startZ = wallH/2;
-          const endX = startX + sunDirX * sunRadius;
-          const endY = startY + sunDirY * sunRadius;
-          const endZ = startZ + sunDirZ * sunRadius;
-
-          traces.push({
-            type: 'scatter3d', mode: 'lines+text', x: [startX, endX], y: [startY, endY], z: [startZ, endZ],
-            line: { color: '#fbbf24', width: 5 },
-            text: ['', '☀️ Live Solar Azimuth'], textposition: 'top center',
-            textfont: { color: '#fbbf24', size: 10, family: 'monospace' }, hoverinfo: 'none'
-          });
-        }
-
-        // 6. X-Ray Metabolic Heat Core
-        if (isXRay && occupants > 0) {
-          traces.push({
-            type: 'scatter3d', mode: 'markers+text',
-            x: [l/2], y: [w/2], z: [1.0],
-            marker: { size: Math.min(30, occupants * 4), color: '#ef4444', opacity: 0.8, line: {color: '#fca5a5', width: 2} },
-            text: [`🔥 ${occupants} Personnel<br>Metabolic Heat`], textposition: 'top center',
-            textfont: { color: '#ef4444', size: 11, family: 'Inter' }, hoverinfo: 'none'
-          });
-        }
-
-        Plotly.react('meshContainer', traces, {
-          paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', uirevision: 'keep-camera',
-          scene: {
-            aspectmode: 'data', camera: { eye: { x: -1.35, y: -1.65, z: 1.15 } },
-            xaxis: { title: 'Length (m)', color: '#94a3b8', gridcolor: '#1e293b', backgroundcolor: '#0f172a', showbackground: true },
-            yaxis: { title: 'Width (m)', color: '#94a3b8', gridcolor: '#1e293b', backgroundcolor: '#0f172a', showbackground: true },
-            zaxis: { title: 'Height (m)', color: '#94a3b8', gridcolor: '#1e293b', backgroundcolor: '#0f172a', showbackground: true }
-          },
-          margin: { l: 0, r: 0, b: 10, t: 10 }, showlegend: false
-        }, { responsive: true });
-      }
-
-      // ── MAP INITIALIZATION & FETCH WEATHER ──────────────────────────────────────
-      let globeMap;
-      let globeMarker;
+      // ── 7. 3D SATELLITE GLOBE & LIVE WEATHER TELEMETRY ────────────────────────
+      let globeMap = null;
+      let globeMarker = null;
       const defaultLat = 34.1526;
       const defaultLng = 77.5771;
 
@@ -1179,8 +1707,10 @@
         const longitudeDirection = longitude < 0 ? 'W' : 'E';
         const selectedLatitude = Math.abs(latitude).toFixed(4);
         const selectedLongitude = Math.abs(longitude).toFixed(4);
-        latitudeInput.value = selectedLatitude; longitudeInput.value = selectedLongitude;
-        latDirSelect.value = latitudeDirection; lonDirSelect.value = longitudeDirection;
+        latitudeInput.value = selectedLatitude;
+        longitudeInput.value = selectedLongitude;
+        latDirSelect.value = latitudeDirection;
+        lonDirSelect.value = longitudeDirection;
         selectedCoordinates.textContent = `Selected: ${selectedLatitude}° ${latitudeDirection}, ${selectedLongitude}° ${longitudeDirection}`;
       }
 
@@ -1212,12 +1742,8 @@
           const snowfall = wxData.current.snowfall;
           const elevation = wxData.elevation || 0;
 
-          // Save live weather to state
-          globalAmbient24 = Array.from({length: 24}, () => temp); // Basic flatline approximation
-          currentAmbientTemp = temp;
-          globalIsSnowing = (snowfall > 0 || temp < 0 || elevation > 3000);
+          baseSiteTemp = temp;
 
-          metricMinOut.textContent = `${temp.toFixed(1)}°C`;
           document.getElementById('wx-temp').textContent = `${temp.toFixed(1)}°C`;
           document.getElementById('wx-humidity').textContent = `${humidity}%`;
           document.getElementById('wx-wind').textContent = `${windSpeed.toFixed(1)}m/s`;
@@ -1229,13 +1755,18 @@
 
           const clampedWind = Math.min(40, Math.max(0, windSpeed));
           windSlider.value = clampedWind;
-          document.getElementById('windValue').textContent = clampedWind.toFixed(1);
+          windValLabel.textContent = clampedWind.toFixed(1);
+
+          const autoSnow = snowfall > 0 ? Math.min(15, snowfall * 2) : (temp < 0 || elevation > 3000 ? 4.0 : 1.5);
+          snowRateSlider.value = autoSnow;
+          snowRateValLabel.textContent = autoSnow.toFixed(1);
 
           updateAllPhysicsAndVisuals();
           badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live`;
         } catch (err) {
           console.error("Weather Telemetry Error:", err);
           badge.innerHTML = `Offline`;
+          updateAllPhysicsAndVisuals();
         }
       }
 
@@ -1252,7 +1783,10 @@
               'esri-satellite': { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, maxzoom: 19 },
               'esri-labels': { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, maxzoom: 19 }
             },
-            layers: [ { id: 'satellite-layer', type: 'raster', source: 'esri-satellite' }, { id: 'labels-layer', type: 'raster', source: 'esri-labels', paint: { 'raster-opacity': 0.9 } } ]
+            layers: [
+              { id: 'satellite-layer', type: 'raster', source: 'esri-satellite' },
+              { id: 'labels-layer', type: 'raster', source: 'esri-labels', paint: { 'raster-opacity': 0.9 } }
+            ]
           },
           center: [currentLng, currentLat], zoom: 2.6
         });
@@ -1265,14 +1799,14 @@
       openLocationPickerBtn.addEventListener('click', () => { locationPickerWindow.classList.remove('hidden'); setTimeout(initializeLocationMap, 50); });
       closeLocationPickerBtn.addEventListener('click', () => locationPickerWindow.classList.add('hidden'));
 
-      // ── BIND LIVE LISTENERS FOR ALL SLIDERS, DROPDOWNS ────────────────────────
+      // ── 8. BIND ALL PARAMETER SLIDERS & DROPDOWNS ─────────────────────────────
       thicknessSlider.addEventListener('input', (e) => {
-        thicknessValLabel.textContent = e.target.value; thicknessMetersLabel.textContent = (e.target.value / 100).toFixed(2);
+        thicknessValLabel.textContent = e.target.value;
+        thicknessMetersLabel.textContent = (e.target.value / 100).toFixed(2);
         updateAllPhysicsAndVisuals();
       });
-      windSlider.addEventListener('input', (e) => {
-        document.getElementById('windValue').textContent = e.target.value; updateAllPhysicsAndVisuals();
-      });
+      windSlider.addEventListener('input', updateAllPhysicsAndVisuals);
+      snowRateSlider.addEventListener('input', updateAllPhysicsAndVisuals);
       document.getElementById('occupants').addEventListener('input', updateAllPhysicsAndVisuals);
       document.getElementById('shelterShape').addEventListener('change', updateAllPhysicsAndVisuals);
 
@@ -1280,10 +1814,12 @@
         materialSelect, lengthInput, widthInput, heightInput,
         winWallSelect, winAreaSlider, doorWallSelect, doorAreaSlider, ventWallSelect, ventAreaSlider
       ].forEach(el => {
-        if (el) { el.addEventListener('input', updateAllPhysicsAndVisuals); el.addEventListener('change', updateAllPhysicsAndVisuals); }
+        if (el) {
+          el.addEventListener('input', updateAllPhysicsAndVisuals);
+          el.addEventListener('change', updateAllPhysicsAndVisuals);
+        }
       });
 
-      // One-Click AI Auto-Optimizer
       autoOptimizeBtn.addEventListener('click', () => {
         materialSelect.value = 'FRP-PUF Sandwich Panel';
         document.getElementById('shelterShape').value = 'barrel';
@@ -1296,54 +1832,93 @@
         updateAllPhysicsAndVisuals();
       });
 
+      // Initial Boot
       updateAllPhysicsAndVisuals();
       fetchLiveWeatherAndLocation(defaultLat, defaultLng);
 
-      function updateUI(results, payload) {
-        globalIndoor24 = results.insideTemp || tempChart.data.datasets[0].data;
-        globalAmbient24 = results.ambientTemp || defaultAmbient;
-        tempChart.data.datasets[0].data = globalIndoor24;
-        tempChart.data.datasets[1].data = globalAmbient24;
-        tempChart.update();
-        updateAllPhysicsAndVisuals();
+      function updateUI(results) {
+        if (results.insideTemp && results.ambientTemp) {
+          globalIndoor24 = results.insideTemp;
+          globalAmbient24 = results.ambientTemp;
+          tempChart.data.datasets[0].data = globalIndoor24;
+          tempChart.data.datasets[1].data = globalAmbient24;
+          tempChart.update();
+        }
+        if (results.energySummary) {
+          statSolar.textContent = `${results.energySummary.totalSolarKWh.toFixed(2)} kWh`;
+          statLoss.textContent = `${results.energySummary.heatLossKW.toFixed(2)} kW`;
+          statRank.textContent = results.energySummary.rank;
+        }
+        triggerMeshUpdate();
       }
 
       function getPayload() {
         let latVal = parseFloat(latitudeInput.value) || 34.1526; if (latDirSelect.value === 'S') latVal = -Math.abs(latVal);
         let lonVal = parseFloat(longitudeInput.value) || 77.5771; if (lonDirSelect.value === 'W') lonVal = -Math.abs(lonVal);
-        const mat = materialPresets[materialSelect.value] || {k: 0.024, rho: 35, cp: 1400};
+        const mat = materialPresets[materialSelect.value] || { k: 0.022, rho: 45, cp: 1450 };
         return {
-          geometry: { length: parseFloat(lengthInput.value), width: parseFloat(widthInput.value), height: parseFloat(heightInput.value), wallThickness: parseFloat(thicknessSlider.value)/100, shape: document.getElementById('shelterShape').value },
+          geometry: {
+            length: parseFloat(lengthInput.value),
+            width: parseFloat(widthInput.value),
+            height: parseFloat(heightInput.value),
+            wallThickness: parseFloat(thicknessSlider.value) / 100,
+            shape: document.getElementById('shelterShape').value
+          },
           materials: { name: materialSelect.value, k: mat.k, rho: mat.rho, cp: mat.cp },
-          environment: { windSpeed: parseFloat(windSlider.value) },
+          environment: {
+            windSpeed: isWindVisible ? parseFloat(windSlider.value) : 0,
+            snowRate: isSnowVisible ? parseFloat(snowRateSlider.value) : 0,
+            baseAmbientTemp: baseSiteTemp
+          },
           occupants: parseInt(document.getElementById('occupants').value),
-          openings: { window: { wall: winWallSelect.value, area: parseFloat(winAreaSlider.value) }, door: { wall: doorWallSelect.value, area: parseFloat(doorAreaSlider.value) }, vent: { wall: ventWallSelect.value, area: parseFloat(ventAreaSlider.value) } },
+          openings: {
+            window: { wall: winWallSelect.value, area: parseFloat(winAreaSlider.value) },
+            door: { wall: doorWallSelect.value, area: parseFloat(doorAreaSlider.value) },
+            vent: { wall: ventWallSelect.value, area: parseFloat(ventAreaSlider.value) }
+          },
           location: { latitude: latVal, longitude: lonVal }
         };
       }
 
       simForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); errorToast.classList.add('hidden');
-        const ogBtn = submitBtn.innerHTML; submitBtn.disabled = true; submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-sm"></i><span>Computing...</span>`;
+        e.preventDefault();
+        errorToast.classList.add('hidden');
+        const ogBtn = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-sm"></i><span>Computing CFD & FEA...</span>`;
         try {
-          const response = await fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getPayload()) });
+          const response = await fetch('/api/simulate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(getPayload())
+          });
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          updateUI(await response.json(), getPayload());
-        } catch (error) { errorToast.classList.remove('hidden'); updateAllPhysicsAndVisuals(); } 
-        finally { submitBtn.disabled = false; submitBtn.innerHTML = ogBtn; }
+          updateUI(await response.json());
+        } catch (error) {
+          errorToast.classList.remove('hidden');
+          updateAllPhysicsAndVisuals();
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = ogBtn;
+        }
       });
 
+      // ── 9. DATABASE HISTORY MODAL ─────────────────────────────────────────────
       const historyModal = document.getElementById('historyModal');
       const historyList = document.getElementById('historyList');
       const historyLoading = document.getElementById('historyLoading');
 
       document.getElementById('openHistoryBtn').addEventListener('click', async () => {
-        historyModal.classList.remove('hidden'); historyLoading.classList.remove('hidden'); historyList.innerHTML = '';
+        historyModal.classList.remove('hidden');
+        historyLoading.classList.remove('hidden');
+        historyList.innerHTML = '';
         try {
-          const res = await fetch('/api/history'); if(!res.ok) throw new Error('Failed to fetch');
+          const res = await fetch('/api/history');
+          if (!res.ok) throw new Error('Failed to fetch');
           const data = await res.json();
-          if (data.length === 0) { historyList.innerHTML = '<div class="text-center text-gray-500 py-8">No previous simulations found in the database.</div>'; } 
-          else {
+          if (data.length === 0) {
+            historyList.innerHTML = '<div class="text-center text-gray-500 py-8">No previous simulations found in the database.</div>';
+          } else {
             data.forEach((sim) => {
               const date = new Date(sim.createdAt || Date.now()).toLocaleString();
               const rawMat = sim.materials?.name || sim.material || sim.name;
@@ -1353,69 +1928,110 @@
               const h = sim.geometry?.height || sim.height || '2.8';
               const lat = sim.location?.latitude || sim.latitude || '34.1526';
               const lon = sim.location?.longitude || sim.longitude || '77.5771';
-              const card = document.createElement('div'); card.className = "bg-gray-800/80 border border-gray-700 p-4 rounded-xl hover:border-orange-500/60 transition-colors cursor-pointer group";
+              const card = document.createElement('div');
+              card.className = "bg-gray-800/80 border border-gray-700 p-4 rounded-xl hover:border-orange-500/60 transition-colors cursor-pointer group";
               card.innerHTML = `<div class="flex justify-between items-start mb-2"><span class="text-xs text-gray-400 font-mono"><i class="fa-regular fa-clock text-gray-500 mr-1"></i> ${date}</span><span class="text-[10px] bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded border border-orange-500/30">Click to Restore</span></div><div class="grid grid-cols-3 gap-2"><div><div class="text-[10px] text-gray-500 uppercase font-bold">Material</div><div class="text-sm font-semibold text-gray-200">${mat}</div></div><div><div class="text-[10px] text-gray-500 uppercase font-bold">Geometry (LxWxH)</div><div class="text-sm font-semibold text-gray-200">${l}m x ${w}m x ${h}m</div></div><div><div class="text-[10px] text-gray-500 uppercase font-bold">GPS Coordinates</div><div class="text-sm font-semibold text-sky-400 font-mono">${lat}°, ${lon}°</div></div></div>`;
-              card.addEventListener('click', () => { materialSelect.value = mat; lengthInput.value = l; widthInput.value = w; heightInput.value = h; fetchLiveWeatherAndLocation(parseFloat(lat), parseFloat(lon)); historyModal.classList.add('hidden'); });
+              card.addEventListener('click', () => {
+                materialSelect.value = mat;
+                lengthInput.value = l;
+                widthInput.value = w;
+                heightInput.value = h;
+                fetchLiveWeatherAndLocation(parseFloat(lat), parseFloat(lon));
+                historyModal.classList.add('hidden');
+              });
               historyList.appendChild(card);
             });
           }
-        } catch (err) { historyList.innerHTML = '<div class="text-center text-rose-400 py-8"><i class="fa-solid fa-triangle-exclamation text-2xl mb-2 block"></i>Could not load records.</div>'; } 
-        finally { historyLoading.classList.add('hidden'); }
+        } catch (err) {
+          historyList.innerHTML = '<div class="text-center text-rose-400 py-8"><i class="fa-solid fa-triangle-exclamation text-2xl mb-2 block"></i>Could not load records.</div>';
+        } finally {
+          historyLoading.classList.add('hidden');
+        }
       });
 
-      document.getElementById('closeHistoryBtn').addEventListener('click', () => { historyModal.classList.add('hidden'); });
+      document.getElementById('closeHistoryBtn').addEventListener('click', () => historyModal.classList.add('hidden'));
       historyModal.addEventListener('click', (e) => { if (e.target === historyModal) historyModal.classList.add('hidden'); });
 
-      // Chat Widget Logic
+      // ── 10. AI CHATBOT WIDGET ─────────────────────────────────────────────────
       document.getElementById('chatToggleBtn').addEventListener('click', () => document.getElementById('chatWindow').classList.toggle('hidden'));
       document.getElementById('closeChatBtn').addEventListener('click', () => document.getElementById('chatWindow').classList.add('hidden'));
       document.getElementById('sendChatBtn').addEventListener('click', async () => {
-        const text = document.getElementById('chatInput').value.trim(); if (!text) return;
+        const text = document.getElementById('chatInput').value.trim();
+        if (!text) return;
         const chatLog = document.getElementById('chatLog');
         chatLog.innerHTML += `<div class="bg-orange-500 text-white p-2.5 rounded-l-xl rounded-br-xl self-end max-w-[85%] shadow-md">${text}</div>`;
-        document.getElementById('chatInput').value = ''; chatLog.scrollTop = chatLog.scrollHeight;
+        document.getElementById('chatInput').value = '';
+        chatLog.scrollTop = chatLog.scrollHeight;
         const loadingId = 'loading-' + Date.now();
         chatLog.innerHTML += `<div id="${loadingId}" class="text-gray-500 text-xs self-start ml-2"><i class="fa-solid fa-circle-notch fa-spin"></i> Thinking...</div>`;
         chatLog.scrollTop = chatLog.scrollHeight;
-        
+
+        const currentContext = {
+          material: materialSelect.value,
+          cost: statCost.innerText,
+          peakTemp: metricPeakIn.innerText,
+          heatLoss: statLoss.innerText,
+          locationName: document.getElementById('locationName').innerText,
+          liveTemp: document.getElementById('wx-temp').innerText,
+          liveHumidity: document.getElementById('wx-humidity').innerText,
+          elevation: document.getElementById('wx-elev').innerText,
+          windSpeed: windValLabel.innerText + ' m/s',
+          snowRate: snowRateValLabel.innerText + ' cm/hr',
+          occupants: document.getElementById('occupants').value,
+          shape: document.getElementById('shelterShape').value
+        };
+
         try {
-          const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, context: { material: materialSelect.value, cost: statCost.innerText, locationName: document.getElementById('locationName').innerText } }) });
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, context: currentContext })
+          });
           const data = await res.json();
-          document.getElementById(loadingId).remove(); chatLog.innerHTML += `<div class="bg-gray-800 text-gray-300 p-2.5 rounded-r-xl rounded-bl-xl self-start max-w-[85%] border border-gray-700 leading-relaxed">${data.reply}</div>`;
-        } catch (e) { document.getElementById(loadingId).remove(); chatLog.innerHTML += `<div class="bg-rose-900/50 text-rose-300 p-2.5 rounded-r-xl rounded-bl-xl self-start max-w-[85%] border border-rose-500/30">Network error connecting to AI engine.</div>`; }
+          document.getElementById(loadingId).remove();
+          chatLog.innerHTML += `<div class="bg-gray-800 text-gray-300 p-2.5 rounded-r-xl rounded-bl-xl self-start max-w-[85%] border border-gray-700 leading-relaxed">${data.reply}</div>`;
+        } catch (e) {
+          document.getElementById(loadingId).remove();
+          chatLog.innerHTML += `<div class="bg-rose-900/50 text-rose-300 p-2.5 rounded-r-xl rounded-bl-xl self-start max-w-[85%] border border-rose-500/30">Network error connecting to AI engine.</div>`;
+        }
         chatLog.scrollTop = chatLog.scrollHeight;
       });
       document.getElementById('chatInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('sendChatBtn').click(); });
 
-      // PDF Logic
+      // ── 11. PDF REPORT EXPORT ─────────────────────────────────────────────────
       const pdfBtn = document.getElementById('pdfBtn');
       if (pdfBtn) {
         pdfBtn.addEventListener('click', () => {
-          const originalText = pdfBtn.innerHTML; pdfBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-rose-400"></i><span class="text-sm">Compiling Data...</span>`;
+          const originalText = pdfBtn.innerHTML;
+          pdfBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-rose-400"></i><span class="text-sm">Compiling Data...</span>`;
           try {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
-            const addText = (text, x, y, size, color = [50, 50, 50], font = "helvetica", style = "normal") => { doc.setFont(font, style); doc.setFontSize(size); doc.setTextColor(color[0], color[1], color[2]); doc.text(text, x, y); };
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const addText = (text, x, y, size, color = [50, 50, 50], font = "helvetica", style = "normal") => {
+              doc.setFont(font, style); doc.setFontSize(size); doc.setTextColor(color[0], color[1], color[2]); doc.text(text, x, y);
+            };
             doc.setFillColor(15, 23, 42); doc.rect(0, 0, 210, 40, 'F');
             addText("ThermoSim SIH Engineering Report", 15, 20, 22, [249, 115, 22], "helvetica", "bold");
             addText(`Generated on: ${new Date().toLocaleString()}`, 15, 30, 10, [200, 200, 200]);
             let y = 52;
-            addText("1. Site Telemetry & Geometry Specifications", 15, y, 13, [0, 0, 0], "helvetica", "bold"); doc.setDrawColor(249, 115, 22); doc.setLineWidth(0.5); doc.line(15, y+3, 195, y+3); y += 10;
+            addText("1. Site Telemetry, CFD Wind & Snow Specifications", 15, y, 13, [0, 0, 0], "helvetica", "bold"); doc.setDrawColor(249, 115, 22); doc.setLineWidth(0.5); doc.line(15, y + 3, 195, y + 3); y += 10;
             addText(`Site Location:  ${document.getElementById('locationName').innerText}`, 20, y, 10, [0, 0, 0], "helvetica", "bold"); y += 7;
             addText(`Dimensions (L x W x H):  ${lengthInput.value}m x ${widthInput.value}m x ${heightInput.value}m`, 20, y, 10); addText(`Wall Thickness:  ${thicknessValLabel.innerText} cm`, 115, y, 10); y += 7;
-            addText(`Roof Profile:  ${document.getElementById('shelterShape').options[document.getElementById('shelterShape').selectedIndex].text}`, 20, y, 10); addText(`Wind Speed:  ${windSlider.value} m/s`, 115, y, 10); y += 14;
-            addText("2. Fenestration & Occupancy Data", 15, y, 13, [0, 0, 0], "helvetica", "bold"); doc.line(15, y+3, 195, y+3); y += 10;
+            addText(`Roof Profile:  ${document.getElementById('shelterShape').options[document.getElementById('shelterShape').selectedIndex].text}`, 20, y, 10); y += 7;
+            addText(`CFD Wind Speed:  ${windValLabel.innerText} m/s  |  Snowfall Rate:  ${snowRateValLabel.innerText} cm/hr  |  Wind-Chill:  ${windChillReadout.innerText}`, 20, y, 10); y += 14;
+            addText("2. Fenestration & Occupancy Data", 15, y, 13, [0, 0, 0], "helvetica", "bold"); doc.line(15, y + 3, 195, y + 3); y += 10;
             addText(`Glazed Window:  ${winAreaVal.innerText}m² (${winWallSelect.value})`, 20, y, 10); addText(`Access Door:  ${doorAreaVal.innerText}m² (${doorWallSelect.value})`, 115, y, 10); y += 7;
             addText(`Ventilation:  ${ventAreaVal.innerText}m² (${ventWallSelect.value})`, 20, y, 10); addText(`${openingsLossBadge.innerText}`, 115, y, 10, [225, 29, 72], "helvetica", "bold"); y += 7;
             addText(`Human Occupancy:  ${document.getElementById('occupants').value} Personnel (${document.getElementById('occupants').value * 120}W Metabolic Heat)`, 20, y, 10, [16, 185, 129], "helvetica", "bold"); y += 14;
-            addText("3. Material & Thermal Performance Analysis", 15, y, 13, [0, 0, 0], "helvetica", "bold"); doc.line(15, y+3, 195, y+3); y += 10;
+            addText("3. Material & Thermal Performance Analysis", 15, y, 13, [0, 0, 0], "helvetica", "bold"); doc.line(15, y + 3, 195, y + 3); y += 10;
             addText(`Material:  ${materialSelect.value}  (k: ${propK.innerText})`, 20, y, 10, [0, 0, 0], "helvetica", "bold"); y += 7;
             addText(`Efficiency Rank:  ${statRank.innerText}`, 20, y, 10, [16, 185, 129], "helvetica", "bold"); addText(`Winter Fuel Saved:  ${statFuel.innerText}`, 115, y, 10, [16, 185, 129], "helvetica", "bold"); y += 7;
-            addText(`Peak Indoor:  ${metricPeakIn.innerText}  |  Min Outdoor:  ${metricMinOut.innerText}`, 20, y, 10); y += 7;
+            addText(`Peak Indoor:  ${metricPeakIn.innerText}  |  Effective Outdoor:  ${metricMinOut.innerText}`, 20, y, 10); y += 7;
             addText(`Daily Heat Gain:  ${statSolar.innerText}  |  Total Heat Loss:  ${statLoss.innerText}`, 20, y, 10); y += 14;
-            addText("4. Logistics & Bill of Materials (BOM)", 15, y, 13, [0, 0, 0], "helvetica", "bold"); doc.line(15, y+3, 195, y+3); y += 10;
+            addText("4. Logistics & Bill of Materials (BOM)", 15, y, 13, [0, 0, 0], "helvetica", "bold"); doc.line(15, y + 3, 195, y + 3); y += 10;
             addText(`Total Payload Weight:  ${statWeight.innerText}`, 20, y, 10); addText(`Transport Status:  ${statAirlift.innerText}`, 100, y, 10, [225, 29, 72], "helvetica", "bold"); y += 7;
             addText(`Net Wall Volume Req:  ${costVolLabel.innerText}`, 20, y, 10); y += 10;
-            doc.setFillColor(249, 115, 22); doc.rect(15, y, 180, 14, 'F'); addText(`ESTIMATED TOTAL COST:  ${statCost.innerText}`, 20, y+9, 13, [255, 255, 255], "helvetica", "bold");
+            doc.setFillColor(249, 115, 22); doc.rect(15, y, 180, 14, 'F'); addText(`ESTIMATED TOTAL COST:  ${statCost.innerText}`, 20, y + 9, 13, [255, 255, 255], "helvetica", "bold");
             doc.save(`ThermoSim_Engineering_Report_${Date.now()}.pdf`); pdfBtn.innerHTML = originalText;
           } catch (error) { console.error(error); pdfBtn.innerHTML = originalText; }
         });
